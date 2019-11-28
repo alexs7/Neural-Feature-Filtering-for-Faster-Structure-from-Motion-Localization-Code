@@ -2,6 +2,10 @@ import os
 import re
 import subprocess
 import tempfile
+from query_image_descs import QueryImageDescs
+import glob
+from colmap_database import COLMAPDatabase
+import numpy as np
 
 colmap_bin = "colmap/COLMAP.app/Contents/MacOS/colmap"
 
@@ -58,3 +62,41 @@ def run(database_path, image_path, ini_save_path=None, params=None):
     colmap_command = [colmap_bin, "feature_extractor", "--project_path", ini_save_path]
 
     subprocess.check_call(colmap_command)
+
+def extract_features(path, db):
+    path = path + "/*.jpg"
+    all_query_image_descs = []
+
+    for fname in glob.glob(path):
+        image_name = fname.split('/')[1]
+        query_image_descs = QueryImageDescs(image_name)
+
+        image_id = db.execute("SELECT image_id FROM images WHERE name = "+"'"+image_name+"'")
+        image_id = str(image_id.fetchone()[0])
+
+        image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = "+ "'" + image_id + "'")
+        image_keypoints_data = image_keypoints_data.fetchone()[0]
+        image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = "+ "'" + image_id + "'")
+        image_keypoints_data_cols = int(image_keypoints_data_cols.fetchone()[0])
+        image_keypoints_data = COLMAPDatabase.blob_to_array(image_keypoints_data, np.float32)
+        image_keypoints_data_rows = int(np.shape(image_keypoints_data)[0]/image_keypoints_data_cols)
+        image_keypoints_data = image_keypoints_data.reshape(image_keypoints_data_rows, image_keypoints_data_cols)
+        image_keypoints_data_xy = image_keypoints_data[:,0:2]
+
+        for i in range(len(image_keypoints_data_xy)):
+            xy = np.reshape(image_keypoints_data_xy[i], [1, 2])
+            query_image_descs.add_xy_coord(xy)
+
+        image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = "+ "'" + image_id + "'")
+        image_descriptors_data = image_descriptors_data.fetchone()[0]
+        image_descriptors_data = COLMAPDatabase.blob_to_array(image_descriptors_data, np.uint8)
+        descs_rows = int(np.shape(image_descriptors_data)[0]/128)
+        image_descriptors_data = image_descriptors_data.reshape([descs_rows,128])
+
+        for i in range(len(image_descriptors_data)):
+            desc = np.reshape(image_descriptors_data[i], [1,128])
+            query_image_descs.add_desc(desc)
+
+        all_query_image_descs.append(query_image_descs)
+
+    return all_query_image_descs
