@@ -15,22 +15,24 @@ db = COLMAPDatabase.connect(db_path)
 
 print("Loading points 3D..")
 points3D_objects = point3D_loader.parse_points3D(points3D_txt_path, db)
+
 feature_extractor.run(db_path, query_image_folder_path)
+
 query_images_features = feature_extractor.extract_features(query_image_folder_path, db)
 
-breakpoint()
-# query matching here!
-# query desc
-des1 =
-# database desc
-des2 =
+des1 = query_images_features[0].descs
+des2 = point3D_loader.get_descriptor_array(points3D_objects) # TODO: this is slow - move it to offline processing
 
-# 1 - Matching descriptor vectors with a FLANN based matcher
 FLANN_INDEX_KDTREE = 0
 index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
 search_params = dict(checks=50)
 flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+des1.dtype = np.float32
+des2.dtype = np.float32
 matches = flann.knnMatch(des1, des2, k=2)
+
+breakpoint()
 
 # store all the good matches as per Lowe's ratio test.
 good = []

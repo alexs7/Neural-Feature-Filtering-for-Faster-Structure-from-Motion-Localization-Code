@@ -69,6 +69,13 @@ def parse_points3D(points3D_text_file , db):
 
     return all_points3D
 
+def get_descriptor_array(points3D_objects):
+    descs = np.empty((0, 128))
+    for i in range(len(points3D_objects)):
+        mean_desc = np.reshape(points3D_objects[i].mean_desc, [1,128])
+        descs = np.concatenate((descs, mean_desc), axis = 0)
+    return descs
+
 
 
 
