@@ -160,6 +160,32 @@ def image_registrator(database_path, input_path, output_path, ini_save_path=None
     # print(colmap_command)
     subprocess.check_call(colmap_command)
 
+def model_converter(database_path, input_path, output_path, ini_save_path=None, params=None):
+
+    # Find and read template INI.
+    input_ini_file = os.path.join('template_inis', 'colmap_model_converter.ini')
+    with open(input_ini_file, 'r') as f:
+        colmap_ini = f.read()
+
+    # Update some parameters, if requested.
+    colmap_ini = override_ini_parameters(colmap_ini, params)
+
+    # Add database and image directory to the INI.
+    # NB. Forward slashes in paths are expected by the GUI.
+    colmap_ini = override_ini_parameters(colmap_ini, {
+        'input_path': input_path.replace('\\', '/'),
+        'output_path': output_path.replace('\\', '/'),
+        'output_type': "TXT"
+    })
+
+    # Save INI file.
+    ini_save_path = save_ini(colmap_ini, ini_save_path)
+
+    # Call COLMAP.
+    colmap_command = [colmap_bin, "model_converter", "--project_path", ini_save_path]
+
+    subprocess.check_call(colmap_command)
+
 # def extract_features(path, db):
 #     path = path + "/*.jpg"
 #     all_query_image_descs = []
