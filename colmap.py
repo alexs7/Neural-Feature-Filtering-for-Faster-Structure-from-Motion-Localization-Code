@@ -2,10 +2,6 @@ import os
 import re
 import subprocess
 import tempfile
-from query_image_descs import QueryImageDescs
-import glob
-from colmap_database import COLMAPDatabase
-import numpy as np
 
 colmap_bin = "colmap/COLMAP.app/Contents/MacOS/colmap"
 
