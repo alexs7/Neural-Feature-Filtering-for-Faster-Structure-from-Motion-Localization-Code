@@ -22,3 +22,4 @@ tz = pose_data[7]
 
 db.execute("UPDATE images set prior_qw = "+qw+", prior_qx = "+qx+", prior_qy = "+qy+", prior_qz = "+qz+", prior_tx = "+tx+", prior_ty = "+ty+", prior_tz = "+tz+" WHERE name = "+"'"+"query.jpg"+"'")
 db.commit()
+
