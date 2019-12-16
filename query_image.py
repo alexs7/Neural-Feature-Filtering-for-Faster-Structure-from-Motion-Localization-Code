@@ -77,7 +77,7 @@ def read_images_binary(path_to_model_file):
 
     return images
 
-def get_query_image_pose():
+def get_query_image_global_pose():
     images = read_images_binary("colmap_data/data6/new_model/images.bin")
     pose_r = images.get(len(images)).qvec2rotmat()
     pose_t = images.get(len(images)).tvec
