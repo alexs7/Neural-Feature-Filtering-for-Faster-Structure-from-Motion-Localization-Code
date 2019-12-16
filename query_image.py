@@ -78,7 +78,7 @@ def read_images_binary(path_to_model_file):
     return images
 
 def get_query_image_global_pose():
-    images = read_images_binary("colmap_data/data6/new_model/images.bin")
+    images = read_images_binary("colmap_data/data/new_model/images.bin")
     pose_r = images.get(len(images)).qvec2rotmat()
     pose_t = images.get(len(images)).tvec
     pose = np.c_[pose_r, pose_t]
@@ -86,6 +86,6 @@ def get_query_image_global_pose():
     return pose
 
 def get_query_image_id():
-    images = read_images_binary("colmap_data/data6/new_model/images.bin")
+    images = read_images_binary("colmap_data/data/new_model/images.bin")
     id = images.get(len(images)).id
     return id

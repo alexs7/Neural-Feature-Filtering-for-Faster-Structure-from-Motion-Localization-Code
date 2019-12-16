@@ -79,7 +79,7 @@ def read_points3d_binary_id(path_to_model_file,id):
     return xyz_values
 
 def get_points3D(id):
-    points3D = read_points3d_binary_id("colmap_data/data6/new_model/points3D.bin", id)
+    points3D = read_points3d_binary_id("colmap_data/data/new_model/points3D.bin", id)
     return points3D
 
 
