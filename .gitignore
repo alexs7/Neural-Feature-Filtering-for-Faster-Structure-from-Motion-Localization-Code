@@ -7,3 +7,4 @@ colmap
 result.png
 calibration iphone data/
 iphone_data/
+*.pyc
