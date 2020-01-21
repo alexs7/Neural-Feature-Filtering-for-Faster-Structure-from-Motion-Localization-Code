@@ -37,6 +37,9 @@ import struct
 import argparse
 import time
 
+Point3D = collections.namedtuple(
+    "Point3D", ["id", "xyz", "rgb", "error", "image_ids", "point2D_idxs"])
+
 def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character="<"):
     """Read and unpack the next bytes from a binary file.
     :param fid:
@@ -48,7 +51,7 @@ def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character="<"):
     data = fid.read(num_bytes)
     return struct.unpack(endian_character + format_char_sequence, data)
 
-def read_points3d_binary_id(path_to_model_file,id):
+def read_points3d_binary_id(path_to_model_file, id):
     """
     see: src/base/reconstruction.cc
         void Reconstruction::ReadPoints3DBinary(const std::string& path)
@@ -79,7 +82,7 @@ def read_points3d_binary_id(path_to_model_file,id):
     return xyz_values
 
 def get_points3D(id):
-    points3D = read_points3d_binary_id("colmap_data/data/new_model/points3D.bin", id)
+    points3D = read_points3d_binary_id("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/points3D.bin", id)
     return points3D
 
 

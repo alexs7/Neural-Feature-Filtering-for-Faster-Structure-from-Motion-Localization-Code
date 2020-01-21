@@ -1,11 +1,3 @@
-# get pose from database
-# apply the maths you talked about with cristian using ARCore's pose
-# use K, Pose and 3D points to and get the 2D points
-# draw them on the android screen
-
-# Indexing images [190/190] (1.736 minutes - 0.570 seconds )
-# Matching image [1/1] in 0.570s
-# Elapsed time: 1.736 [minutes]
 import time
 import numpy as np
 import struct
@@ -77,15 +69,21 @@ def read_images_binary(path_to_model_file):
 
     return images
 
-def get_query_image_global_pose():
-    images = read_images_binary("colmap_data/data/new_model/images.bin")
-    pose_r = images.get(len(images)).qvec2rotmat()
-    pose_t = images.get(len(images)).tvec
+def get_query_image_global_pose(name):
+    images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/images.bin")
+    for k,v in images.items():
+        if v.name == name:
+            image = v
+    pose_r = image.qvec2rotmat()
+    pose_t = image.tvec
     pose = np.c_[pose_r, pose_t]
     pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
     return pose
 
-def get_query_image_id():
-    images = read_images_binary("colmap_data/data/new_model/images.bin")
-    id = images.get(len(images)).id
+def get_query_image_id(name):
+    images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/images.bin")
+    for k,v in images.items():
+        if v.name == name:
+            image = v
+    id = image.id
     return id

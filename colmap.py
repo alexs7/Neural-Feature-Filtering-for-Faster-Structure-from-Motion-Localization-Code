@@ -3,7 +3,7 @@ import re
 import subprocess
 import tempfile
 
-colmap_bin = "colmap"
+colmap_bin = "colmap/COLMAP.app/Contents/MacOS/colmap"
 
 def override_ini_parameters(ini, params):
     if not params:
