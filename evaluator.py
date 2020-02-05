@@ -3,6 +3,7 @@ import cv2
 from query_image import get_query_image_global_pose
 from point3D_loader import get_points3D
 from query_image import get_query_image_id
+import scipy.io as sio
 
 K = np.loadtxt("matrices/pixel_intrinsics_low_640.txt")
 
@@ -32,11 +33,11 @@ def show_projected_points(image_path, K, FP, points3D):
 # from: frame_1579029492539.jpg
 # to:   frame_1579029499574.jpg
 # images between are:
-sequence = ["1579029492539", "1579029492928", "1579029493315", "1579029493703", "1579029494092",
-            "1579029494497", "1579029494884", "1579029495272", "1579029495678",
-            "1579029496064", "1579029496437", "1579029496840", "1579029497228",
-            "1579029497616", "1579029498004", "1579029498411", "1579029498796",
-            "1579029499185", "1579029499574"]
+sequence = ["frame_1579030115397","frame_1579030115819", "frame_1579030116242","frame_1579030116663", "frame_1579030117103","frame_1579030117542",
+                "frame_1579030117964","frame_1579030118385", "frame_1579030118807","frame_1579030119230", "frame_1579030119653", "frame_1579030120065",
+                "frame_1579030120479", "frame_1579030120919", "frame_1579030121341", "frame_1579030121747", "frame_1579030122152", "frame_1579030122558",
+                "frame_1579030122978", "frame_1579030123400", "frame_1579030123839", "frame_1579030124261", "frame_1579030124683", "frame_1579030125105",
+                "frame_1579030125527" ]
 
 first_frame = sequence[0];
 
@@ -80,6 +81,16 @@ for i in range(1 , len(sequence)):
     np.savetxt("final_poses/final_pose_" + sequence[i] + ".txt", FP)
     np.savetxt("colmap_poses/colmap_pose_" + sequence[i] + ".txt", colmap_poses[: , : , i])
 
-
+# relative_pose = np.empty([4, 4])
+# for i in range(1 , len(sequence)):
+#
+#     FP = sio.loadmat("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/matlab_res/final_pose_"+sequence[i]+".txt.mat")
+#     FP = np.array(FP.get('pose_new'))
+#     # FP = relative_pose.dot(CP_start)
+#
+#     show_projected_points("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/current_query_image/frame_" + sequence[i] +".jpg", K, FP, points3D_start)
+#
+#     # np.savetxt("final_poses/final_pose_" + sequence[i] + ".txt", FP)
+#     # np.savetxt("colmap_poses/colmap_pose_" + sequence[i] + ".txt", colmap_poses[: , : , i])
 
 

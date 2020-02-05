@@ -17,7 +17,7 @@ hold on
 
 minus_cameras = 0;
 
-gt_cam_loc = [];
+% gt_cam_loc = [];
 dinfo = dir('colmap_poses/*.txt');
 for i = 1 : length(dinfo) - minus_cameras
     pose = importdata(fullfile('colmap_poses/', dinfo(i).name));
@@ -26,7 +26,7 @@ for i = 1 : length(dinfo) - minus_cameras
     
     camera_location = -inv(rotm) * tvec;
     
-    gt_cam_loc = [gt_cam_loc ; camera_location'];
+%     gt_cam_loc = [gt_cam_loc ; camera_location'];
     
     % set to origin
 %     if(i == 1)
@@ -41,7 +41,7 @@ end
 
 hold on
 
-fp_cam_loc = [];
+% fp_cam_loc = [];
 dinfo = dir('final_poses/*.txt');
 for i = 1 : length(dinfo) - minus_cameras
     pose = importdata(fullfile('final_poses/', dinfo(i).name));
@@ -50,7 +50,7 @@ for i = 1 : length(dinfo) - minus_cameras
     
     camera_location = -inv(rotm) * tvec;
     
-    fp_cam_loc = [fp_cam_loc ; camera_location'];
+%     fp_cam_loc = [fp_cam_loc ; camera_location'];
 
     % set to origin
 %     if(i == 1)
@@ -64,7 +64,10 @@ for i = 1 : length(dinfo) - minus_cameras
 end
 
 gt_cam_loc = load('gt_cam_loc.mat');
+gt_cam_loc = gt_cam_loc.gt_cam_loc;
 fp_cam_loc = load('fp_cam_loc.mat');
+fp_cam_loc = fp_cam_loc.fp_cam_loc;
+
 [d,Z,transform] = procrustes(gt_cam_loc, fp_cam_loc);
 c = transform.c;
 T = transform.T;
