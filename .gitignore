@@ -10,3 +10,9 @@ iphone_data/
 *.pyc
 calibration data
 .idea/
+Kabsch.m
+blender_viewer/
+cameraPose_dp_oriented/
+colmap_poses/
+final_poses/
+points3D_start.txt

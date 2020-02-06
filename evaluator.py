@@ -33,6 +33,10 @@ def show_projected_points(image_path, K, FP, points3D):
 # from: frame_1579029492539.jpg
 # to:   frame_1579029499574.jpg
 # images between are:
+
+# check and load the file here
+# also check the trajectory if it didnt break in ARCore
+sequence = load_ARCore_Poses('');
 sequence = ["frame_1579030115397","frame_1579030115819", "frame_1579030116242","frame_1579030116663", "frame_1579030117103","frame_1579030117542",
                 "frame_1579030117964","frame_1579030118385", "frame_1579030118807","frame_1579030119230", "frame_1579030119653", "frame_1579030120065",
                 "frame_1579030120479", "frame_1579030120919", "frame_1579030121341", "frame_1579030121747", "frame_1579030122152", "frame_1579030122558",
