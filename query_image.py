@@ -70,7 +70,7 @@ def read_images_binary(path_to_model_file):
     return images
 
 def get_query_image_global_pose(name):
-    images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/images.bin")
+    images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/model/0/images.bin")
     for k,v in images.items():
         if v.name == name:
             image = v
@@ -81,7 +81,7 @@ def get_query_image_global_pose(name):
     return pose
 
 def get_query_image_id(name):
-    images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/images.bin")
+    images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/model/0/images.bin")
     for k,v in images.items():
         if v.name == name:
             image = v

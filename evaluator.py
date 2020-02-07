@@ -3,6 +3,7 @@ import cv2
 from query_image import get_query_image_global_pose
 from point3D_loader import get_points3D
 from query_image import get_query_image_id
+import glob
 import scipy.io as sio
 
 K = np.loadtxt("matrices/pixel_intrinsics_low_640.txt")
@@ -29,61 +30,112 @@ def show_projected_points(image_path, K, FP, points3D):
     cv2.imshow("result", image)
     cv2.waitKey(0)
 
-# get COLMAP pose the 3D points the image(s) are looking at
-# from: frame_1579029492539.jpg
-# to:   frame_1579029499574.jpg
-# images between are:
+def get_ARCore_poses(dir):
+    print("Getting ARCore poses..")
+    poses = []
+    for filename in glob.glob(dir + "/" + 'cameraPose_*.txt'):
+        poses.append(np.loadtxt(filename))
+    return poses
 
-# check and load the file here
+def get_sequence(dir):
+    sequence = []
+    for filename in glob.glob(dir+"/"+'cameraPose_*.txt'): #can be anything
+        sequence.append(filename.split("_")[-1].split(".")[0])
+    return sequence
+
+def get_COLMAP_poses(array):
+    print("Getting COLMAP poses..")
+    poses = []
+    for i in range(len(array)):
+        print("At: " + str(round(100 * i / len(array),2)) + "%", end="\r")
+        poses.append(get_query_image_global_pose("frame_" + array[i] + ".jpg"))
+    return poses
+
+def get_Relative_Poses(local_poses, global_poses):
+    relative_poses = []
+    gp_start = global_poses[0]
+    lp_start = local_poses[0]
+
+    fp = lp_start.dot(np.linalg.inv(lp_start)).dot(gp_start)
+    relative_poses.append(fp)
+
+    relative_pose = np.empty([4, 4])
+    for i in range(1, len(local_poses)):
+        lp =  local_poses[i]
+
+        R1 = lp_start[0:3, 0:3]
+        t1 = lp_start[0:3, 3]
+        R2 = lp[0:3, 0:3]
+        t2 = lp[0:3, 3]
+        R1to2 = np.linalg.inv(R2).dot(R1)
+        T1to2 = np.linalg.inv(R2).dot((t1 - t2))
+
+        relative_pose[0:3, 0:3] = R1to2
+        relative_pose[0:3, 3] = T1to2
+        relative_pose[3, :] = [0, 0, 0, 1]
+
+        fp = relative_pose.dot(gp_start)
+        relative_poses.append(fp)
+
+    return relative_poses
+
+def save_poses(local_poses, global_poses, relative_poses):
+    for i in range(len(relative_poses)):
+        np.savetxt("ar_core_poses/pose_" + str(i) + ".txt", local_poses[i])
+        np.savetxt("global_poses/pose_" + str(i) + ".txt", global_poses[i])
+        np.savetxt("final_poses/pose_" + str(i) + ".txt", relative_poses[i])
+
+
+# check and load the files here
 # also check the trajectory if it didnt break in ARCore
-sequence = load_ARCore_Poses('');
-sequence = ["frame_1579030115397","frame_1579030115819", "frame_1579030116242","frame_1579030116663", "frame_1579030117103","frame_1579030117542",
-                "frame_1579030117964","frame_1579030118385", "frame_1579030118807","frame_1579030119230", "frame_1579030119653", "frame_1579030120065",
-                "frame_1579030120479", "frame_1579030120919", "frame_1579030121341", "frame_1579030121747", "frame_1579030122152", "frame_1579030122558",
-                "frame_1579030122978", "frame_1579030123400", "frame_1579030123839", "frame_1579030124261", "frame_1579030124683", "frame_1579030125105",
-                "frame_1579030125527" ]
+query_dir = '/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/query_data'
+ARCore_poses = get_ARCore_poses(query_dir)
+sequence = get_sequence(query_dir)
+COLMAP_poses = get_COLMAP_poses(sequence)
+relative_Poses = get_Relative_Poses(ARCore_poses, COLMAP_poses)
 
-first_frame = sequence[0];
+save_poses(ARCore_poses,COLMAP_poses,relative_Poses)
 
-CP_start = get_query_image_global_pose("frame_"+first_frame+".jpg")
-
-LP_start = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/query_data/cameraPose_" + first_frame + ".txt")
-FP_start = LP_start.dot(np.linalg.inv(LP_start)).dot(CP_start) # Identity anyway..
-
-image_id_start = get_query_image_id("frame_"+first_frame+".jpg")
-points3D_start = get_points3D(image_id_start)
-
-np.savetxt("points3D_start.txt", points3D_start)
-
-show_projected_points("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/current_query_image/frame_" + first_frame + ".jpg", K, FP_start, points3D_start)
-
-colmap_poses = np.empty([4,4,len(sequence)])
-for i in range(len(sequence)):
-    colmap_pose = get_query_image_global_pose("frame_"+sequence[i]+".jpg")
-    colmap_poses[:,:,i] = colmap_pose
-
-relative_pose = np.empty([4, 4])
-for i in range(1 , len(sequence)):
-
-    LP = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/query_data/cameraPose_"+sequence[i]+".txt")
-
-    R1 = LP_start[0:3,0:3]
-    t1 = LP_start[0:3, 3]
-    R2 = LP[0:3,0:3]
-    t2 = LP[0:3,3]
-    R1to2 = np.linalg.inv(R2).dot(R1)
-    T1to2 = np.linalg.inv(R2).dot((t1 - t2))
-
-    relative_pose[0:3, 0:3] = R1to2
-    relative_pose[0:3, 3] = T1to2
-    relative_pose[3, :] = [0, 0, 0, 1]
-
-    FP = relative_pose.dot(CP_start)
-
-    show_projected_points("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/current_query_image/frame_" + sequence[i] +".jpg", K, FP, points3D_start)
-
-    np.savetxt("final_poses/final_pose_" + sequence[i] + ".txt", FP)
-    np.savetxt("colmap_poses/colmap_pose_" + sequence[i] + ".txt", colmap_poses[: , : , i])
+#
+# CP_start = get_query_image_global_pose("frame_"+first_frame+".jpg")
+#
+# LP_start = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/query_data/cameraPose_" + first_frame + ".txt")
+# FP_start = LP_start.dot(np.linalg.inv(LP_start)).dot(CP_start) # Identity anyway..
+#
+# image_id_start = get_query_image_id("frame_"+first_frame+".jpg")
+# points3D_start = get_points3D(image_id_start)
+#
+# np.savetxt("points3D_start.txt", points3D_start)
+#
+# show_projected_points("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/current_query_image/frame_" + first_frame + ".jpg", K, FP_start, points3D_start)
+#
+# colmap_poses = np.empty([4,4,len(sequence)])
+# for i in range(len(sequence)):
+#     colmap_pose = get_query_image_global_pose("frame_"+sequence[i]+".jpg")
+#     colmap_poses[:,:,i] = colmap_pose
+#
+# relative_pose = np.empty([4, 4])
+# for i in range(1 , len(sequence)):
+#
+#     LP = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/query_data/cameraPose_"+sequence[i]+".txt")
+#
+#     R1 = LP_start[0:3,0:3]
+#     t1 = LP_start[0:3, 3]
+#     R2 = LP[0:3,0:3]
+#     t2 = LP[0:3,3]
+#     R1to2 = np.linalg.inv(R2).dot(R1)
+#     T1to2 = np.linalg.inv(R2).dot((t1 - t2))
+#
+#     relative_pose[0:3, 0:3] = R1to2
+#     relative_pose[0:3, 3] = T1to2
+#     relative_pose[3, :] = [0, 0, 0, 1]
+#
+#     FP = relative_pose.dot(CP_start)
+#
+#     show_projected_points("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/current_query_image/frame_" + sequence[i] +".jpg", K, FP, points3D_start)
+#
+#     np.savetxt("final_poses/final_pose_" + sequence[i] + ".txt", FP)
+#     np.savetxt("colmap_poses/colmap_pose_" + sequence[i] + ".txt", colmap_poses[: , : , i])
 
 # relative_pose = np.empty([4, 4])
 # for i in range(1 , len(sequence)):

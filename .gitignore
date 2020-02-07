@@ -16,3 +16,6 @@ cameraPose_dp_oriented/
 colmap_poses/
 final_poses/
 points3D_start.txt
+threejs_viewer/
+ar_core_poses/
+global_poses/
