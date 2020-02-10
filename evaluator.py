@@ -83,7 +83,7 @@ def save_poses(local_poses, global_poses, relative_poses):
     for i in range(len(relative_poses)):
         np.savetxt("ar_core_poses/pose_" + str(i) + ".txt", local_poses[i])
         np.savetxt("global_poses/pose_" + str(i) + ".txt", global_poses[i])
-        np.savetxt("final_poses/pose_" + str(i) + ".txt", relative_poses[i])
+        np.savetxt("relative_poses/pose_" + str(i) + ".txt", relative_poses[i])
 
 
 # check and load the files here

@@ -19,3 +19,4 @@ points3D_start.txt
 threejs_viewer/
 ar_core_poses/
 global_poses/
+relative_poses/
