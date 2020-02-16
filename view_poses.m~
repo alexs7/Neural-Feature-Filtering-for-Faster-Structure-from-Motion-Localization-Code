@@ -40,53 +40,52 @@ end
 
 hold on;
 
-% rt = rotz(180) * roty(90);
-% dinfo = dir('relative_poses/*.txt');
-% for i = 1 : step_size :  length(dinfo) - minus_cameras
-%     pose = importdata(fullfile('relative_poses/', dinfo(i).name));
-%     rotm = pose(1:3,1:3);
-%     tvec = pose(1:3,4);
-%     
-%     camera_location = -inv(rotm) * tvec;
-% %     camera_location = inv(C) * camera_location;
-%     camera_location = rt * camera_location;
-% %     rotm = rt * rotm;
-%     
-%     % set to origin
-%     if(i == 1)
-%         diff = camera_location;
-%         camera_location = [0 0 0];
-%     else
-%         camera_location = camera_location - diff;
-%     end
-%     
-%     plotCamera('Location', camera_location, 'Orientation', rotm, 'Size', 0.15, 'Color', [1, 1, 0]);
-% end
+rt = rotz(90) * rotx(90);
+dinfo = dir('arcore_relative_poses/*.txt');
+for i = 1 : step_size :  length(dinfo) - minus_cameras
+    pose = importdata(fullfile('arcore_relative_poses/', dinfo(i).name));
+    rotm = pose(1:3,1:3);
+    tvec = pose(1:3,4);
+    
+    camera_location = -inv(rotm) * tvec;
+%     camera_location = inv(C) * camera_location;
+    camera_location = rt * 
+
+    % set to origin
+    if(i == 1)
+        diff = camera_location;
+        camera_location = [0 0 0];
+    else
+        camera_location = camera_location - diff;
+    end
+    
+    plotCamera('Location', camera_location, 'Orientation', rotm, 'Size', 0.15, 'Color', [1, 1, 0]);
+end
 
 % 
 % hold on
-
-% fp_cam_loc = [];
-dinfo = dir('ar_core_poses/*.txt');
-for i = 1 : length(dinfo) - minus_cameras
-    pose = importdata(fullfile('ar_core_poses/', dinfo(i).name));
-    rotm =  pose(1:3,1:3);
-    tvec =  pose(1:3,4);
-    
-    camera_location = -inv(rotm) * tvec;
-    
-%     fp_cam_loc = [fp_cam_loc ; camera_location'];
-
-    % set to origin
-%     if(i == 1)
-%         diff = camera_location;
-%         camera_location = [0 0 0];
-%     else
-%         camera_location = camera_location - diff;
-%     end
-    
-    plotCamera('Location', camera_location, 'Orientation', rotm, 'Size', 0.15, 'Color', [0, 1, 0]);
-end
+% 
+% % fp_cam_loc = [];
+% dinfo = dir('ar_core_poses/*.txt');
+% for i = 1 : length(dinfo) - minus_cameras
+%     pose = importdata(fullfile('ar_core_poses/', dinfo(i).name));
+%     rotm =  pose(1:3,1:3);
+%     tvec =  pose(1:3,4);
+%     
+%     camera_location = -inv(rotm) * tvec;
+%     
+% %     fp_cam_loc = [fp_cam_loc ; camera_location'];
+% 
+%     % set to origin
+% %     if(i == 1)
+% %         diff = camera_location;
+% %         camera_location = [0 0 0];
+% %     else
+% %         camera_location = camera_location - diff;
+% %     end
+%     
+%     plotCamera('Location', camera_location, 'Orientation', rotm, 'Size', 0.03, 'Color', [0, 1, 0]);
+% end
 % 
 % hold on
 

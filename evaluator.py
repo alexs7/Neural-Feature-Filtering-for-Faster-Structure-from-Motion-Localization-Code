@@ -37,6 +37,33 @@ def get_ARCore_poses(dir):
         poses.append(np.loadtxt(filename))
     return poses
 
+def get_ARCore_poses_relative(poses):
+    print("Getting ARCore Relative poses..")
+    relative_poses = []
+    start = poses[0]
+
+    relative_poses.append(start)
+
+    relative_pose = np.empty([4, 4])
+    for i in range(1, len(poses)):
+        lp = poses[i]
+
+        R1 = start[0:3, 0:3]
+        t1 = start[0:3, 3]
+        R2 = lp[0:3, 0:3]
+        t2 = lp[0:3, 3]
+        R1to2 = np.linalg.inv(R2).dot(R1)
+        T1to2 = np.linalg.inv(R2).dot((t1 - t2))
+
+        relative_pose[0:3, 0:3] = R1to2
+        relative_pose[0:3, 3] = T1to2
+        relative_pose[3, :] = [0, 0, 0, 1]
+
+        fp = relative_pose.dot(start)
+        relative_poses.append(fp)
+
+    return relative_poses
+
 def get_sequence(dir):
     sequence = []
     for filename in glob.glob(dir+"/"+'cameraPose_*.txt'): #can be anything
@@ -51,7 +78,8 @@ def get_COLMAP_poses(array):
         poses.append(get_query_image_global_pose("frame_" + array[i] + ".jpg"))
     return poses
 
-def get_Relative_Poses(local_poses, global_poses):
+def get_Relative_poses(local_poses, global_poses):
+    print("Getting Relative poses..")
     relative_poses = []
     gp_start = global_poses[0]
     lp_start = local_poses[0]
@@ -61,7 +89,7 @@ def get_Relative_Poses(local_poses, global_poses):
 
     relative_pose = np.empty([4, 4])
     for i in range(1, len(local_poses)):
-        lp =  local_poses[i]
+        lp = local_poses[i]
 
         R1 = lp_start[0:3, 0:3]
         t1 = lp_start[0:3, 3]
@@ -79,22 +107,23 @@ def get_Relative_Poses(local_poses, global_poses):
 
     return relative_poses
 
-def save_poses(local_poses, global_poses, relative_poses):
-    for i in range(len(relative_poses)):
-        np.savetxt("ar_core_poses/pose_" + str(i) + ".txt", local_poses[i])
-        np.savetxt("global_poses/pose_" + str(i) + ".txt", global_poses[i])
-        np.savetxt("relative_poses/pose_" + str(i) + ".txt", relative_poses[i])
-
+def save_poses(poses, folder_name):
+    for i in range(len(poses)):
+        np.savetxt(folder_name+"/pose_" + str(i) + ".txt", poses[i])
 
 # check and load the files here
 # also check the trajectory if it didnt break in ARCore
 query_dir = '/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/query_data'
 ARCore_poses = get_ARCore_poses(query_dir)
+ARCore_poses_relative = get_ARCore_poses_relative(ARCore_poses)
 sequence = get_sequence(query_dir)
-COLMAP_poses = get_COLMAP_poses(sequence)
-relative_Poses = get_Relative_Poses(ARCore_poses, COLMAP_poses)
+# COLMAP_poses = get_COLMAP_poses(sequence)
+# relative_Poses = get_Relative_poses(ARCore_poses, COLMAP_poses)
 
-save_poses(ARCore_poses,COLMAP_poses,relative_Poses)
+save_poses(ARCore_poses, "ar_core_poses")
+save_poses(ARCore_poses_relative, "arcore_relative_poses")
+
+# save_poses(ARCore_poses, COLMAP_poses, relative_Poses, ARCore_poses_relative)
 
 #
 # CP_start = get_query_image_global_pose("frame_"+first_frame+".jpg")
