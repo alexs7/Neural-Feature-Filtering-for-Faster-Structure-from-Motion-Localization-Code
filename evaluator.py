@@ -113,15 +113,15 @@ def save_poses(poses, folder_name):
 
 # check and load the files here
 # also check the trajectory if it didnt break in ARCore
-query_dir = '/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/query_data'
-ARCore_poses = get_ARCore_poses(query_dir)
-ARCore_poses_relative = get_ARCore_poses_relative(ARCore_poses)
-sequence = get_sequence(query_dir)
+# query_dir = '/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/query_data'
+# ARCore_poses = get_ARCore_poses(query_dir)
+# ARCore_poses_relative = get_ARCore_poses_relative(ARCore_poses)
+# sequence = get_sequence(query_dir)
 # COLMAP_poses = get_COLMAP_poses(sequence)
 # relative_Poses = get_Relative_poses(ARCore_poses, COLMAP_poses)
 
-save_poses(ARCore_poses, "ar_core_poses")
-save_poses(ARCore_poses_relative, "arcore_relative_poses")
+# save_poses(ARCore_poses, "ar_core_poses")
+# save_poses(ARCore_poses_relative, "arcore_relative_poses")
 
 # save_poses(ARCore_poses, COLMAP_poses, relative_Poses, ARCore_poses_relative)
 

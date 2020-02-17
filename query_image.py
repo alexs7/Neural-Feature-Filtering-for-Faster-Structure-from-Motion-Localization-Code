@@ -80,8 +80,27 @@ def get_query_image_global_pose(name):
     pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
     return pose
 
+def get_query_image_global_pose_new_model(name):
+    images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/images.bin")
+    for k,v in images.items():
+        if v.name == name:
+            image = v
+    pose_r = image.qvec2rotmat()
+    pose_t = image.tvec
+    pose = np.c_[pose_r, pose_t]
+    pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
+    return pose
+
 def get_query_image_id(name):
     images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/model/0/images.bin")
+    for k,v in images.items():
+        if v.name == name:
+            image = v
+    id = image.id
+    return id
+
+def get_query_image_id_new_model(name):
+    images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/images.bin")
     for k,v in images.items():
         if v.name == name:
             image = v
