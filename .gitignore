@@ -16,7 +16,8 @@ cameraPose_dp_oriented/
 colmap_poses/
 final_poses/
 points3D_start.txt
-threejs_viewer/
+threejs_viewer/package*
+threejs_viewer/node_modules
 ar_core_poses/
 global_poses/
 relative_poses/
