@@ -14,7 +14,7 @@ window.onload = function() {
     app.use(bodyParser.text());
 
     app.post('/', (req, res) => {
-        console.log('Got body:', req.body);
+        // console.log('Got body:', req.body);
 
         tx = parseFloat(req.body.split(',')[0]);
         ty = parseFloat(req.body.split(',')[1]);
@@ -68,11 +68,19 @@ window.onload = function() {
 
     var geometry = new THREE.Geometry();
     geometry.vertices.push(
-      new THREE.Vector3(1, 1, 0),  // 0
-      new THREE.Vector3(-1, 1, 0),  // 1
-      new THREE.Vector3(-1, -1, 0),  // 2
-      new THREE.Vector3(1, -1, 0),  // 3
-      new THREE.Vector3(0, 0, 2),  // 4
+        new THREE.Vector3(1, 1, 0),
+        new THREE.Vector3(0.5, 0.5, 0),
+        new THREE.Vector3(-1, 1, 0),
+        new THREE.Vector3(-0.5, 0.5, 0),
+        new THREE.Vector3(-1, -1, 0),
+        new THREE.Vector3(-0.5, -0.5, 0),
+        new THREE.Vector3(1, -1, 0),
+        new THREE.Vector3(0.5, -0.5, 0),
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(0, 0, 1.5),
+        new THREE.Vector3(0, 0, 2),
+        new THREE.Vector3(0, 0, 2.5),
+        new THREE.Vector3(0, 0, 3)
     );
 
     var material =  new THREE.PointsMaterial( { color: 0xff0000, size: 0.03 } );
