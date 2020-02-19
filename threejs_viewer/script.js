@@ -5,6 +5,9 @@ const bodyParser = require('body-parser');
 //3D Objects
 var cone;
 var anchor;
+var x_cam_point_axis;
+var y_cam_point_axis;
+var z_cam_point_axis;
 var points;
 var scene;
 
@@ -29,6 +32,21 @@ window.onload = function() {
         cone.position.x = tx;
         cone.position.y = ty;
         cone.position.z = tz;
+
+        x_cam_point_axis_xyz = JSON.parse(req.body.split("|")[1]);
+        x_cam_point_axis.position.x = x_cam_point_axis_xyz[0];
+        x_cam_point_axis.position.y = x_cam_point_axis_xyz[1];
+        x_cam_point_axis.position.z = x_cam_point_axis_xyz[2];
+
+        y_cam_point_axis_xyz = JSON.parse(req.body.split("|")[2]);
+        y_cam_point_axis.position.x = y_cam_point_axis_xyz[0];
+        y_cam_point_axis.position.y = y_cam_point_axis_xyz[1];
+        y_cam_point_axis.position.z = y_cam_point_axis_xyz[2];
+
+        z_cam_point_axis_xyz = JSON.parse(req.body.split("|")[3]);
+        z_cam_point_axis.position.x = z_cam_point_axis_xyz[0];
+        z_cam_point_axis.position.y = z_cam_point_axis_xyz[1];
+        z_cam_point_axis.position.z = z_cam_point_axis_xyz[2];
 
         var quaternion = new THREE.Quaternion();
         quaternion.fromArray([qx,qy,qz,qw]);
@@ -92,18 +110,35 @@ window.onload = function() {
     var axesHelperCone = new THREE.AxesHelper( 5 );
     cone.add(axesHelperCone);
     scene.add( cone );
+    cone.scale.set(0.1,0.1,0.1);
 
     var geometry = new THREE.SphereGeometry( 1, 32, 32 );
     var material = new THREE.MeshPhongMaterial( {color: 0xffff00} );
     anchor = new THREE.Mesh( geometry, material );
     scene.add( anchor );
+    anchor.scale.set(0.05,0.05,0.05);
+
+    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    var material = new THREE.MeshPhongMaterial( {color: 'red'} );
+    x_cam_point_axis = new THREE.Mesh( geometry, material );
+    scene.add( x_cam_point_axis );
+    x_cam_point_axis.scale.set(0.025,0.025,0.025);
+
+    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    var material = new THREE.MeshPhongMaterial( {color: 'green'} );
+    y_cam_point_axis = new THREE.Mesh( geometry, material );
+    scene.add( y_cam_point_axis );
+    y_cam_point_axis.scale.set(0.025,0.025,0.025);
+
+    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    var material = new THREE.MeshPhongMaterial( {color: 'blue'} );
+    z_cam_point_axis = new THREE.Mesh( geometry, material );
+    scene.add( z_cam_point_axis );
+    z_cam_point_axis.scale.set(0.025,0.025,0.025);
 
     var light = new THREE.DirectionalLight( 0xffffff );
     light.position.set( 50, 50, 50 );
     scene.add( light );
-
-    cone.scale.set(0.1,0.1,0.1);
-    anchor.scale.set(0.05,0.05,0.05);
 
     var controls = new THREE.TrackballControls(camera, renderer.domElement);
 
