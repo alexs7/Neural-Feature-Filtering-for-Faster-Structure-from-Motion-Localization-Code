@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 //3D Objects
 var cone;
 var anchor;
+var points;
+var scene;
 
 window.onload = function() {
 
@@ -48,7 +50,7 @@ window.onload = function() {
 
     app.listen(3000, () => console.log(`Started server at http://localhost:3000!`));
 
-    var scene = new THREE.Scene();
+    scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
     var renderer = new THREE.WebGLRenderer();
@@ -116,39 +118,29 @@ window.onload = function() {
         renderer.render( scene, camera );
     }
 
-    // //add poses here
-    // const global_poses = '../global_poses/';
-    //
-    // fs.readdirSync(global_poses).forEach(file => {
-    //     if(file == ".DS_Store"){
-    //         return;
-    //     }
-    //     fs.readFile(global_poses+file, 'utf8', (err, data) => {
-    //         console.log(file);
-    //         // debugger;
-    //         data = data.split("\n").slice(0,4);
-    //         data = data.join(" ");
-    //         data = data.split(" ");
-    //         data = data.map(Number);
-    //
-    //         pose = new THREE.Matrix4().fromArray(data);
-    //
-    //         var geometry = new THREE.ConeGeometry( 1, 1, 4 );
-    //         var edges = new THREE.EdgesGeometry(geometry);
-    //         var cone = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: "red" } ) );
-    //
-    //         cone.setRotationFromMatrix(pose);
-    //         cone.translateX(pose.elements[3]);
-    //         cone.translateY(pose.elements[7]);
-    //         cone.translateZ(pose.elements[11]);
-    //         cone.scale.x = 0.08;
-    //         cone.scale.y = 0.08;
-    //         cone.scale.z = 0.08;
-    //
-    //         // scene.updateMatrixWorld();
-    //         scene.add( cone );
-    //     });
-    // });
-
     animate();
 };
+
+function read3Dpoints(){
+
+    const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/points3D_AR.txt';
+    fs.readFile(file_path, 'utf8', (err, data) => {
+
+        var geometry = new THREE.Geometry();
+        data = data.split('\n');
+
+        for (var i = 0; i < data.length; i++) {
+            xyz = data[i].split(' ');
+            x = parseFloat(xyz[0]);
+            y = parseFloat(xyz[1]);
+            z = parseFloat(xyz[2]);
+            geometry.vertices.push(
+                new THREE.Vector3(x, y, z)
+            )
+        }
+
+        var material =  new THREE.PointsMaterial( { color: 0x00ff00, size: 0.03 } );
+        points = new THREE.Points( geometry, material );
+        scene.add(points);
+    });
+}

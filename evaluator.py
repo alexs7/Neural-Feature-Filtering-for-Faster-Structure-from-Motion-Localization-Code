@@ -30,6 +30,9 @@ def show_projected_points(image_path, K, FP, points3D):
     cv2.imshow("result", image)
     cv2.waitKey(0)
 
+def get_ARCore_pose(dir, frame):
+    return np.loadtxt(dir+"/displayOrientedPose_"+frame+".txt")
+
 def get_ARCore_poses(dir):
     print("Getting ARCore poses..")
     poses = []

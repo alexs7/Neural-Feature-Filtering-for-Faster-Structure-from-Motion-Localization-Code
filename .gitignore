@@ -21,3 +21,4 @@ threejs_viewer/node_modules
 ar_core_poses/
 global_poses/
 relative_poses/
+points3D_AR.txt
