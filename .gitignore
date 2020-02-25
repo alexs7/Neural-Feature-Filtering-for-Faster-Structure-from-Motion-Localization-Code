@@ -22,3 +22,4 @@ ar_core_poses/
 global_poses/
 relative_poses/
 points3D_AR.txt
+poses_for_debug/

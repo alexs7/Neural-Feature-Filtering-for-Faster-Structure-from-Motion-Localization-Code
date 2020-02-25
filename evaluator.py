@@ -5,6 +5,8 @@ from point3D_loader import get_points3D
 from query_image import get_query_image_id
 import glob
 import scipy.io as sio
+from scipy.spatial.transform import Rotation as R
+import os
 
 K = np.loadtxt("matrices/pixel_intrinsics_low_640.txt")
 
@@ -26,19 +28,38 @@ def show_projected_points(image_path, K, FP, points3D):
         y = int(points[i][1])
         center = (x, y)
         cv2.circle(image, center, 4, (0, 0, 255), -1)
-    image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
     cv2.imshow("result", image)
     cv2.waitKey(0)
 
 def get_ARCore_pose(dir, frame):
     return np.loadtxt(dir+"/displayOrientedPose_"+frame+".txt")
 
-def get_ARCore_poses(dir):
+def get_ARCore_poses(dir, pose_string, sequence):
     print("Getting ARCore poses..")
     poses = []
-    for filename in glob.glob(dir + "/" + 'cameraPose_*.txt'):
-        poses.append(np.loadtxt(filename))
+    for i in range(len(sequence)):
+        poses.append(np.loadtxt(dir + "/" + pose_string+'_'+sequence[i]+'.txt'))
     return poses
+
+def get_ARCore_pose_query_image():
+    f = open('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_data/cameraPose.txt', 'r')
+    x = f.readlines()
+    f.close()
+    values = x[0].split(',')
+    tx = float(values[0])
+    ty = float(values[1])
+    tz = float(values[2])
+    qx = float(values[3])
+    qy = float(values[4])
+    qz = float(values[5])
+    qw = float(values[6])
+    quat = [qx, qy, qz, qw]
+    rot = R.from_quat(quat)
+    rot = rot.as_dcm()
+    tvec = np.array([tx, ty, tz])
+    pose = np.c_[rot, tvec]
+    pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
+    return pose
 
 def get_ARCore_poses_relative(poses):
     print("Getting ARCore Relative poses..")
@@ -67,10 +88,15 @@ def get_ARCore_poses_relative(poses):
 
     return relative_poses
 
-def get_sequence(dir):
+def get_sequence(dir, pose_string, start, end):
     sequence = []
-    for filename in glob.glob(dir+"/"+'cameraPose_*.txt'): #can be anything
+    for filename in glob.glob(dir+"/"+pose_string+'_*.txt'): #can be anything
         sequence.append(filename.split("_")[-1].split(".")[0])
+    sequence  = np.array(sequence)
+    sequence.sort()
+    start_index = np.where(sequence == start)[0][0]
+    end_index = np.where(sequence == end)[0][0]
+    sequence = sequence[start_index: end_index + 1]
     return sequence
 
 def get_COLMAP_poses(array):
@@ -81,10 +107,10 @@ def get_COLMAP_poses(array):
         poses.append(get_query_image_global_pose("frame_" + array[i] + ".jpg"))
     return poses
 
-def get_Relative_poses(local_poses, global_poses):
+def get_Relative_Poses(local_poses, global_poses):
     print("Getting Relative poses..")
     relative_poses = []
-    gp_start = global_poses[0]
+    gp_start = global_poses[0] #just use first anyway
     lp_start = local_poses[0]
 
     fp = lp_start.dot(np.linalg.inv(lp_start)).dot(gp_start)
@@ -114,21 +140,32 @@ def save_poses(poses, folder_name):
     for i in range(len(poses)):
         np.savetxt(folder_name+"/pose_" + str(i) + ".txt", poses[i])
 
+# make sure this is commented out when localising from Electron
 # check and load the files here
 # also check the trajectory if it didnt break in ARCore
-# query_dir = '/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/query_data'
-# ARCore_poses = get_ARCore_poses(query_dir)
-# ARCore_poses_relative = get_ARCore_poses_relative(ARCore_poses)
-# sequence = get_sequence(query_dir)
-# COLMAP_poses = get_COLMAP_poses(sequence)
-# relative_Poses = get_Relative_poses(ARCore_poses, COLMAP_poses)
-
-# save_poses(ARCore_poses, "ar_core_poses")
-# save_poses(ARCore_poses_relative, "arcore_relative_poses")
-
-# save_poses(ARCore_poses, COLMAP_poses, relative_Poses, ARCore_poses_relative)
-
+# query_dir = '/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/images/data_ar'
+# sequence = get_sequence(query_dir, 'displayOrientedPose', '1582476378648' , '1582476394307')
 #
+# ARCore_oriented_poses = get_ARCore_poses(query_dir, 'displayOrientedPose', sequence)
+# ARCore_poses_relative = get_ARCore_poses_relative(ARCore_oriented_poses)
+# ARCore_camera_poses = get_ARCore_poses(query_dir, 'cameraPose', sequence)
+# COLMAP_poses = get_COLMAP_poses(sequence)
+# ar_core_and_colmap_relative_poses = get_Relative_Poses(ARCore_oriented_poses, COLMAP_poses)
+#
+# # os.system("rm poses_for_debug/ar_core_oriented_poses/*")
+# # os.system("rm poses_for_debug/arcore_relative_poses/*")
+# # os.system("rm poses_for_debug/ar_core_camera_poses/*")
+# # os.system("rm poses_for_debug/colmap_poses/*")
+# # os.system("rm poses_for_debug/ar_core_and_colmap_relative_poses/*")
+#
+# save_poses(ARCore_oriented_poses, "poses_for_debug/ar_core_oriented_poses") # yellow in MATLAB
+# save_poses(ARCore_poses_relative, "poses_for_debug/arcore_relative_poses") # green in MATLAB
+# save_poses(ARCore_camera_poses, "poses_for_debug/ar_core_camera_poses") # white in MATLAB
+# save_poses(COLMAP_poses, "poses_for_debug/colmap_poses") # red in MATLAB
+# save_poses(ar_core_and_colmap_relative_poses, "poses_for_debug/ar_core_and_colmap_relative_poses") # blue in MATLAB
+
+
+# old code
 # CP_start = get_query_image_global_pose("frame_"+first_frame+".jpg")
 #
 # LP_start = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/query_data/cameraPose_" + first_frame + ".txt")

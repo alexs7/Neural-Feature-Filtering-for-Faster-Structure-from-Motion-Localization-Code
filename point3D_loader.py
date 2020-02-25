@@ -81,7 +81,7 @@ def read_points3d_binary_id(path_to_model_file, id):
                 xyz_values = np.r_[xyz_values, xyz]
     return xyz_values
 
-def get_points3D(id):
+def get_points3D(id): #this is assumed to be used for the new model (localised)
     points3D = read_points3d_binary_id("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/points3D.bin", id)
     return points3D
 
