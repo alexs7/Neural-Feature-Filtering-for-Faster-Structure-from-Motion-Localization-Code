@@ -32,12 +32,37 @@ html, body {
     height: 240px;
 }
 
-.buttons{
+.colmap_result_image_preview {
+    top: 1%;
+    right: 1%;
+    position: absolute;
+}
+
+.colmap_result_image_preview > img {
+    width: 320px;
+    height: 240px;
+}
+
+
+.controls{
+    width : 20%;
     top: 30%;
     left: 1%;
     position: absolute;
 }
 
-.slider{
-    margin: 6%;
+label {
+    color: white;
+}
+
+.slider_size{
+    margin: 4%;
+}
+
+.slider_scale{
+    margin: 4%;
+}
+
+button{
+    margin: 4% !important;
 }

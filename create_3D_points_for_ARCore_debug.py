@@ -25,10 +25,23 @@ rotate90Z = np.array([[0, -1, 0, 0],[1, 0, 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]])
 print('Rotate 90 on Z')
 print(rotate90Z)
 
-ar_core_inverse = np.linalg.inv(arcore_pose)
+rotate90Z_clockwise = np.array([[0, -1, 0, 0],[1, 0, 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]])
+print('Rotate 90 on Z Clockwise')
+print(rotate90Z_clockwise)
 
-points3D_AR = ar_core_inverse.dot(rotate90Z.dot(colmap_to_arcore_matrix.dot(colmap_pose.dot(np.transpose(points3D)))))
-points3D_AR = np.transpose(points3D_AR)
+rotate90Z_anticlockwise = np.array([[0, 1, 0, 0],[-1, 0, 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]])
+print('Rotate 90 on Z Anticlockwise')
+print(rotate90Z_anticlockwise)
 
-os.system("rm /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/points3D_AR.txt")
-np.savetxt('points3D_AR.txt', points3D_AR)
+arcore_pose_inverse = np.linalg.inv(arcore_pose)
+
+from_colmap_world_to_colmap_camera = colmap_pose.dot(np.transpose(points3D))
+from_colmap_camera_to_arcore_camera = colmap_to_arcore_matrix.dot(from_colmap_world_to_colmap_camera)
+from_arcore_camera_to_arcore_world = arcore_pose_inverse.dot(from_colmap_camera_to_arcore_camera)
+points3D_AR = np.transpose(from_arcore_camera_to_arcore_world)
+
+# points3D_AR = arcore_pose_inverse.dot(rotate90Z_anticlockwise.dot(colmap_to_arcore_matrix.dot(colmap_pose.dot(np.transpose(points3D)))))
+# points3D_AR = np.transpose(points3D_AR)
+
+os.system("rm /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/points3D_AR.txt")
+np.savetxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/points3D_AR.txt', points3D_AR)
