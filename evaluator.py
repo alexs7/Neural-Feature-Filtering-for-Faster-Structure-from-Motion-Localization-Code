@@ -8,7 +8,7 @@ import scipy.io as sio
 from scipy.spatial.transform import Rotation as R
 import os
 
-K = np.loadtxt("matrices/pixel_intrinsics_low_640.txt")
+K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt")
 
 def get_pose_from_correspondences(filename,K):
     correspondences = np.loadtxt(filename)
@@ -21,6 +21,21 @@ def get_pose_from_correspondences(filename,K):
 def show_projected_points(image_path, K, FP, points3D):
     image = cv2.imread(image_path)
     points = K.dot(FP.dot(points3D.transpose())[0:3,:])
+    points = points // points[2,:]
+    points = points.transpose()
+    for i in range(len(points)):
+        x = int(points[i][0])
+        y = int(points[i][1])
+        center = (x, y)
+        cv2.circle(image, center, 4, (0, 0, 255), -1)
+    cv2.imshow("result", image)
+    cv2.waitKey(0)
+
+def show_projected_points_only_intrinsics(image_path, K, Rt_points3D):
+    image = cv2.imread(image_path)
+    Rt_points3D = Rt_points3D[:, 0:3]
+    breakpoint()
+    points = K.dot(Rt_points3D.transpose())
     points = points // points[2,:]
     points = points.transpose()
     for i in range(len(points)):
@@ -65,7 +80,7 @@ def get_ARCore_pose_query_image():
     qy = float(values[4])
     qz = float(values[5])
     qw = float(values[6])
-    quat = [qx, qy, qz, qw]
+    quat = [qx, qy, qz, qw] # TODO: normalise ?
     rot = R.from_quat(quat)
     rot = rot.as_dcm()
     tvec = np.array([tx, ty, tz])

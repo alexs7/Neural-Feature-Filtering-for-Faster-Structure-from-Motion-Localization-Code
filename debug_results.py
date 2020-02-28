@@ -5,7 +5,7 @@ from evaluator import get_ARCore_pose_query_image
 from query_image import get_query_image_global_pose_new_model
 import numpy as np
 
-K = np.loadtxt("matrices/pixel_intrinsics_low_640.txt")
+K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt")
 
 image_id_start = get_query_image_id_new_model("query.jpg")
 points3D = get_points3D(image_id_start)
