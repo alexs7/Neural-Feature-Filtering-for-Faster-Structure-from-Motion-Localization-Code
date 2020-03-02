@@ -8,7 +8,7 @@ import scipy.io as sio
 from scipy.spatial.transform import Rotation as R
 import os
 
-K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt")
+K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_landscape.txt")
 
 def get_pose_from_correspondences(filename,K):
     correspondences = np.loadtxt(filename)
@@ -34,7 +34,6 @@ def show_projected_points(image_path, K, FP, points3D):
 def show_projected_points_only_intrinsics(image_path, K, Rt_points3D):
     image = cv2.imread(image_path)
     Rt_points3D = Rt_points3D[:, 0:3]
-    breakpoint()
     points = K.dot(Rt_points3D.transpose())
     points = points // points[2,:]
     points = points.transpose()
@@ -45,6 +44,20 @@ def show_projected_points_only_intrinsics(image_path, K, Rt_points3D):
         cv2.circle(image, center, 4, (0, 0, 255), -1)
     cv2.imshow("result", image)
     cv2.waitKey(0)
+
+def save_projected_points_only_intrinsics(image_path, K, Rt_points3D):
+    image = cv2.imread(image_path)
+    Rt_points3D = Rt_points3D[:, 0:3]
+    points = K.dot(Rt_points3D.transpose())
+    points = points // points[2,:]
+    points = points.transpose()
+    for i in range(len(points)):
+        x = int(points[i][0])
+        y = int(points[i][1])
+        center = (x, y)
+        cv2.circle(image, center, 4, (0, 0, 255), -1)
+    cv2.imwrite('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/debug_projected.jpg',image)
+
 
 def save_image_projected_points(image_path, K, FP, points3D):
     image = cv2.imread(image_path)

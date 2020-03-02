@@ -4,20 +4,46 @@ const bodyParser = require('body-parser');
 const { execSync } = require('child_process');
 
 //3D Objects
-var phone_cam_0; // displayOrientedMode
-var phone_cam_1; // cameraPose
+var phone_cam;
 var anchor;
 var colmap_points;
 var arcore_points;
 var scene;
 var server;
-var cameraPose;
 var cameraDisplayOrientedPose;
-var camerasOffset = 0.0;
 var camera; //ThreeJS Camera
 var controls;
+var origin = new THREE.Vector3( 0, 0, 0 );
+var arrow_length = 0.5;
+var red = 0xff0000;
+var green = 0x00ff00;
+var blue = 0x0000ff;
+var yellow = 0xffff00;
+var white = 0xffffff;
+var orange = 0xffa500;
+var arrow_x_axis_local;
+var arrow_y_axis_local;
+var arrow_z_axis_local;
+var useCameraDisplayOrientedPose = false;
+var camera_pose;
+var local_camera_axes_points;
+var x_axis_point;
+var y_axis_point;
+var z_axis_point;
+var cameraWorldCenter;
+var cameraWorldCenterPoint;
+var debugAnchorPosition;
+var debugAnchor;
 
 window.onload = function() {
+
+    $(".useCameraDisplayOrientedPose").click(function(){
+        useCameraDisplayOrientedPose = true;
+    });
+
+    $(".useCameraPose").click(function(){
+        useCameraDisplayOrientedPose = false;
+    });
 
     //assign button listeners
     $(".resetCamera").click(function(){
@@ -38,30 +64,30 @@ window.onload = function() {
 
     $(".viewARCoreCame").click(function(){
 
-        tx = parseFloat(cameraDisplayOrientedPose[0]);
-        ty = parseFloat(cameraDisplayOrientedPose[1]);
-        tz = parseFloat(cameraDisplayOrientedPose[2]);
-        qx = parseFloat(cameraDisplayOrientedPose[3]);
-        qy = parseFloat(cameraDisplayOrientedPose[4]);
-        qz = parseFloat(cameraDisplayOrientedPose[5]);
-        qw = parseFloat(cameraDisplayOrientedPose[6]);
-
-        phone_cam_1.position.x = tx;
-        phone_cam_1.position.y = ty;
-        phone_cam_1.position.z = tz ;
-
-        var rotMatrix = new THREE.Matrix4();
-        var quat = new THREE.Quaternion();
-        quat.fromArray([qx,qy,qz,qw]);
-        quat.normalize();
-        rotMatrix.makeRotationFromQuaternion(quat);
-        rotMatrix.setPosition(tx,ty,tz);
-
-        var lookAtPoint =  new THREE.Vector4([0, 0, -1, 1]);
-        lookAtPoint.applyMatrix4(rotMatrix);
-
-        debugger;
-        phone_cam_1.lookAt(0,0,0);
+        // tx = parseFloat(cameraDisplayOrientedPose[0]);
+        // ty = parseFloat(cameraDisplayOrientedPose[1]);
+        // tz = parseFloat(cameraDisplayOrientedPose[2]);
+        // qx = parseFloat(cameraDisplayOrientedPose[3]);
+        // qy = parseFloat(cameraDisplayOrientedPose[4]);
+        // qz = parseFloat(cameraDisplayOrientedPose[5]);
+        // qw = parseFloat(cameraDisplayOrientedPose[6]);
+        //
+        // phone_cam_1.position.x = tx;
+        // phone_cam_1.position.y = ty;
+        // phone_cam_1.position.z = tz ;
+        //
+        // var rotMatrix = new THREE.Matrix4();
+        // var quat = new THREE.Quaternion();
+        // quat.fromArray([qx,qy,qz,qw]);
+        // quat.normalize();
+        // rotMatrix.makeRotationFromQuaternion(quat);
+        // rotMatrix.setPosition(tx,ty,tz);
+        //
+        // var lookAtPoint =  new THREE.Vector4([0, 0, -1, 1]);
+        // lookAtPoint.applyMatrix4(rotMatrix);
+        //
+        // debugger;
+        // phone_cam_1.lookAt(0,0,0);
 
         //controls.update();
     });
@@ -76,45 +102,66 @@ window.onload = function() {
     app.use(bodyParser.json({limit: '1mb'}));
 
     app.post('/', (req, res) => {
+
         $(".frame").attr('src', 'data:image/png;base64,'+req.body.frameString);
 
-        cameraDisplayOrientedPose = req.body.cameraDisplayOrientedPose.split(',');
+        if(useCameraDisplayOrientedPose) {
+            camera_pose = req.body.cameraDisplayOrientedPose.split(',');
+            local_camera_axes_points = req.body.cameraDisplayOrientedPoseLocalAxes.split(",");
+            cameraWorldCenter = req.body.cameraDisplayOrientedPoseCamCenter.split(",");
+            debugAnchorPosition = req.body.debugAnchorPositionForDisplayOrientedPose.split(",");
+        }else{
+            camera_pose = req.body.cameraPose.split(',');
+            local_camera_axes_points = req.body.cameraPoseLocalAxes.split(",");
+            cameraWorldCenter = req.body.cameraPoseCamCenter.split(",");
+            debugAnchorPosition = req.body.debugAnchorPositionForCameraPose.split(",");
+        }
 
-        tx = parseFloat(cameraDisplayOrientedPose[0]);
-        ty = parseFloat(cameraDisplayOrientedPose[1]);
-        tz = parseFloat(cameraDisplayOrientedPose[2]);
-        qx = parseFloat(cameraDisplayOrientedPose[3]);
-        qy = parseFloat(cameraDisplayOrientedPose[4]);
-        qz = parseFloat(cameraDisplayOrientedPose[5]);
-        qw = parseFloat(cameraDisplayOrientedPose[6]);
+        tx = parseFloat(camera_pose[0]);
+        ty = parseFloat(camera_pose[1]);
+        tz = parseFloat(camera_pose[2]);
+        qx = parseFloat(camera_pose[3]);
+        qy = parseFloat(camera_pose[4]);
+        qz = parseFloat(camera_pose[5]);
+        qw = parseFloat(camera_pose[6]);
 
-        phone_cam_0.position.x = tx - camerasOffset;
-        phone_cam_0.position.y = ty;
-        phone_cam_0.position.z = tz;
+        phone_cam.position.x = tx;
+        phone_cam.position.y = ty;
+        phone_cam.position.z = tz;
+
+        cameraWorldCenterPoint.position.x = tx;
+        cameraWorldCenterPoint.position.y = ty;
+        cameraWorldCenterPoint.position.z = tz;
+
+        debugAnchor.position.x = debugAnchorPosition[0];
+        debugAnchor.position.y = debugAnchorPosition[1];
+        debugAnchor.position.z = debugAnchorPosition[2];
 
         var quaternion = new THREE.Quaternion();
-        quaternion.fromArray([qx,qy,qz,qw]);
-        quaternion.normalize();
-        phone_cam_0.setRotationFromQuaternion(quaternion);
+        quaternion.fromArray([qx, qy, qz, qw]);
+        quaternion.normalize(); // ?
+        phone_cam.setRotationFromQuaternion(quaternion);
 
-        cameraPose = req.body.cameraPose.split(',');
+        var x = parseFloat(local_camera_axes_points[0]);
+        var y = parseFloat(local_camera_axes_points[1]);
+        var z = parseFloat(local_camera_axes_points[2]);
+        x_axis_point.position.x = x;
+        x_axis_point.position.y = y;
+        x_axis_point.position.z = z;
 
-        tx = parseFloat(cameraPose[0]);
-        ty = parseFloat(cameraPose[1]);
-        tz = parseFloat(cameraPose[2]);
-        qx = parseFloat(cameraPose[3]);
-        qy = parseFloat(cameraPose[4]);
-        qz = parseFloat(cameraPose[5]);
-        qw = parseFloat(cameraPose[6]);
+        x = parseFloat(local_camera_axes_points[3]);
+        y = parseFloat(local_camera_axes_points[4]);
+        z = parseFloat(local_camera_axes_points[5]);
+        y_axis_point.position.x = x;
+        y_axis_point.position.y = y;
+        y_axis_point.position.z = z;
 
-        phone_cam_1.position.x = tx + camerasOffset;
-        phone_cam_1.position.y = ty;
-        phone_cam_1.position.z = tz;
-
-        var quaternion = new THREE.Quaternion();
-        quaternion.fromArray([qx,qy,qz,qw]);
-        quaternion.normalize();
-        phone_cam_1.setRotationFromQuaternion(quaternion);
+        x = parseFloat(local_camera_axes_points[6]);
+        y = parseFloat(local_camera_axes_points[7]);
+        z = parseFloat(local_camera_axes_points[8]);
+        z_axis_point.position.x = x;
+        z_axis_point.position.y = y;
+        z_axis_point.position.z = z;
 
         var anchorPosition = req.body.anchorPosition.split(',');
         anchor_tx = parseFloat(anchorPosition[0]);
@@ -126,7 +173,7 @@ window.onload = function() {
         anchor.position.z = anchor_tz;
 
         pointsArray = req.body.pointCloud.split("\n");
-        pointsArray.pop();
+        pointsArray.pop(); // remove newline
 
         scene.remove(arcore_points);
         var pointsGeometry = new THREE.Geometry();
@@ -149,7 +196,7 @@ window.onload = function() {
     });
 
     app.post('/localise', (req, res) => {
-        localise(cameraDisplayOrientedPose);
+        localise(camera_pose);
     });
 
     server = app.listen(3000, () => console.log(`Started server at http://localhost:3000!`));
@@ -172,14 +219,14 @@ window.onload = function() {
 
     var geometry = new THREE.Geometry();
     geometry.vertices.push(
-        new THREE.Vector3(1, 1.4, 0),
-        new THREE.Vector3(0.5, 0.9, 0),
-        new THREE.Vector3(-1, 1.4, 0),
-        new THREE.Vector3(-0.5, 0.9, 0),
-        new THREE.Vector3(-1, -1.4, 0),
-        new THREE.Vector3(-0.5, -0.9, 0),
-        new THREE.Vector3(1, -1.4, 0),
-        new THREE.Vector3(0.5, -0.9, 0),
+        new THREE.Vector3(1, 1, 0),
+        new THREE.Vector3(0.5, 0.5, 0),
+        new THREE.Vector3(-1, 1, 0),
+        new THREE.Vector3(-0.5, 0.5, 0),
+        new THREE.Vector3(-1, -1, 0),
+        new THREE.Vector3(-0.5, -0.5, 0),
+        new THREE.Vector3(1, -1, 0),
+        new THREE.Vector3(0.5, -0.5, 0),
         new THREE.Vector3(0, 0, 1),
         new THREE.Vector3(0, 0, 1.5),
         new THREE.Vector3(0, 0, 2),
@@ -188,30 +235,48 @@ window.onload = function() {
     );
 
     var material =  new THREE.PointsMaterial( { color: 0xff0000, size: 0.03 } );
-    phone_cam_0 = new THREE.Points( geometry, material );
-    phone_cam_0.position.z = camerasOffset;
-    phone_cam_0.position.x = -camerasOffset;
-
-    var axesHelperCone = new THREE.AxesHelper( 2 );
-    phone_cam_0.add(axesHelperCone);
-    phone_cam_0.scale.set(0.1,0.1,0.1);
-    scene.add( phone_cam_0 );
-
-    var material =  new THREE.PointsMaterial( { color: 0x9900FF, size: 0.03 } );
-    phone_cam_1 = new THREE.Points( geometry, material );
-    phone_cam_1.position.z = camerasOffset;
-    phone_cam_1.position.x = camerasOffset;
-
-    var axesHelperCone = new THREE.AxesHelper( 2 );
-    phone_cam_1.add(axesHelperCone);
-    phone_cam_1.scale.set(0.1,0.1,0.1);
-    scene.add( phone_cam_1 );
+    phone_cam = new THREE.Points( geometry, material );
+    phone_cam.scale.set(0.1,0.1,0.1);
+    scene.add( phone_cam );
 
     var geometry = new THREE.SphereGeometry( 1, 32, 32 );
-    var material = new THREE.MeshPhongMaterial( {color: 0xffff00} );
+    var material = new THREE.MeshPhongMaterial( {color: yellow} );
     anchor = new THREE.Mesh( geometry, material );
     scene.add( anchor );
     anchor.scale.set(0.03,0.03,0.03);
+
+    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    var material = new THREE.MeshPhongMaterial( {color: white } );
+    cameraWorldCenterPoint = new THREE.Mesh( geometry, material );
+    scene.add( cameraWorldCenterPoint );
+    cameraWorldCenterPoint.scale.set(0.015,0.015,0.015);
+
+    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    var material = new THREE.MeshPhongMaterial( {color: red} );
+    x_axis_point = new THREE.Mesh( geometry, material );
+    x_axis_point.position.x = 0.1;
+    scene.add( x_axis_point );
+    x_axis_point.scale.set(0.02,0.02,0.02);
+
+    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    var material = new THREE.MeshPhongMaterial( {color: green} );
+    y_axis_point = new THREE.Mesh( geometry, material );
+    y_axis_point.position.y = 0.1;
+    scene.add( y_axis_point );
+    y_axis_point.scale.set(0.02,0.02,0.02);
+
+    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    var material = new THREE.MeshPhongMaterial( {color: blue} );
+    z_axis_point = new THREE.Mesh( geometry, material );
+    z_axis_point.position.z = 0.1;
+    scene.add( z_axis_point );
+    z_axis_point.scale.set(0.02,0.02,0.02);
+
+    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    var material = new THREE.MeshPhongMaterial( {color: orange} );
+    debugAnchor = new THREE.Mesh( geometry, material );
+    scene.add( debugAnchor );
+    debugAnchor.scale.set(0.02,0.02,0.02);
 
     //reference points
     var geometry = new THREE.SphereGeometry( 1, 32, 32 );
@@ -262,12 +327,14 @@ window.onload = function() {
     });
 
     $( ".slider_scale" ).slider({
-        min: 0.01,
-        max: 1,
+        min: 0.5,
+        max: 1.5,
         step: 0.005,
         slide: function( event, ui ) {
             var scale = ui.value;
-            colmap_points.scale.set(scale,scale,scale);
+            console.log("Getting 3D points from COLMAP with scale: " + scale);
+            execSync('cd /Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/ && python3 create_3D_points_for_ARCore_debug.py ' + scale);
+            read3Dpoints();
         }
     });
 };
@@ -301,6 +368,7 @@ function read3Dpoints(){
     var material =  new THREE.PointsMaterial( { color: 0x0000ff, size: 0.01 } );
     colmap_points = new THREE.Points( geometry, material );
 
+    colmap_points.rotation.z = Math.PI/2;
     scene.add(colmap_points);
 }
 
@@ -323,7 +391,7 @@ function localise(arg_pose){
         });
 
     //rotate image so it matches the ones in COLMAP
-    execSync('sips -r 90 /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/current_query_image/query.jpg')
+    // execSync('sips -r 90 /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/current_query_image/query.jpg')
 
     //remove model and replace with vanilla
     execSync('rm -rf /Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/model/');
@@ -337,7 +405,6 @@ function localise(arg_pose){
 
     execSync('cd /Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/ && python3 debug_results.py');
     $(".colmap_result_frame").attr('src', '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/colmap_points_projected.jpg');
-
 }
 
 function exportPoints() {

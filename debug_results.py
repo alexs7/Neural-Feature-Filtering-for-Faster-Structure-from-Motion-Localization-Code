@@ -1,11 +1,12 @@
 from point3D_loader import get_points3D
 from query_image import get_query_image_id_new_model
 from evaluator import save_image_projected_points
+from evaluator import show_projected_points
 from evaluator import get_ARCore_pose_query_image
 from query_image import get_query_image_global_pose_new_model
 import numpy as np
 
-K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt")
+K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_landscape.txt")
 
 image_id_start = get_query_image_id_new_model("query.jpg")
 points3D = get_points3D(image_id_start)
