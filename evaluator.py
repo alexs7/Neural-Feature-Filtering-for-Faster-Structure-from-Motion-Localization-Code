@@ -58,7 +58,6 @@ def save_projected_points_only_intrinsics(image_path, K, Rt_points3D):
         cv2.circle(image, center, 4, (0, 0, 255), -1)
     cv2.imwrite('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/debug_projected.jpg',image)
 
-
 def save_image_projected_points(image_path, K, FP, points3D):
     image = cv2.imread(image_path)
     points = K.dot(FP.dot(points3D.transpose())[0:3,:])
@@ -93,12 +92,16 @@ def get_ARCore_pose_query_image():
     qy = float(values[4])
     qz = float(values[5])
     qw = float(values[6])
-    quat = [qx, qy, qz, qw] # TODO: normalise ?
+    quat = [qx, qy, qz, qw] # This already comes normalised - I checked the norm with matlab
     rot = R.from_quat(quat)
     rot = rot.as_dcm()
     tvec = np.array([tx, ty, tz])
     pose = np.c_[rot, tvec]
     pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
+    return pose
+
+def get_ARCore_pose_query_image_matrix_file():
+    pose = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_data/cameraPoseMatrixString.txt")
     return pose
 
 def get_ARCore_poses_relative(poses):

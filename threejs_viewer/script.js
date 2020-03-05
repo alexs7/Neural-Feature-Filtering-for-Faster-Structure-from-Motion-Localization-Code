@@ -2,6 +2,7 @@ const fs = require('fs');
 const express = require('express');
 const bodyParser = require('body-parser');
 const { execSync } = require('child_process');
+const {getCurrentWindow, globalShortcut} = require('electron').remote;
 
 //3D Objects
 var phone_cam;
@@ -14,17 +15,14 @@ var cameraDisplayOrientedPose;
 var camera; //ThreeJS Camera
 var controls;
 var origin = new THREE.Vector3( 0, 0, 0 );
-var arrow_length = 0.5;
 var red = 0xff0000;
 var green = 0x00ff00;
 var blue = 0x0000ff;
 var yellow = 0xffff00;
 var white = 0xffffff;
 var orange = 0xffa500;
-var arrow_x_axis_local;
-var arrow_y_axis_local;
-var arrow_z_axis_local;
-var useCameraDisplayOrientedPose = false;
+var pink = 0xFFC0CB;
+var useCameraDisplayOrientedPose = true;
 var camera_pose;
 var local_camera_axes_points;
 var x_axis_point;
@@ -34,6 +32,9 @@ var cameraWorldCenter;
 var cameraWorldCenterPoint;
 var debugAnchorPosition;
 var debugAnchor;
+var arCoreViewMatrix;
+var arCoreProjMatrix;
+var cameraPoseStringMatrix;
 
 window.onload = function() {
 
@@ -53,7 +54,7 @@ window.onload = function() {
     });
 
     $(".exportPoints").click(function(){
-        exportPoints();
+        exportARCorePointCloud();
     });
 
     $(".loadCOLMAPpoints").click(function(){
@@ -93,7 +94,7 @@ window.onload = function() {
     });
 
     $( ".localiseButton" ).click(function() {
-        localise(cameraDisplayOrientedPose);
+        //localise(cameraDisplayOrientedPose);
     });
 
     //start server
@@ -110,20 +111,25 @@ window.onload = function() {
             local_camera_axes_points = req.body.cameraDisplayOrientedPoseLocalAxes.split(",");
             cameraWorldCenter = req.body.cameraDisplayOrientedPoseCamCenter.split(",");
             debugAnchorPosition = req.body.debugAnchorPositionForDisplayOrientedPose.split(",");
+            cameraPoseStringMatrix = req.body.cameraDisplayOrientedPoseMatrix;
         }else{
             camera_pose = req.body.cameraPose.split(',');
             local_camera_axes_points = req.body.cameraPoseLocalAxes.split(",");
             cameraWorldCenter = req.body.cameraPoseCamCenter.split(",");
             debugAnchorPosition = req.body.debugAnchorPositionForCameraPose.split(",");
+            cameraPoseStringMatrix = req.body.cameraPoseMatrix;
         }
 
-        tx = parseFloat(camera_pose[0]);
-        ty = parseFloat(camera_pose[1]);
-        tz = parseFloat(camera_pose[2]);
-        qx = parseFloat(camera_pose[3]);
-        qy = parseFloat(camera_pose[4]);
-        qz = parseFloat(camera_pose[5]);
-        qw = parseFloat(camera_pose[6]);
+        arCoreViewMatrix = req.body.viewmtx;
+        arCoreProjMatrix = req.body.projMatrix;
+
+        var tx = parseFloat(camera_pose[0]);
+        var ty = parseFloat(camera_pose[1]);
+        var tz = parseFloat(camera_pose[2]);
+        var qx = parseFloat(camera_pose[3]);
+        var qy = parseFloat(camera_pose[4]);
+        var qz = parseFloat(camera_pose[5]);
+        var qw = parseFloat(camera_pose[6]);
 
         phone_cam.position.x = tx;
         phone_cam.position.y = ty;
@@ -164,20 +170,20 @@ window.onload = function() {
         z_axis_point.position.z = z;
 
         var anchorPosition = req.body.anchorPosition.split(',');
-        anchor_tx = parseFloat(anchorPosition[0]);
-        anchor_ty = parseFloat(anchorPosition[1]);
-        anchor_tz = parseFloat(anchorPosition[2]);
+        var anchor_tx = parseFloat(anchorPosition[0]);
+        var anchor_ty = parseFloat(anchorPosition[1]);
+        var anchor_tz = parseFloat(anchorPosition[2]);
 
         anchor.position.x = anchor_tx;
         anchor.position.y = anchor_ty;
         anchor.position.z = anchor_tz;
 
-        pointsArray = req.body.pointCloud.split("\n");
+        var pointsArray = req.body.pointCloud.split("\n");
         pointsArray.pop(); // remove newline
 
         scene.remove(arcore_points);
         var pointsGeometry = new THREE.Geometry();
-        var material =  new THREE.PointsMaterial( { color: 0x00ff00, size: 0.008 } );
+        var material =  new THREE.PointsMaterial( { color: green, size: 0.02 } );
 
         for (var i = 0; i < pointsArray.length; i++) {
             x = parseFloat(pointsArray[i].split(" ")[0]);
@@ -188,15 +194,37 @@ window.onload = function() {
                 new THREE.Vector3(x, y, z)
             )
         }
-
         arcore_points = new THREE.Points( pointsGeometry, material );
         scene.add(arcore_points);
+
+        // var pointsArray = req.body.pointCloudByViewMatrix.split("\n");
+        // pointsArray.pop(); // remove newline
+        //
+        // scene.remove(arcore_points_view_matrix);
+        // var pointsGeometry = new THREE.Geometry();
+        // var material =  new THREE.PointsMaterial( { color: blue, size: 0.02 } );
+        //
+        // for (var i = 0; i < pointsArray.length; i++) {
+        //     x = parseFloat(pointsArray[i].split(" ")[0]);
+        //     y = parseFloat(pointsArray[i].split(" ")[1]);
+        //     z = parseFloat(pointsArray[i].split(" ")[2]);
+        //
+        //     pointsGeometry.vertices.push(
+        //         new THREE.Vector3(x, y, z)
+        //     )
+        // }
+        // arcore_points_view_matrix = new THREE.Points( pointsGeometry, material );
+        // scene.add(arcore_points_view_matrix);
 
         res.sendStatus(200);
     });
 
     app.post('/localise', (req, res) => {
-        localise(camera_pose);
+        localise(camera_pose, cameraPoseStringMatrix);
+    });
+
+    app.post('/reload', (req, res) => {
+        getCurrentWindow().reload();
     });
 
     server = app.listen(3000, () => console.log(`Started server at http://localhost:3000!`));
@@ -234,7 +262,7 @@ window.onload = function() {
         new THREE.Vector3(0, 0, 3)
     );
 
-    var material =  new THREE.PointsMaterial( { color: 0xff0000, size: 0.03 } );
+    var material =  new THREE.PointsMaterial( { color: white, size: 0.03 } );
     phone_cam = new THREE.Points( geometry, material );
     phone_cam.scale.set(0.1,0.1,0.1);
     scene.add( phone_cam );
@@ -294,8 +322,8 @@ window.onload = function() {
     reference_point_2.position.set(0.5,0,-1);
 
     // lights
-    var light = new THREE.DirectionalLight( 0xffffff );
-    var ambientLight = new THREE.AmbientLight( 0x404040 );
+    var light = new THREE.DirectionalLight( white );
+    var ambientLight = new THREE.AmbientLight( pink );
     light.position.set( 50, 50, 50 );
     scene.add( light );
     scene.add(ambientLight);
@@ -349,7 +377,7 @@ function read3Dpoints(){
     scene.remove(colmap_points); // remove previous ones
 
     const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/points3D_AR.txt';
-    // async !
+
     var data = fs.readFileSync(file_path);
     data = data.toString().split('\n');
 
@@ -365,16 +393,17 @@ function read3Dpoints(){
         )
     }
 
-    var material =  new THREE.PointsMaterial( { color: 0x0000ff, size: 0.01 } );
+    var material =  new THREE.PointsMaterial( { color: red, size: 0.02 } );
     colmap_points = new THREE.Points( geometry, material );
 
     colmap_points.rotation.z = Math.PI/2;
     scene.add(colmap_points);
 }
 
-function localise(arg_pose){
+function localise(arg_pose, arg_pose_matrix){
 
     var pose = arg_pose;
+    var pose_matrix_string = arg_pose_matrix
     server.close();
 
     var base64String = $('.frame').attr('src');
@@ -387,6 +416,11 @@ function localise(arg_pose){
 
     fs.writeFileSync("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_data/cameraPose.txt",
         pose.join(","), function(err) {
+            console.log(err);
+        });
+
+    fs.writeFileSync("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_data/cameraPoseMatrixString.txt",
+        pose_matrix_string, function(err) {
             console.log(err);
         });
 
@@ -407,7 +441,14 @@ function localise(arg_pose){
     $(".colmap_result_frame").attr('src', '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/colmap_points_projected.jpg');
 }
 
-function exportPoints() {
+function exportMatrixString(matrix, name){
+    fs.writeFileSync("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/"+name+".txt",
+        matrix, 'utf8', function(err) {
+            console.log(err);
+        });
+}
+
+function exportARCorePointCloud() {
 
     var arcore_points_String = "";
     for (var i = 0; i < arcore_points.geometry.vertices.length; i++) {
@@ -416,26 +457,16 @@ function exportPoints() {
         var y = arcore_points.geometry.vertices[i].y;
         var z = arcore_points.geometry.vertices[i].z;
 
-        arcore_points_String += x + " " + y + " " + z + "\n"
+        arcore_points_String += x + " " + y + " " + z + " " + 1 +"\n"
     }
 
-    fs.writeFileSync("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/arcore_points.txt",
+    fs.writeFileSync("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/arcore_pointCloud.txt",
         arcore_points_String, 'utf8', function(err) {
             console.log(err);
         });
+}
 
-    var colmap_points_String = "";
-    for (var i = 0; i < colmap_points.geometry.vertices.length; i++) {
-
-        var x = colmap_points.geometry.vertices[i].x;
-        var y = colmap_points.geometry.vertices[i].y;
-        var z = colmap_points.geometry.vertices[i].z;
-
-        colmap_points_String += x + " " + y + " " + z + "\n"
-    }
-
-    fs.writeFileSync("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/colmap_points.txt",
-        colmap_points_String, 'utf8', function(err) {
-            console.log(err);
-        });
+function debug_COLMAP_points(scale){
+    execSync('cd /Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/ && python3 create_3D_points_for_ARCore_debug.py ' + scale);
+    read3Dpoints();
 }
