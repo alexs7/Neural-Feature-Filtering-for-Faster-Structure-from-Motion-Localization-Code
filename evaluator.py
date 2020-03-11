@@ -70,7 +70,7 @@ def save_image_projected_points(image_path, K, FP, points3D):
         cv2.circle(image, center, 4, (0, 0, 255), -1)
     cv2.imwrite('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/colmap_points_projected.jpg', image)
 
-def get_ARCore_pose(dir, frame):
+def get_ARCore_displayOrientedPose(dir, frame):
     return np.loadtxt(dir+"/displayOrientedPose_"+frame+".txt")
 
 def get_ARCore_poses(dir, pose_string, sequence):
@@ -141,6 +141,15 @@ def get_sequence(dir, pose_string, start, end):
     end_index = np.where(sequence == end)[0][0]
     sequence = sequence[start_index: end_index + 1]
     return sequence
+
+def get_sequence_all(dir):
+    sequence = []
+    for filename in glob.glob(dir + '/displayOrientedPose_*.txt'):  # can be anything
+        sequence.append(filename.split("_")[-1].split(".")[0])
+    sequence = np.array(sequence)
+    sequence.sort()
+    return sequence
+
 
 def get_COLMAP_poses(array):
     print("Getting COLMAP poses..")

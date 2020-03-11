@@ -220,7 +220,8 @@ window.onload = function() {
     });
 
     app.post('/localise', (req, res) => {
-        localise(camera_pose, cameraPoseStringMatrix);
+        var colmapPoints = localise(camera_pose, cameraPoseStringMatrix);
+        res.status(200).json({ points: colmapPoints });
     });
 
     app.post('/reload', (req, res) => {
@@ -400,11 +401,20 @@ function read3Dpoints(){
     scene.add(colmap_points);
 }
 
+function loadPoints3DFromFile(){
+    const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/points3D_AR.txt';
+
+    var data = fs.readFileSync(file_path);
+    data = data.toString().split('\n');
+
+    return data;
+}
+
 function localise(arg_pose, arg_pose_matrix){
 
     var pose = arg_pose;
     var pose_matrix_string = arg_pose_matrix
-    server.close();
+    //server.close();
 
     var base64String = $('.frame').attr('src');
     var base64Data = base64String.replace(/^data:image\/png;base64,/, "");
@@ -439,6 +449,12 @@ function localise(arg_pose, arg_pose_matrix){
 
     execSync('cd /Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/ && python3 debug_results.py');
     $(".colmap_result_frame").attr('src', '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/colmap_points_projected.jpg');
+
+    var scale = 0.12;
+    execSync('cd /Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/ && python3 create_3D_points_for_ARCore_debug.py ' + scale);
+
+    var points = loadPoints3DFromFile();
+    return points
 }
 
 function exportMatrixString(matrix, name){
