@@ -80,6 +80,11 @@ def get_query_image_global_pose(name):
     pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
     return pose
 
+"""
+The reconstructed pose of an image is specified as the projection 
+from world to the camera coordinate system of an image using a quaternion (QW, QX, QY, QZ) 
+and a translation vector (TX, TY, TZ). 
+"""
 def get_query_image_global_pose_new_model(name):
     images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/images.bin")
     for k,v in images.items():
@@ -89,6 +94,16 @@ def get_query_image_global_pose_new_model(name):
     pose_t = image.tvec
     pose = np.c_[pose_r, pose_t]
     pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
+    return pose
+
+def get_query_image_global_pose_new_model_quaternion(name):
+    images = read_images_binary("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/images.bin")
+    for k,v in images.items():
+        if v.name == name:
+            image = v
+    pose_r = image.qvec
+    pose_t = image.tvec
+    pose = np.r_[pose_t, [pose_r[1],pose_r[2],pose_r[3]],pose_r[0]]
     return pose
 
 def get_query_image_id(name):
