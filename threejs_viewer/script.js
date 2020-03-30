@@ -38,63 +38,8 @@ var cameraPoseStringMatrix;
 
 window.onload = function() {
 
-    $(".useCameraDisplayOrientedPose").click(function(){
-        useCameraDisplayOrientedPose = true;
-    });
+    $(".loadCompleteModel").click(function(){
 
-    $(".useCameraPose").click(function(){
-        useCameraDisplayOrientedPose = false;
-    });
-
-    //assign button listeners
-    $(".resetCamera").click(function(){
-        camera.position.set( 0.1, 1, 1 );
-        camera.lookAt(scene.position);
-        controls.update();
-    });
-
-    $(".exportPoints").click(function(){
-        exportARCorePointCloud();
-    });
-
-    $(".loadCOLMAPpoints").click(function(){
-        get3DPoints();
-        read3Dpoints();
-        console.log("Done loading points! you can scale them now!");
-    });
-
-    $(".viewARCoreCame").click(function(){
-
-        // tx = parseFloat(cameraDisplayOrientedPose[0]);
-        // ty = parseFloat(cameraDisplayOrientedPose[1]);
-        // tz = parseFloat(cameraDisplayOrientedPose[2]);
-        // qx = parseFloat(cameraDisplayOrientedPose[3]);
-        // qy = parseFloat(cameraDisplayOrientedPose[4]);
-        // qz = parseFloat(cameraDisplayOrientedPose[5]);
-        // qw = parseFloat(cameraDisplayOrientedPose[6]);
-        //
-        // phone_cam_1.position.x = tx;
-        // phone_cam_1.position.y = ty;
-        // phone_cam_1.position.z = tz ;
-        //
-        // var rotMatrix = new THREE.Matrix4();
-        // var quat = new THREE.Quaternion();
-        // quat.fromArray([qx,qy,qz,qw]);
-        // quat.normalize();
-        // rotMatrix.makeRotationFromQuaternion(quat);
-        // rotMatrix.setPosition(tx,ty,tz);
-        //
-        // var lookAtPoint =  new THREE.Vector4([0, 0, -1, 1]);
-        // lookAtPoint.applyMatrix4(rotMatrix);
-        //
-        // debugger;
-        // phone_cam_1.lookAt(0,0,0);
-
-        //controls.update();
-    });
-
-    $( ".localiseButton" ).click(function() {
-        //localise(cameraDisplayOrientedPose);
     });
 
     //start server
