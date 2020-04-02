@@ -9,7 +9,7 @@ def show_projected_points(image_path, points2D):
         x = int(points2D[i][0])
         y = int(points2D[i][1])
         center = (x, y)
-        cv2.circle(image, center, 3, (0, 0, 255), -1)
+        cv2.circle(image, center, 3, (255, 0, 0), -1)
     # image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
     cv2.imshow("result", image)
     cv2.waitKey(0)

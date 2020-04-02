@@ -66,7 +66,6 @@ def read_images_binary(path_to_model_file):
                 id=image_id, qvec=qvec, tvec=tvec,
                 camera_id=camera_id, name=image_name,
                 xys=xys, point3D_ids=point3D_ids)
-
     return images
 
 def get_query_image_global_pose(name):
@@ -79,6 +78,16 @@ def get_query_image_global_pose(name):
     pose = np.c_[pose_r, pose_t]
     pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
     return pose
+
+def get_query_image_global_poses(path):
+    poses = []
+    images = read_images_binary(path)
+    for k,v in images.items():
+        pose_r = v.qvec
+        pose_t = v.tvec
+        pose = np.r_[pose_r, pose_t]
+        poses.append(pose)
+    return poses
 
 """
 The reconstructed pose of an image is specified as the projection 

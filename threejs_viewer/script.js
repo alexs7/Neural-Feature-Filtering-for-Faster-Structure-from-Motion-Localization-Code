@@ -35,11 +35,63 @@ var debugAnchor;
 var arCoreViewMatrix;
 var arCoreProjMatrix;
 var cameraPoseStringMatrix;
+var colmapPose;
+var colmapPoseIndex = 1;
 
 window.onload = function() {
 
     $(".loadCompleteModel").click(function(){
+        var colmapPoints = loadColmapModelPoints();
+    });
 
+    $(".animateColmapPoses").click(function(){
+
+        colmapPose = fs.readFileSync("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/26_03_2020/fresh_uni_large/model_run_1/pose_"+colmapPoseIndex+".txt");
+        colmapPose = colmapPose.toString().split('\n');
+
+        var tx = parseFloat(colmapPose[4]);
+        var ty = parseFloat(colmapPose[5]);
+        var tz = parseFloat(colmapPose[6]);
+
+        var qx = parseFloat(colmapPose[1]);
+        var qy = parseFloat(colmapPose[2]);
+        var qz = parseFloat(colmapPose[3]);
+        var qw = parseFloat(colmapPose[0]);
+
+        phone_cam.position.x = tx;
+        phone_cam.position.y = ty;
+        phone_cam.position.z = tz;
+
+        var quaternion = new THREE.Quaternion();
+        quaternion.fromArray([qx, qy, qz, qw]);
+        quaternion.normalize(); // ?
+        phone_cam.setRotationFromQuaternion(quaternion);
+
+        const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/26_03_2020/fresh_uni_large/model_run_1/points3D_'+colmapPoseIndex+'.txt';
+
+        var data = fs.readFileSync(file_path);
+        data = data.toString().split('\n');
+
+        var geometry = new THREE.Geometry();
+
+        for (var i = 0; i < data.length; i++) {
+            var line = data[i].split(' ');
+            var x = parseFloat(line[0]);
+            var y = parseFloat(line[1]);
+            var z = parseFloat(line[2]);
+            geometry.vertices.push(
+                new THREE.Vector3(x, y, z)
+            );
+        }
+
+        var material =  new THREE.PointsMaterial( { color: green, size: 0.06 } );
+        var points = new THREE.Points( geometry, material );
+        // points.scale.set(0.1,0.1,0.1);
+        scene.add(points);
+
+        $(".colmap_result_frame").attr('src', '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/26_03_2020/fresh_uni_large/frame_projected_'+colmapPoseIndex+'.jpg');
+
+        colmapPoseIndex++;
     });
 
     //start server
@@ -127,6 +179,7 @@ window.onload = function() {
         pointsArray.pop(); // remove newline
 
         scene.remove(arcore_points);
+
         var pointsGeometry = new THREE.Geometry();
         var material =  new THREE.PointsMaterial( { color: green, size: 0.02 } );
 
@@ -141,26 +194,6 @@ window.onload = function() {
         }
         arcore_points = new THREE.Points( pointsGeometry, material );
         scene.add(arcore_points);
-
-
-        // var pointsArray = req.body.pointCloudByViewMatrix.split("\n");
-        // pointsArray.pop(); // remove newline
-        //
-        // scene.remove(arcore_points_view_matrix);
-        // var pointsGeometry = new THREE.Geometry();
-        // var material =  new THREE.PointsMaterial( { color: blue, size: 0.02 } );
-        //
-        // for (var i = 0; i < pointsArray.length; i++) {
-        //     x = parseFloat(pointsArray[i].split(" ")[0]);
-        //     y = parseFloat(pointsArray[i].split(" ")[1]);
-        //     z = parseFloat(pointsArray[i].split(" ")[2]);
-        //
-        //     pointsGeometry.vertices.push(
-        //         new THREE.Vector3(x, y, z)
-        //     )
-        // }
-        // arcore_points_view_matrix = new THREE.Points( pointsGeometry, material );
-        // scene.add(arcore_points_view_matrix);
 
         res.sendStatus(200);
     });
@@ -182,7 +215,6 @@ window.onload = function() {
         res.status(200).json({ points: colmapPoints });
     });
 
-
     app.post('/reload', (req, res) => {
         getCurrentWindow().reload();
     });
@@ -199,11 +231,11 @@ window.onload = function() {
     var size = 10;
     var divisions = 10;
 
-    var gridHelper = new THREE.GridHelper( size, divisions );
-    scene.add( gridHelper );
-
-    var axesHelper = new THREE.AxesHelper( 5 );
-    scene.add( axesHelper );
+    // var gridHelper = new THREE.GridHelper( size, divisions );
+    // scene.add( gridHelper );
+    //
+    // var axesHelper = new THREE.AxesHelper( 5 );
+    // scene.add( axesHelper );
 
     var geometry = new THREE.Geometry();
     geometry.vertices.push(
@@ -222,64 +254,51 @@ window.onload = function() {
         new THREE.Vector3(0, 0, 3)
     );
 
-    var material =  new THREE.PointsMaterial( { color: white, size: 0.03 } );
-    phone_cam = new THREE.Points( geometry, material );
+    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    var material = new THREE.MeshPhongMaterial( {color: yellow} );
+    phone_cam = new THREE.Mesh( geometry, material );
     phone_cam.scale.set(0.1,0.1,0.1);
     scene.add( phone_cam );
 
-    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
-    var material = new THREE.MeshPhongMaterial( {color: yellow} );
-    anchor = new THREE.Mesh( geometry, material );
-    scene.add( anchor );
-    anchor.scale.set(0.03,0.03,0.03);
 
-    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
-    var material = new THREE.MeshPhongMaterial( {color: white } );
-    cameraWorldCenterPoint = new THREE.Mesh( geometry, material );
-    scene.add( cameraWorldCenterPoint );
-    cameraWorldCenterPoint.scale.set(0.015,0.015,0.015);
-
-    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
-    var material = new THREE.MeshPhongMaterial( {color: red} );
-    x_axis_point = new THREE.Mesh( geometry, material );
-    x_axis_point.position.x = 0.1;
-    scene.add( x_axis_point );
-    x_axis_point.scale.set(0.02,0.02,0.02);
-
-    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
-    var material = new THREE.MeshPhongMaterial( {color: green} );
-    y_axis_point = new THREE.Mesh( geometry, material );
-    y_axis_point.position.y = 0.1;
-    scene.add( y_axis_point );
-    y_axis_point.scale.set(0.02,0.02,0.02);
-
-    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
-    var material = new THREE.MeshPhongMaterial( {color: blue} );
-    z_axis_point = new THREE.Mesh( geometry, material );
-    z_axis_point.position.z = 0.1;
-    scene.add( z_axis_point );
-    z_axis_point.scale.set(0.02,0.02,0.02);
-
-    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
-    var material = new THREE.MeshPhongMaterial( {color: orange} );
-    debugAnchor = new THREE.Mesh( geometry, material );
-    scene.add( debugAnchor );
-    debugAnchor.scale.set(0.02,0.02,0.02);
-
-    //reference points
-    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
-    var material = new THREE.MeshPhongMaterial( {color: 0x00FFFF} );
-    var reference_point_1 = new THREE.Mesh( geometry, material );
-    scene.add( reference_point_1 );
-    reference_point_1.scale.set(0.04,0.04,0.04);
-    reference_point_1.position.set(-0.5,0,-1);
-
-    var geometry = new THREE.SphereGeometry( 1, 32, 32 );
-    var material = new THREE.MeshPhongMaterial( {color: 0xFD00FF} );
-    var reference_point_2 = new THREE.Mesh( geometry, material );
-    scene.add( reference_point_2 );
-    reference_point_2.scale.set(0.04,0.04,0.04);
-    reference_point_2.position.set(0.5,0,-1);
+    // var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    // var material = new THREE.MeshPhongMaterial( {color: yellow} );
+    // anchor = new THREE.Mesh( geometry, material );
+    // scene.add( anchor );
+    // anchor.scale.set(0.03,0.03,0.03);
+    //
+    // var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    // var material = new THREE.MeshPhongMaterial( {color: white } );
+    // cameraWorldCenterPoint = new THREE.Mesh( geometry, material );
+    // scene.add( cameraWorldCenterPoint );
+    // cameraWorldCenterPoint.scale.set(0.015,0.015,0.015);
+    //
+    // var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    // var material = new THREE.MeshPhongMaterial( {color: red} );
+    // x_axis_point = new THREE.Mesh( geometry, material );
+    // x_axis_point.position.x = 0.1;
+    // scene.add( x_axis_point );
+    // x_axis_point.scale.set(0.02,0.02,0.02);
+    //
+    // var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    // var material = new THREE.MeshPhongMaterial( {color: green} );
+    // y_axis_point = new THREE.Mesh( geometry, material );
+    // y_axis_point.position.y = 0.1;
+    // scene.add( y_axis_point );
+    // y_axis_point.scale.set(0.02,0.02,0.02);
+    //
+    // var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    // var material = new THREE.MeshPhongMaterial( {color: blue} );
+    // z_axis_point = new THREE.Mesh( geometry, material );
+    // z_axis_point.position.z = 0.1;
+    // scene.add( z_axis_point );
+    // z_axis_point.scale.set(0.02,0.02,0.02);
+    //
+    // var geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    // var material = new THREE.MeshPhongMaterial( {color: orange} );
+    // debugAnchor = new THREE.Mesh( geometry, material );
+    // scene.add( debugAnchor );
+    // debugAnchor.scale.set(0.02,0.02,0.02);
 
     // lights
     var light = new THREE.DirectionalLight( white );
@@ -288,7 +307,7 @@ window.onload = function() {
     scene.add( light );
     scene.add(ambientLight);
 
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls = new THREE.TrackballControls(camera, renderer.domElement);
 
     camera.position.set( 0.1, 1, 1 );
     camera.lookAt(scene.position);
@@ -303,28 +322,6 @@ window.onload = function() {
     }
 
     animate();
-
-    $( ".slider_size" ).slider({
-        min: 0.01,
-        max: 0.03,
-        step: 0.0001,
-        slide: function( event, ui ) {
-            var size = ui.value;
-            colmap_points.material.size = size;
-        }
-    });
-
-    $( ".slider_scale" ).slider({
-        min: 0.5,
-        max: 1.5,
-        step: 0.005,
-        slide: function( event, ui ) {
-            var scale = ui.value;
-            console.log("Getting 3D points from COLMAP with scale: " + scale);
-            execSync('cd /Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/ && python3 create_3D_points_for_ARCore_debug.py ' + scale);
-            read3Dpoints();
-        }
-    });
 };
 
 function get3DPoints(){
@@ -356,8 +353,33 @@ function read3Dpoints(){
     var material =  new THREE.PointsMaterial( { color: red, size: 0.02 } );
     colmap_points = new THREE.Points( geometry, material );
 
-    colmap_points.rotation.z = Math.PI/2;
+    colmap_points.rotation.z = Math.PI/2; // is this needed ? (bug) ?
     scene.add(colmap_points);
+}
+
+function loadColmapModelPoints(){
+
+    const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/26_03_2020/fresh_uni_large/model_run_1/model/0/points3D_threeJS.txt';
+
+    var data = fs.readFileSync(file_path);
+    data = data.toString().split('\n');
+
+    var geometry = new THREE.Geometry();
+
+    for (var i = 0; i < data.length; i++) {
+        var line = data[i].split(',');
+        var x = parseFloat(line[1]);
+        var y = parseFloat(line[2]);
+        var z = parseFloat(line[3]);
+        geometry.vertices.push(
+            new THREE.Vector3(x, y, z)
+        );
+    }
+
+    var material =  new THREE.PointsMaterial( { color: red, size: 0.06 } );
+    var points = new THREE.Points( geometry, material );
+    // points.scale.set(0.1,0.1,0.1);
+    scene.add(points);
 }
 
 function getModel(){

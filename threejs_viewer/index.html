@@ -6,8 +6,8 @@
   <title>ARCore Debugger</title>
   <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.js"></script>
-<!--  <script src="TrackballControls.js"></script>-->
-  <script src="OrbitControls.js"></script>
+  <script src="TrackballControls.js"></script>
+<!--  <script src="OrbitControls.js"></script>-->
   <script src="script.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" integrity="sha256-KM512VNnjElC30ehFwehXjx1YCHPiQkOPmqnrWtpccM=" crossorigin="anonymous"></script>
@@ -20,9 +20,9 @@
 
 <canvas id="drawingSurface"></canvas>
 
-<div class="image_preview">
-  <img src="640x480.jpg" class="frame">
-</div>
+<!--<div class="image_preview">-->
+<!--  <img src="640x480.jpg" class="frame">-->
+<!--</div>-->
 
 <div class="colmap_result_image_preview">
   <img src="640x480.jpg" class="colmap_result_frame">
@@ -30,6 +30,7 @@
 
 <div class="controls">
   <button class="loadCompleteModel btn btn-primary">Load Complete Model</button>
+  <button class="animateColmapPoses btn btn-primary">Load Camera Poses - Demo</button>
 <!--  <button class="useCameraDisplayOrientedPose btn btn-light">Use CameraDisplayOrientedPose</button>-->
 <!--  <button class="useCameraPose btn btn-light">Use CameraPose</button>-->
 <!--  <button class="localiseButton btn btn-primary">Localise (This will kill the server)</button>-->
