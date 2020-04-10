@@ -1,0 +1,8 @@
+first = importdata('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/1/all_xyz_points3D.txt');
+second = importdata('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/2/all_xyz_points3D.txt');
+
+pcwrite(first,'first.pcd','Encoding','ascii');
+pcwrite(second,'second.pcd','Encoding','ascii');
+
+pc_first = pcread('first.pcd');
+pc_first = pcread('first.pcd');
