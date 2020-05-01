@@ -79,15 +79,19 @@ def get_query_image_global_pose(name):
     pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
     return pose
 
-def get_query_image_global_poses(path):
+def get_image_camera_center(path, name):
     poses = []
+    cam_center = np.array([])
     images = read_images_binary(path)
     for k,v in images.items():
-        pose_r = v.qvec
-        pose_t = v.tvec
-        pose = np.r_[pose_r, pose_t]
-        poses.append(pose)
-    return poses
+        if(v.name == name):
+            pose_r = v.qvec2rotmat()
+            pose_t = v.tvec
+            pose = np.c_[pose_r, pose_t]
+            pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
+            rot = np.array(pose[0:3, 0:3])
+            cam_center = -rot.transpose().dot(pose_t)
+    return cam_center
 
 """
 The reconstructed pose of an image is specified as the projection 

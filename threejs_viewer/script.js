@@ -35,72 +35,45 @@ var debugAnchor;
 var arCoreViewMatrix;
 var arCoreProjMatrix;
 var cameraPoseStringMatrix;
+var totalPointsSum = 0;
 
 window.onload = function() {
 
-    var geometry = new THREE.Geometry();
-    geometry.vertices.push(
-        new THREE.Vector3(1, 1, 0),
-        new THREE.Vector3(0.5, 0.5, 0),
-        new THREE.Vector3(-1, 1, 0),
-        new THREE.Vector3(-0.5, 0.5, 0),
-        new THREE.Vector3(-1, -1, 0),
-        new THREE.Vector3(-0.5, -0.5, 0),
-        new THREE.Vector3(1, -1, 0),
-        new THREE.Vector3(0.5, -0.5, 0),
-        new THREE.Vector3(0, 0, 1),
-        new THREE.Vector3(0, 0, 1.5),
-        new THREE.Vector3(0, 0, 2),
-        new THREE.Vector3(0, 0, 2.5),
-        new THREE.Vector3(0, 0, 3)
-    );
+    $(".one").click(function(){
+        renderModel(1, red);
+    });
 
-    $(".loadAllModels").click(function(){
+    $(".two").click(function(){
+        renderModel(2, blue);
+    });
 
+    $(".three").click(function(){
+        renderModel(3, yellow);
+    });
+
+    $(".four").click(function(){
+        renderModel(4, green);
+    });
+
+    $(".five").click(function(){
+        renderModel(5, yellow);
+    });
+
+    $(".six").click(function(){
+        renderModel(6, pink);
+    });
+
+    $(".seven").click(function(){
+        renderModel(7, orange);
+    });
+
+    $(".eight").click(function(){
+        renderModel(8, white);
+    });
+
+    $(".reset").click(function(){
+        totalPointsSum = 0;
         clearScene();
-
-        var file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/1/all_xyz_points3D.txt';
-
-        var data = fs.readFileSync(file_path);
-        data = data.toString().split('\n');
-
-        var geometry = new THREE.Geometry();
-
-        for (var i = 0; i < data.length; i++) {
-            var line = data[i].split(' ');
-            var x = parseFloat(line[1]);
-            var y = parseFloat(line[2]);
-            var z = parseFloat(line[3]);
-            geometry.vertices.push(
-                new THREE.Vector3(x, y, z)
-            );
-        }
-
-        var material =  new THREE.PointsMaterial( { color: blue, size: 0.06 } );
-        var points = new THREE.Points( geometry, material );
-        
-        scene.add(points);
-
-        var file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/2/all_xyz_points3D.txt';
-
-        var data = fs.readFileSync(file_path);
-        data = data.toString().split('\n');
-
-        var geometry = new THREE.Geometry();
-
-        for (var i = 0; i < data.length; i++) {
-            var line = data[i].split(' ');
-            var x = parseFloat(line[1]);
-            var y = parseFloat(line[2]);
-            var z = parseFloat(line[3]);
-            geometry.vertices.push(
-                new THREE.Vector3(x, y, z)
-            );
-        }
-
-        var material =  new THREE.PointsMaterial( { color: red, size: 0.06 } );
-        var points = new THREE.Points( geometry, material );
-        scene.add(points);
     });
 
     $(".loadCompleteModel").click(function(){
@@ -170,9 +143,11 @@ window.onload = function() {
         var qz = parseFloat(colmapPose[3]);
         var qw = parseFloat(colmapPose[0]);
 
-        var material =  new THREE.PointsMaterial( { color: yellow, size: 0.03 } );
-        var pose_cam = new THREE.Points( geometry, material );
-        pose_cam.scale.set(0.1,0.1,0.1);
+        var pose_geometry = new THREE.ConeGeometry( 0.5, 0.75, 4 );
+        var material = new THREE.MeshPhongMaterial( {color: yellow} );
+        var pose_cam = new THREE.Mesh( pose_geometry, material );
+        pose_cam.rotation.y = Math.PI/4 ;
+        pose_cam.rotation.x = -Math.PI/2 ;
         scene.add( pose_cam );
 
         pose_cam.position.x = tx;
@@ -205,9 +180,11 @@ window.onload = function() {
             var qz = parseFloat(colmapPose[3]);
             var qw = parseFloat(colmapPose[0]);
 
-            var material =  new THREE.PointsMaterial( { color: white, size: 0.04 } );
-            var pose_cam = new THREE.Points( geometry, material );
-            pose_cam.scale.set(0.1,0.1,0.1);
+            var pose_geometry = new THREE.ConeGeometry( 0.5, 0.75, 4 );
+            var material = new THREE.MeshPhongMaterial( {color: yellow} );
+            var pose_cam = new THREE.Mesh( pose_geometry, material );
+            pose_cam.rotation.y = Math.PI/4 ;
+            pose_cam.rotation.x = -Math.PI/2 ;
             scene.add( pose_cam );
 
             pose_cam.position.x = tx;
@@ -288,6 +265,31 @@ function clearScene(){
     while(scene.children.length > 0){
         scene.remove(scene.children[0]);
     }
+}
+
+function renderModel(i, colour) {
+    var file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/'+i+'/all_xyz_points3D.txt';
+    var data = fs.readFileSync(file_path);
+    data = data.toString().split('\n');
+
+    console.log(data.length-1);
+    totalPointsSum += data.length-1;
+
+    var geometry = new THREE.Geometry();
+
+    for (var i = 0; i < data.length; i++) {
+        var line = data[i].split(' ');
+        var x = parseFloat(line[1]);
+        var y = parseFloat(line[2]);
+        var z = parseFloat(line[3]);
+        geometry.vertices.push(
+            new THREE.Vector3(x, y, z)
+        );
+    }
+
+    var material =  new THREE.PointsMaterial( { color: colour, size: 0.06 } );
+    var points = new THREE.Points( geometry, material );
+    scene.add(points);
 }
 
 // function get3DPoints(){
