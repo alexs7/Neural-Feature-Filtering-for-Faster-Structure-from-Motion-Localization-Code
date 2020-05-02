@@ -68,20 +68,20 @@ np.savetxt(dest_3D_points, all_points3D)
 #         all_points3D_obv_count = np.r_[all_points3D_obv_count, data]
 # np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/all_xyz_points3D_mean.txt", all_points3D_obv_count)
 
-# print("Getting desc for each 3D point")
-# for k,v in points3D.items():
-#     points3D_descs =  np.empty([0,128])
-#     for i in range(len(v.image_ids)):
-#         img_id = v.image_ids[i]
-#         data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(img_id) + "'")
-#         data = blob_to_array(data.fetchone()[0], np.uint8)
-#         descs_rows = int(np.shape(data)[0] / 128)
-#         descs = data.reshape([descs_rows, 128])
-#         desc = descs[v.point2D_idxs[i]]
-#         desc = desc.reshape(1, 128)
-#         points3D_descs = np.r_[points3D_descs, desc]
-#     # np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/desc_for_point3D_" + str(v.id)+".txt", points3D_descs)
-#     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/mean_for_descs_for_point3D_" + str(v.id)+".txt", points3D_descs.mean(axis=0).reshape(1,128))
+print("Getting desc for each 3D point")
+for k,v in points3D.items():
+    points3D_descs =  np.empty([0,128])
+    for i in range(len(v.image_ids)):
+        img_id = v.image_ids[i]
+        data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(img_id) + "'")
+        data = blob_to_array(data.fetchone()[0], np.uint8)
+        descs_rows = int(np.shape(data)[0] / 128)
+        descs = data.reshape([descs_rows, 128])
+        desc = descs[v.point2D_idxs[i]]
+        desc = desc.reshape(1, 128)
+        points3D_descs = np.r_[points3D_descs, desc]
+    # np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/desc_for_point3D_" + str(v.id)+".txt", points3D_descs)
+    np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/mean_for_descs_for_point3D_" + str(v.id)+".txt", points3D_descs.mean(axis=0).reshape(1,128))
 
 # Rest of colmap data (poses)
 # print("Exporting Rest of Data..")

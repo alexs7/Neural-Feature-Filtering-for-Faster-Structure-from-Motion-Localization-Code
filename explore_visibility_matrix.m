@@ -13,8 +13,8 @@ visibility_matrix_new_sfm = visibility_matrix_new(1:130, :);
 % % figure
 % % plot(sum(visibility_matrix_original,1))
 % 
-% x = 1:size(visibility_matrix_new,2);
-% y = 1:size(visibility_matrix_new,1);
-% [X,Y] = meshgrid(x,y);
-% Z = visibility_matrix_new(y,x);
-% surf(X,Y,Z);
+x = 1:size(visibility_matrix_new,2);
+y = 1:size(visibility_matrix_new,1);
+[X,Y] = meshgrid(x,y);
+Z = visibility_matrix_new(y,x);
+surf(X,Y,Z);

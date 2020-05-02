@@ -105,6 +105,7 @@ for query_image in query_images:
     images_scores_list = images_scores_list[0 : neighbours_no]
 
     # get the all 3D points that the neighbours are looking at (except the ones the localised/query frame is looking at)
+    # and also make sure you haven't already seen them before in previous neighbours' frames
     localised_frame_neighbours_points3D_ids = []
     for i in range(len(images_scores_list)):
         for k,v in images.items():
@@ -126,7 +127,7 @@ for query_image in query_images:
     Nt = N0 * (0.5)**(t/t1_2)
     for i in range(len(localised_frame_neighbours_points3D_ids)):
         vm_point3D_index = points3D_indexing[localised_frame_neighbours_points3D_ids[i]]
-        visibility_matrix[0:len(sfm_images)-1, vm_point3D_index] = (0.5) ** (t / t1_2) * visibility_matrix[0:len(sfm_images)-1, vm_point3D_index]
+        visibility_matrix[:, vm_point3D_index] = (0.5) ** (t / t1_2) * visibility_matrix[:, vm_point3D_index]
 
 # at this point you play with the data
 # sum_over_columns = visibility_matrix.sum(axis=0)
