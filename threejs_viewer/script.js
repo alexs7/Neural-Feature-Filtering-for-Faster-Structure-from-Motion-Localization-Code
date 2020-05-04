@@ -36,6 +36,7 @@ var arCoreViewMatrix;
 var arCoreProjMatrix;
 var cameraPoseStringMatrix;
 var totalPointsSum = 0;
+var pointsSize = 0.08;
 
 window.onload = function() {
 
@@ -84,6 +85,9 @@ window.onload = function() {
 
         var data = fs.readFileSync(file_path);
         data = data.toString().split('\n');
+        data.pop() // remove the last element ""
+
+        console.log("loadCompleteModel " + data.length);
 
         var geometry = new THREE.Geometry();
 
@@ -97,20 +101,52 @@ window.onload = function() {
             );
         }
 
-        var material =  new THREE.PointsMaterial( { color: red, size: 0.06 } );
+        var material =  new THREE.PointsMaterial( { color: red, size: pointsSize } );
         var points = new THREE.Points( geometry, material );
         // points.scale.set(0.1,0.1,0.1);
         scene.add(points);
     });
 
-    $(".loadCompressedModel").click(function(){
+    $(".loadCompressedModel_VMM").click(function(){
 
         clearScene();
-        
-        const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/all_xyz_points3D_mean.txt';
+
+        const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/col_sum_points_camera_and_sum_mean.txt';
 
         var data = fs.readFileSync(file_path);
         data = data.toString().split('\n');
+        data.pop() // remove the last element ""
+
+        console.log("loadCompressedModel_VMM " + data.length);
+
+        var geometry = new THREE.Geometry();
+
+        for (var i = 0; i < data.length; i++) {
+            var line = data[i].split(' ');
+            var x = parseFloat(line[0]);
+            var y = parseFloat(line[1]);
+            var z = parseFloat(line[2]);
+            geometry.vertices.push(
+                new THREE.Vector3(x, y, z)
+            );
+        }
+
+        var material =  new THREE.PointsMaterial( { color: green, size: pointsSize } );
+        var points = new THREE.Points( geometry, material );
+        scene.add(points);
+    });
+
+    $(".loadCompressedModel_CM").click(function(){
+
+        clearScene();
+        
+        const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/all_xyz_points3D_obvs_mean.txt';
+
+        var data = fs.readFileSync(file_path);
+        data = data.toString().split('\n');
+        data.pop() // remove the last element ""
+
+        console.log("loadCompressedModel_CM " + data.length);
 
         var geometry = new THREE.Geometry();
 
@@ -124,7 +160,7 @@ window.onload = function() {
             );
         }
 
-        var material =  new THREE.PointsMaterial( { color: green, size: 0.06 } );
+        var material =  new THREE.PointsMaterial( { color: blue, size: pointsSize } );
         var points = new THREE.Points( geometry, material );
         scene.add(points);
     });
@@ -214,7 +250,7 @@ window.onload = function() {
             //     );
             // }
             //
-            // var material =  new THREE.PointsMaterial( { color: green, size: 0.06 } );
+            // var material =  new THREE.PointsMaterial( { color: green, size: pointsSize } );
             // var points = new THREE.Points( geometry, material );
             // // points.scale.set(0.1,0.1,0.1);
             // scene.add(points);
@@ -287,7 +323,7 @@ function renderModel(i, colour) {
         );
     }
 
-    var material =  new THREE.PointsMaterial( { color: colour, size: 0.06 } );
+    var material =  new THREE.PointsMaterial( { color: colour, size: pointsSize } );
     var points = new THREE.Points( geometry, material );
     scene.add(points);
 }
