@@ -36,7 +36,7 @@ var arCoreViewMatrix;
 var arCoreProjMatrix;
 var cameraPoseStringMatrix;
 var totalPointsSum = 0;
-var pointsSize = 0.08;
+var pointsSize = 0.1;
 
 window.onload = function() {
 
@@ -160,7 +160,7 @@ window.onload = function() {
             );
         }
 
-        var material =  new THREE.PointsMaterial( { color: blue, size: pointsSize } );
+        var material =  new THREE.PointsMaterial( { color: yellow, size: pointsSize } );
         var points = new THREE.Points( geometry, material );
         scene.add(points);
     });

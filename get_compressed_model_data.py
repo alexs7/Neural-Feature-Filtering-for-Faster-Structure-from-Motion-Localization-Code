@@ -3,7 +3,11 @@ import numpy as np
 import sys
 np.set_printoptions(threshold=sys.maxsize)
 
+# both are the same but I need the second one for the obvservation count
 points3D = read_points3d_default("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/points3D.bin")
+points3D_initial = read_points3d_default("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/model/0/points3D.bin")
+
+print("Initial Model Size: " + str(len(points3D_initial)))
 
 class Point3D:
   def __init__(self, id, index, xyz, seen_by_no):
@@ -12,9 +16,9 @@ class Point3D:
     self.xyz = xyz
     self.seen_by_no = seen_by_no
 
-print("Getting observation count from all traversals")
+print("Getting observation count only from base model")
 observations = []
-for k,v in points3D.items():
+for k,v in points3D_initial.items():
     observations.append(len(np.unique(v.image_ids)))
 observations = np.array(observations)
 observations_mean = observations.mean()
@@ -44,7 +48,7 @@ for i in range(len(col_sum_over_mean)):
                 xyz_to_render = np.r_[xyz_to_render, np.reshape(p.xyz, [1,3])]
 
 no_new_points = len(xyz_to_render)
-print("Reduced to " + str(no_new_points * 100 / len(col_sum)) + "%")
+print("Reduced to " + str(no_new_points * 100 / len(col_sum)) + "%, number of points now " + str(no_new_points))
 np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/col_sum_points_mean.txt", xyz_to_render)
 
 # 2 - mean and by how many cameras it is seen?
@@ -59,26 +63,17 @@ for i in range(len(col_sum_over_mean)):
                 xyz_to_render = np.r_[xyz_to_render, np.reshape(p.xyz, [1,3])]
 
 no_new_points = len(xyz_to_render)
-print("Reduced to " + str(no_new_points * 100 / len(col_sum)) + "%")
+print("Reduced to " + str(no_new_points * 100 / len(col_sum)) + "%, number of points now " + str(no_new_points))
 np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/col_sum_points_camera_and_sum_mean.txt", xyz_to_render)
 
-# 3 - set cover ? (double check if you applied the algorithm correctly)
-selected_3D_points = []
-can_select = True
+# 4 - Camera observation count - from base model only
+# in file get_compressed_model_data.py
 
-while can_select:
-    max_col_index = np.argmax(col_sum)
-    if()
-    selected_3D_points.append()
-
-
-
-
-breakpoint()
-
-xyz_to_render = np.empty([0, 3])
-for i in range(len(col_sum_over_mean)):
-    if(col_sum_over_mean[i] != 0):
-        for p in points3D_objects:
-            if(p.index == i and p.seen_by_no > observations_mean):
-                xyz_to_render = np.r_[xyz_to_render, np.reshape(p.xyz, [1,3])]
+# # 3 - set cover ? (double check if you applied the algorithm correctly)
+# selected_3D_points = []
+# can_select = True
+#
+# while can_select:
+#     max_col_index = np.argmax(col_sum)
+#     if()
+#     selected_3D_points.append()
