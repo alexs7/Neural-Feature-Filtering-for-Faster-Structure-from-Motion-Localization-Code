@@ -1,7 +1,7 @@
 close all;
 clear all;
 
-visibility_matrix = importdata('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/visibility_matrix_new.txt');
+visibility_matrix = importdata('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/base_visibility_matrix.txt');
 
 % figure
 % plot(sum(visibility_matrix_new,1))

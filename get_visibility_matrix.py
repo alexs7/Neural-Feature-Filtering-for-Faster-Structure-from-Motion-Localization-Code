@@ -4,12 +4,27 @@ import numpy as np
 import sys
 np.set_printoptions(threshold=sys.maxsize)
 
-# gets visibility matrix for a number of models
-images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/images.bin"
-images = read_images_binary(images_path)
-points3D = read_points3d_default("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/points3D.bin")
+# helper methods:
+def image_localised(name, images):
+    image_id = None
+    for k, v in images.items():
+        if (v.name == name):
+            image_id = v.id
+            return image_id
+    return image_id
 
-# all query images - already localised
+# by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
+complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/images.bin"
+complete_model_all_images = read_images_binary(complete_model_images_path)
+complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/points3D.bin"
+points3D = read_points3d_default(complete_model_points3D_path) # base model's 3D points
+
+# all base model images
+print("Getting the base model images..")
+images_from_28_03 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/28_03_2020/coop_local/model/model/0/images.bin")
+
+# all future session images - already localised in complete model
+print("Getting images from other future sessions.. (or models)")
 images_from_29_03 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/29_03_2020/coop_local/model/model/0/images.bin")
 images_from_04_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/04_04_2020/coop_local/model/model/0/images.bin")
 images_from_09_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/09_04_2020/coop_local_small/model/model/0/images.bin")
@@ -18,6 +33,7 @@ images_from_25_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/L
 images_from_26_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/26_04_2020/coop_local/model/model/0/images.bin")
 images_from_27_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/27_04_2020/coop_local/model/model/0/images.bin")
 
+print("Getting the future sessions images' names..")
 images_from_29_03_names = []
 for k, v in images_from_29_03.items():
     images_from_29_03_names.append(v.name)
@@ -46,144 +62,206 @@ images_from_27_04_names = []
 for k, v in images_from_27_04.items():
     images_from_27_04_names.append(v.name)
 
-# all localised and non localised
-all_query_images = []
-all_query_images.extend(images_from_29_03_names)
-all_query_images.extend(images_from_04_04_names)
-all_query_images.extend(images_from_09_04_names)
-all_query_images.extend(images_from_23_04_names)
-all_query_images.extend(images_from_25_04_names)
-all_query_images.extend(images_from_26_04_names)
-all_query_images.extend(images_from_27_04_names)
+print("Creating VMs..")
+complete_model_visibility_matrix = np.empty([0, len(points3D)])
 
-# getting the ones that have been localised
-query_images = []
-for query_image in all_query_images:
-    camera_center = get_image_camera_center(images_path, query_image)
-    if (camera_center.size != 0):
-        query_images.append(query_image)
+print("     Creating base VM..")
+base_visibility_matrix = np.empty([0, len(points3D)])
 
-sfm_images = []
-for k, v in images.items():
-    if(v.name not in query_images):
-        sfm_images.append(v.name)
-
-print("SFM frame: " + str(len(sfm_images)))
-print("Localised frame: " + str(len(query_images)))
-
-# the next two loops are for sorting and creating a list of images by time!
-images_dict = {}
-images_dict_sorted = {}
-
-# name cropped and id dict i.e "12345678 -> 56"
-for k, v in images.items():
-    images_dict[int(v.name.split('_')[1].split(".")[0])] = v.id
-
-for k in sorted(images_dict.keys()):
-    images_dict_sorted[k] = images_dict[k]
-
-visibility_matrix = np.empty([0, len(points3D)])
-
-# create an index and point_id relationship
-point3D_index = 0
-points3D_indexing = {}
-for key, value in points3D.items():
-    points3D_indexing[value.id] = point3D_index
-    point3D_index = point3D_index + 1
-
-# loop throuh the time sorted frames and ids dict and create the visibility matrix
-for k,v in images_dict_sorted.items():
+for k,v in images_from_28_03.items(): # or images_from_28_03 here is base.
     points_row = np.zeros([len(points3D)])
     points_row = points_row.reshape([1, len(points3D)])
     point_index = 0
     for key, value in points3D.items():
-        if(v in value.image_ids):
+        if(v.id in value.image_ids):
             points_row[0, point_index] = 100
         point_index = point_index + 1 # move by one point (or column)
-    visibility_matrix = np.r_[visibility_matrix, points_row]
+    base_visibility_matrix = np.r_[base_visibility_matrix, points_row]
+complete_model_visibility_matrix = np.r_[complete_model_visibility_matrix, base_visibility_matrix]
 
-np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/visibility_matrix_original.txt", visibility_matrix)
-
-# helper methods:
-def get_image(name, images):
-    for k, v in images.items():
-        if (v.name == name):
-            return v
-
-# loop through query images
-previously_viewed_points = []
-image_sets = [images_from_29_03_names, images_from_04_04_names, images_from_09_04_names, images_from_23_04_names,
-              images_from_25_04_names, images_from_26_04_names, images_from_27_04_names]
-
+print("     Creating future session VMs..")
+sessions_vm_matrices = {} # this will have t as key and the session VM matrix as value
 t = 0
-for image_set in image_sets:
+sessions_image_sets = [images_from_29_03_names, images_from_04_04_names, images_from_09_04_names,
+                       images_from_23_04_names, images_from_25_04_names, images_from_26_04_names,
+                       images_from_27_04_names]
+
+for session_image_set in sessions_image_sets:
     t = t + 1
-    print("t value: " + str(t))
+    print("         Getting VM for future session: " + str(t))
+    session_visibility_matrix = np.empty([0, len(points3D)])
 
-    for query_image in image_set:
-        camera_center = get_image_camera_center(images_path, query_image)
-        if (camera_center.size == 0):
-            print(query_image + " not localised..")
-            continue
+    for image_name in session_image_set:
+        image_id = image_localised(image_name, complete_model_all_images)
+        if(image_id != None):
+            points_row = np.zeros([len(points3D)])
+            points_row = points_row.reshape([1, len(points3D)])
+            point_index = 0
+            for key, value in points3D.items():
+                if (image_id in value.image_ids):
+                    points_row[0, point_index] = 100
+                point_index = point_index + 1  # move by one point (or column)
+            session_visibility_matrix = np.r_[session_visibility_matrix, points_row]
 
-        print("Doing frame " + query_image)
-        # get the point3D ids that this query image is looking at
-        localised_frame_points3D_id = []
-        for k,v in images.items():
-            if(v.name == query_image):
-                for i in range(len(v.point3D_ids)):
-                    if(v.point3D_ids[i] != -1):
-                        localised_frame_points3D_id.append(v.point3D_ids[i])
-        print(" Frame " + query_image + " looks at " + str(len(localised_frame_points3D_id)) + " points")
-        localised_frame_points3D_id = np.unique(localised_frame_points3D_id) #clear duplicates
+    sessions_vm_matrices[t] = session_visibility_matrix
+    complete_model_visibility_matrix = np.r_[complete_model_visibility_matrix, session_visibility_matrix]
 
-        # how many points of the localised_frame_points3D do the the other sfm_images see ?
-        images_scores = {}
-        for sfm_image in sfm_images:
-            image_score = 0
-            for i in range(len(localised_frame_points3D_id)):
-                if(localised_frame_points3D_id[i] in get_image(sfm_image, images).point3D_ids):
-                    image_score = image_score + 1
-            images_scores[sfm_image] = image_score
+print("Applying exponential decay..")
+N0 = 100
+t1_2 = 1 # 1 day
 
-        # sort by points seen, descending, so you can pick up the most prominent
-        images_scores = {k: v for k, v in sorted(images_scores.items(), key=lambda item: -item[1])}
+for t,vm in sessions_vm_matrices.items():
+    print("Looking at session " + str(t))
+    Nt = N0 * (0.5) ** (t / t1_2)
+    indices = np.where(np.sum(vm,0) == 0)[0]
+    base_visibility_matrix[:, indices] = Nt
 
-        # convert to array so you can pick up the first N
-        images_scores_list = []
-        for key, value in images_scores.items():
-            temp = [key, value]
-            images_scores_list.append(temp)
-        neighbours_no = 3 #N
-        images_scores_list = images_scores_list[0 : neighbours_no]
+np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/base_visibility_matrix.txt", base_visibility_matrix)
 
-        # get the all 3D points that the neighbours are looking at (except the ones the localised/query frame is looking at)
-        # and also make sure you haven't already seen them before in previous neighbours' frames
-        localised_frame_neighbours_points3D_ids = []
-        for i in range(len(images_scores_list)):
-            for k,v in images.items():
-                if (v.name == images_scores_list[i][0]):
-                    counter = 0
-                    for k in range(len(v.point3D_ids)):
-                        if(v.point3D_ids[k] != -1 and v.point3D_ids[k] not in localised_frame_points3D_id and v.point3D_ids[k] not in previously_viewed_points):
-                            counter = counter + 1
-                            localised_frame_neighbours_points3D_ids.append(v.point3D_ids[k])
-                            previously_viewed_points.append(v.point3D_ids[k])
-                    print(" Added " + str(counter) + " points for " + v.name)
+points3D = #TODO: point it to the base model ones!! otherwise you endup with more image ids per point!
+# create an index and point_id relationship - reverse here!
+point3D_index = 0
+points3D_indexing = {}
+for key, value in points3D.items():
+    points3D_indexing[point3D_index] = value.id
+    point3D_index = point3D_index + 1
 
-        localised_frame_neighbours_points3D_ids = np.unique(localised_frame_neighbours_points3D_ids) #TODO: might not need this ?
+# create an index and image_id relationship
+image_index = 0
+images_indexing = {}
+for key, value in images_from_28_03.items():
+    images_indexing[value.id] = image_index
+    image_index = image_index + 1
 
-        # ..now reduce their value using exponential decay
-        N0 = 100
-        t1_2 = 1 # 1 day
-        Nt = N0 * (0.5)**(t/t1_2)
+breakpoint()
 
-        for i in range(len(localised_frame_neighbours_points3D_ids)):
-            vm_point3D_index = points3D_indexing[localised_frame_neighbours_points3D_ids[i]]
-            visibility_matrix[:, vm_point3D_index] = (0.5) ** (t / t1_2) * visibility_matrix[:, vm_point3D_index]
+print("Applying Set Cover Problem..")
+removed_images_ids = []
+selected_points_ids = []
+K = 100
 
-# at this point you play with the data
-# sum_over_columns = visibility_matrix.sum(axis=0) #TODO: Revise this ?
-np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/visibility_matrix_new.txt", visibility_matrix)
+while(np.sum(base_visibility_matrix) != 0):
+    sum_points_across_images = np.sum(base_visibility_matrix, 0)
+    max_point_index = np.argmax(sum_points_across_images)
+    selected_points_ids.append(points3D_indexing[max_point_index])
 
-print("Done!")
+    images_ids_that_observe_current_max_point = np.unique(points3D[points3D_indexing[max_point_index]].image_ids)
+
+    for image_id in images_ids_that_observe_current_max_point:
+        if(np.sum(base_visibility_matrix[images_indexing[image_id],:]) >= K):
+            print("Removing image with id " + str(image_id) + " and index " + str(images_indexing[image_id]))
+            base_visibility_matrix[images_indexing[image_id], :] = 0
+
+    print("Removing point with id " + str(points3D_indexing[max_point_index]) + " and index " + str(max_point_index) + " and value " + str(sum_points_across_images[max_point_index]))
+    base_visibility_matrix[:,max_point_index] = 0
+
+    print("Sum of base_visibility_matrix: " + str(np.sum(base_visibility_matrix)))
+
+breakpoint()
+
+# #         Getting the image details from the images
+#
+#
+# # create an index and point_id relationship
+# point3D_index = 0
+# points3D_indexing = {}
+# for key, value in points3D.items():
+#     points3D_indexing[value.id] = point3D_index
+#     point3D_index = point3D_index + 1
+#
+# # loop throuh the time sorted frames and ids dict and create the visibility matrix
+# for k,v in images_dict_sorted.items():
+#     points_row = np.zeros([len(points3D)])
+#     points_row = points_row.reshape([1, len(points3D)])
+#     point_index = 0
+#     for key, value in points3D.items():
+#         if(v in value.image_ids):
+#             points_row[0, point_index] = 100
+#         point_index = point_index + 1 # move by one point (or column)
+#     visibility_matrix = np.r_[visibility_matrix, points_row]
+#
+# np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/visibility_matrix_original.txt", visibility_matrix)
+#
+#
+#
+# # loop through query images
+# previously_viewed_points = []
+#
+#
+# for query_image in images_from_29_03_names:
+#     if(get_image_camera_center(images_path, query_image).size != 0): #if the images was localised against the base model
+#         for vm_image in images.items():
+#             breakpoint()
+
+# t = 0
+# for image_set in image_sets:
+#     t = t + 1
+#     print("t value: " + str(t))
+#
+#     for query_image in image_set:
+#         camera_center = get_image_camera_center(images_path, query_image)
+#         if (camera_center.size == 0):
+#             print(query_image + " not localised..")
+#             continue
+#
+#         print("Doing frame " + query_image)
+#         # get the point3D ids that this query image is looking at
+#         localised_frame_points3D_id = []
+#         for k,v in images.items():
+#             if(v.name == query_image):
+#                 for i in range(len(v.point3D_ids)):
+#                     if(v.point3D_ids[i] != -1):
+#                         localised_frame_points3D_id.append(v.point3D_ids[i])
+#         print(" Frame " + query_image + " looks at " + str(len(localised_frame_points3D_id)) + " points")
+#         localised_frame_points3D_id = np.unique(localised_frame_points3D_id) #clear duplicates
+#
+#         # how many points of the localised_frame_points3D do the the other sfm_images see ?
+#         images_scores = {}
+#         for sfm_image in sfm_images:
+#             image_score = 0
+#             for i in range(len(localised_frame_points3D_id)):
+#                 if(localised_frame_points3D_id[i] in get_image(sfm_image, images).point3D_ids):
+#                     image_score = image_score + 1
+#             images_scores[sfm_image] = image_score
+#
+#         # sort by points seen, descending, so you can pick up the most prominent
+#         images_scores = {k: v for k, v in sorted(images_scores.items(), key=lambda item: -item[1])}
+#
+#         # convert to array so you can pick up the first N
+#         images_scores_list = []
+#         for key, value in images_scores.items():
+#             temp = [key, value]
+#             images_scores_list.append(temp)
+#         neighbours_no = 3 #N
+#         images_scores_list = images_scores_list[0 : neighbours_no]
+#
+#         # get the all 3D points that the neighbours are looking at (except the ones the localised/query frame is looking at)
+#         # and also make sure you haven't already seen them before in previous neighbours' frames
+#         localised_frame_neighbours_points3D_ids = []
+#         for i in range(len(images_scores_list)):
+#             for k,v in images.items():
+#                 if (v.name == images_scores_list[i][0]):
+#                     counter = 0
+#                     for k in range(len(v.point3D_ids)):
+#                         if(v.point3D_ids[k] != -1 and v.point3D_ids[k] not in localised_frame_points3D_id and v.point3D_ids[k] not in previously_viewed_points):
+#                             counter = counter + 1
+#                             localised_frame_neighbours_points3D_ids.append(v.point3D_ids[k])
+#                             previously_viewed_points.append(v.point3D_ids[k])
+#                     print(" Added " + str(counter) + " points for " + v.name)
+#
+#         localised_frame_neighbours_points3D_ids = np.unique(localised_frame_neighbours_points3D_ids) #TODO: might not need this ?
+#
+#         # ..now reduce their value using exponential decay
+#         N0 = 100
+#         t1_2 = 1 # 1 day
+#         Nt = N0 * (0.5)**(t/t1_2)
+#
+#         for i in range(len(localised_frame_neighbours_points3D_ids)):
+#             vm_point3D_index = points3D_indexing[localised_frame_neighbours_points3D_ids[i]]
+#             visibility_matrix[:, vm_point3D_index] = (0.5) ** (t / t1_2) * visibility_matrix[:, vm_point3D_index]
+#
+# # at this point you play with the data
+# # sum_over_columns = visibility_matrix.sum(axis=0) #TODO: Revise this ?
+# np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/visibility_matrix_new.txt", visibility_matrix)
+#
+# print("Done!")
