@@ -21,17 +21,27 @@ points3D = read_points3d_default(complete_model_points3D_path) # base model's 3D
 
 # all base model images
 print("Getting the base model images..")
-images_from_28_03 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/28_03_2020/coop_local/model/model/0/images.bin")
+# This should have 117 imges not 130, as 13 where left out for testing.
+images_from_28_03 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/model/0/images.bin")
 
 # all future session images - already localised in complete model
 print("Getting images from other future sessions.. (or models)")
-images_from_29_03 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/29_03_2020/coop_local/model/model/0/images.bin")
-images_from_04_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/04_04_2020/coop_local/model/model/0/images.bin")
-images_from_09_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/09_04_2020/coop_local_small/model/model/0/images.bin")
-images_from_23_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/23_04_2020/coop_local_small/model/model/0/images.bin")
-images_from_25_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/25_04_2020/coop_local/model/model/0/images.bin")
-images_from_26_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/26_04_2020/coop_local/model/model/0/images.bin")
-images_from_27_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/27_04_2020/coop_local/model/model/0/images.bin")
+
+# for the base model these are in a text file - might use these for testing (these are 13 - or should be!)
+with open("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-03-28/coop_local/base_model/base_model_query_images.txt") as f:
+    images_from_28_03_excluded_from_sfm = f.readlines()
+images_from_28_03_excluded_from_sfm = [x.strip() for x in images_from_28_03_excluded_from_sfm]
+
+# for the rest of the models this are in .bin files
+images_from_29_03 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-03-29/coop_local/model/model/0/images.bin")
+images_from_04_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-04/coop_local/model/model/0/images.bin")
+images_from_09_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-09/coop_local_small/model/model/0/images.bin")
+images_from_23_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-23/coop_local_small/model/model/0/images.bin")
+images_from_25_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-25/coop_local/model/model/0/images.bin")
+images_from_26_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-26/coop_local/model/model/0/images.bin")
+images_from_27_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-27/coop_local/model/model/0/images.bin")
+images_from_02_05 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-05-02/coop_local/model/model/0/images.bin")
+images_from_06_05 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-05-06/coop_local/model/model/0/images.bin")
 
 print("Getting the future sessions images' names..")
 images_from_29_03_names = []
@@ -62,6 +72,14 @@ images_from_27_04_names = []
 for k, v in images_from_27_04.items():
     images_from_27_04_names.append(v.name)
 
+images_from_02_05_names = []
+for k, v in images_from_02_05.items():
+    images_from_02_05_names.append(v.name)
+
+images_from_06_05_names = []
+for k, v in images_from_06_05.items():
+    images_from_06_05_names.append(v.name)
+
 print("Creating VMs..")
 complete_model_visibility_matrix = np.empty([0, len(points3D)])
 
@@ -77,6 +95,7 @@ for k,v in images_from_28_03.items(): # or images_from_28_03 here is base.
             points_row[0, point_index] = 100
         point_index = point_index + 1 # move by one point (or column)
     base_visibility_matrix = np.r_[base_visibility_matrix, points_row]
+
 complete_model_visibility_matrix = np.r_[complete_model_visibility_matrix, base_visibility_matrix]
 
 print("     Creating future session VMs..")
@@ -84,7 +103,7 @@ sessions_vm_matrices = {} # this will have t as key and the session VM matrix as
 t = 0
 sessions_image_sets = [images_from_29_03_names, images_from_04_04_names, images_from_09_04_names,
                        images_from_23_04_names, images_from_25_04_names, images_from_26_04_names,
-                       images_from_27_04_names]
+                       images_from_27_04_names, images_from_02_05_names, images_from_06_05_names]
 
 for session_image_set in sessions_image_sets:
     t = t + 1
@@ -117,47 +136,47 @@ for t,vm in sessions_vm_matrices.items():
     base_visibility_matrix[:, indices] = Nt
 
 np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/base_visibility_matrix.txt", base_visibility_matrix)
+np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/complete_model_visibility_matrix.txt", complete_model_visibility_matrix)
 
-points3D = #TODO: point it to the base model ones!! otherwise you endup with more image ids per point!
-# create an index and point_id relationship - reverse here!
-point3D_index = 0
-points3D_indexing = {}
-for key, value in points3D.items():
-    points3D_indexing[point3D_index] = value.id
-    point3D_index = point3D_index + 1
+# This is still WIP
+# print("Applying Set Cover Problem..")
+# points3D = #TODO: point it to the base model ones!! otherwise you endup with more image ids per point!
+# # create an index and point_id relationship - reverse here!
+# point3D_index = 0
+# points3D_indexing = {}
+# for key, value in points3D.items():
+#     points3D_indexing[point3D_index] = value.id
+#     point3D_index = point3D_index + 1
+#
+# # create an index and image_id relationship
+# image_index = 0
+# images_indexing = {}
+# for key, value in images_from_28_03.items():
+#     images_indexing[value.id] = image_index
+#     image_index = image_index + 1
 
-# create an index and image_id relationship
-image_index = 0
-images_indexing = {}
-for key, value in images_from_28_03.items():
-    images_indexing[value.id] = image_index
-    image_index = image_index + 1
-
-breakpoint()
-
-print("Applying Set Cover Problem..")
-removed_images_ids = []
-selected_points_ids = []
-K = 100
-
-while(np.sum(base_visibility_matrix) != 0):
-    sum_points_across_images = np.sum(base_visibility_matrix, 0)
-    max_point_index = np.argmax(sum_points_across_images)
-    selected_points_ids.append(points3D_indexing[max_point_index])
-
-    images_ids_that_observe_current_max_point = np.unique(points3D[points3D_indexing[max_point_index]].image_ids)
-
-    for image_id in images_ids_that_observe_current_max_point:
-        if(np.sum(base_visibility_matrix[images_indexing[image_id],:]) >= K):
-            print("Removing image with id " + str(image_id) + " and index " + str(images_indexing[image_id]))
-            base_visibility_matrix[images_indexing[image_id], :] = 0
-
-    print("Removing point with id " + str(points3D_indexing[max_point_index]) + " and index " + str(max_point_index) + " and value " + str(sum_points_across_images[max_point_index]))
-    base_visibility_matrix[:,max_point_index] = 0
-
-    print("Sum of base_visibility_matrix: " + str(np.sum(base_visibility_matrix)))
-
-breakpoint()
+# removed_images_ids = []
+# selected_points_ids = []
+# K = 100
+#
+# while(np.sum(base_visibility_matrix) != 0):
+#     sum_points_across_images = np.sum(base_visibility_matrix, 0)
+#     max_point_index = np.argmax(sum_points_across_images)
+#     selected_points_ids.append(points3D_indexing[max_point_index])
+#
+#     images_ids_that_observe_current_max_point = np.unique(points3D[points3D_indexing[max_point_index]].image_ids)
+#
+#     for image_id in images_ids_that_observe_current_max_point:
+#         if(np.sum(base_visibility_matrix[images_indexing[image_id],:]) >= K):
+#             print("Removing image with id " + str(image_id) + " and index " + str(images_indexing[image_id]))
+#             base_visibility_matrix[images_indexing[image_id], :] = 0
+#
+#     print("Removing point with id " + str(points3D_indexing[max_point_index]) + " and index " + str(max_point_index) + " and value " + str(sum_points_across_images[max_point_index]))
+#     base_visibility_matrix[:,max_point_index] = 0
+#
+#     print("Sum of base_visibility_matrix: " + str(np.sum(base_visibility_matrix)))
+#
+# !Set Cover Problem
 
 # #         Getting the image details from the images
 #
