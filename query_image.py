@@ -93,6 +93,14 @@ def get_image_camera_center(path, name):
             cam_center = -rot.transpose().dot(pose_t)
     return cam_center
 
+def image_localised(name, images):
+    image_id = None
+    for k, v in images.items():
+        if (v.name == name):
+            image_id = v.id
+            return image_id
+    return image_id
+
 """
 The reconstructed pose of an image is specified as the projection 
 from world to the camera coordinate system of an image using a quaternion (QW, QX, QY, QZ) 

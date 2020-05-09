@@ -1,17 +1,8 @@
 from point3D_loader import read_points3d_default
-from query_image import read_images_binary, get_image_camera_center
+from query_image import read_images_binary, get_image_camera_center, image_localised
 import numpy as np
 import sys
 np.set_printoptions(threshold=sys.maxsize)
-
-# helper methods:
-def image_localised(name, images):
-    image_id = None
-    for k, v in images.items():
-        if (v.name == name):
-            image_id = v.id
-            return image_id
-    return image_id
 
 # by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
 complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/images.bin"
@@ -82,6 +73,7 @@ for k, v in images_from_06_05.items():
 
 print("Creating VMs..")
 complete_model_visibility_matrix = np.empty([0, len(points3D)])
+vm_positive_value = 1 # if a point is seen from an image
 
 print("     Creating base VM..")
 base_visibility_matrix = np.empty([0, len(points3D)])
@@ -92,7 +84,7 @@ for k,v in images_from_28_03.items(): # or images_from_28_03 here is base.
     point_index = 0
     for key, value in points3D.items():
         if(v.id in value.image_ids):
-            points_row[0, point_index] = 100
+            points_row[0, point_index] = vm_positive_value
         point_index = point_index + 1 # move by one point (or column)
     base_visibility_matrix = np.r_[base_visibility_matrix, points_row]
 
@@ -100,41 +92,64 @@ complete_model_visibility_matrix = np.r_[complete_model_visibility_matrix, base_
 
 print("     Creating future session VMs..")
 sessions_vm_matrices = {} # this will have t as key and the session VM matrix as value
-t = 0
+
+# these have to be sorted by time!
 sessions_image_sets = [images_from_29_03_names, images_from_04_04_names, images_from_09_04_names,
                        images_from_23_04_names, images_from_25_04_names, images_from_26_04_names,
                        images_from_27_04_names, images_from_02_05_names, images_from_06_05_names]
 
+t = len(sessions_image_sets)
 for session_image_set in sessions_image_sets:
-    t = t + 1
     print("         Getting VM for future session: " + str(t))
     session_visibility_matrix = np.empty([0, len(points3D)])
 
+    localised_images_no = 0
     for image_name in session_image_set:
         image_id = image_localised(image_name, complete_model_all_images)
         if(image_id != None):
+            localised_images_no = localised_images_no + 1
             points_row = np.zeros([len(points3D)])
             points_row = points_row.reshape([1, len(points3D)])
             point_index = 0
             for key, value in points3D.items():
                 if (image_id in value.image_ids):
-                    points_row[0, point_index] = 100
+                    points_row[0, point_index] = vm_positive_value
                 point_index = point_index + 1  # move by one point (or column)
             session_visibility_matrix = np.r_[session_visibility_matrix, points_row]
 
+    print("         For f. session " + str(t) + " images localised " + str(localised_images_no))
+    print("         Session matrix rows " + str(session_visibility_matrix.shape[0]))
+    t = t - 1
     sessions_vm_matrices[t] = session_visibility_matrix
     complete_model_visibility_matrix = np.r_[complete_model_visibility_matrix, session_visibility_matrix]
 
+print("Complete_model_visibility_matrix matrix rows " + str(complete_model_visibility_matrix.shape[0]))
+
 print("Applying exponential decay..")
-N0 = 100
+session_images_weight = {}
+heatmap_matrix = np.empty([0, len(points3D)])
+N0 = vm_positive_value # what the matrices already contain
 t1_2 = 1 # 1 day
+t = len(sessions_vm_matrices) # start from reverse
+Nt = N0 * (0.5) ** (t / t1_2)
 
-for t,vm in sessions_vm_matrices.items():
-    print("Looking at session " + str(t))
+print("Looking at base model vm, with t value " + str(t))
+print("Exponential decay value: " + str(Nt))
+session_images_weight[t] = Nt
+heatmap_matrix = np.where(base_visibility_matrix == 1, Nt, 0) #apply oldest t on oldest data first
+t = t-1
+
+# sessions_vm_matrices should contain only localised images
+for k , vm in sessions_vm_matrices.items():
     Nt = N0 * (0.5) ** (t / t1_2)
-    indices = np.where(np.sum(vm,0) == 0)[0]
-    base_visibility_matrix[:, indices] = Nt
+    print("Looking at session vm " + str(k) + " and t value is at " + str(t))
+    session_images_weight[t] = Nt
+    print("Exponential decay value: " + str(Nt))
+    vm = np.where(vm == 1, Nt, 0)
+    heatmap_matrix = np.r_[heatmap_matrix, vm]
+    t = t - 1
 
+np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/heatmap_matrix.txt", heatmap_matrix)
 np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/base_visibility_matrix.txt", base_visibility_matrix)
 np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/complete_model_visibility_matrix.txt", complete_model_visibility_matrix)
 

@@ -68,10 +68,10 @@ for k,v in points3D.items():
         all_points3D_obv_count = np.r_[all_points3D_obv_count, data]
 np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/all_xyz_points3D_obvs_mean.txt", all_points3D_obv_count)
 
-print("Getting mean desc for each 3D point")
+print("Getting mean desc for each 3D point") #one file for each
 for k,v in points3D.items():
     points3D_descs =  np.empty([0,128])
-    for i in range(len(v.image_ids)):
+    for i in range(len(v.image_ids)): #TODO: this might need to be unique? no! because indexing is important here
         img_id = v.image_ids[i]
         data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(img_id) + "'")
         data = blob_to_array(data.fetchone()[0], np.uint8)
