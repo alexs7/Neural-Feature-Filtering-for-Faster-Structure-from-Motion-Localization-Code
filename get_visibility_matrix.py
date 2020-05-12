@@ -1,8 +1,10 @@
+# applies the exponential decay on images not 3D points as it was before!
 from point3D_loader import read_points3d_default
 from query_image import read_images_binary, get_image_camera_center, image_localised
 import numpy as np
 import sys
 np.set_printoptions(threshold=sys.maxsize)
+import json
 
 # by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
 complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/images.bin"
@@ -99,6 +101,7 @@ sessions_image_sets = [images_from_29_03_names, images_from_04_04_names, images_
                        images_from_27_04_names, images_from_02_05_names, images_from_06_05_names]
 
 t = len(sessions_image_sets)
+print("         Getting future sessions (oldest first)")
 for session_image_set in sessions_image_sets:
     print("         Getting VM for future session: " + str(t))
     session_visibility_matrix = np.empty([0, len(points3D)])
@@ -117,8 +120,8 @@ for session_image_set in sessions_image_sets:
                 point_index = point_index + 1  # move by one point (or column)
             session_visibility_matrix = np.r_[session_visibility_matrix, points_row]
 
-    print("         For f. session " + str(t) + " images localised " + str(localised_images_no))
-    print("         Session matrix rows " + str(session_visibility_matrix.shape[0]))
+    print("         For future session " + str(t) + " images localised " + str(localised_images_no))
+    # print("         Session matrix rows " + str(session_visibility_matrix.shape[0]))
     t = t - 1
     sessions_vm_matrices[t] = session_visibility_matrix
     complete_model_visibility_matrix = np.r_[complete_model_visibility_matrix, session_visibility_matrix]
@@ -130,25 +133,35 @@ session_images_weight = {}
 heatmap_matrix = np.empty([0, len(points3D)])
 N0 = vm_positive_value # what the matrices already contain
 t1_2 = 1 # 1 day
-t = len(sessions_vm_matrices) # start from reverse
+t = len(sessions_vm_matrices) # start from reverse - (zero based indexing here!)
 Nt = N0 * (0.5) ** (t / t1_2)
 
 print("Looking at base model vm, with t value " + str(t))
 print("Exponential decay value: " + str(Nt))
 session_images_weight[t] = Nt
-heatmap_matrix = np.where(base_visibility_matrix == 1, Nt, 0) #apply oldest t on oldest data first
+heatmap_matrix = np.where(base_visibility_matrix == vm_positive_value, Nt, 0) #apply oldest t on oldest data first
 t = t-1
 
 # sessions_vm_matrices should contain only localised images
+# Note: t here will reach 0, that is OK as the most recent model has not decayed at all (i.e is at 100)
 for k , vm in sessions_vm_matrices.items():
     Nt = N0 * (0.5) ** (t / t1_2)
     print("Looking at session vm " + str(k) + " and t value is at " + str(t))
     session_images_weight[t] = Nt
     print("Exponential decay value: " + str(Nt))
-    vm = np.where(vm == 1, Nt, 0)
+    vm = np.where(vm == vm_positive_value, Nt, 0)
     heatmap_matrix = np.r_[heatmap_matrix, vm]
     t = t - 1
 
+# This vector will contain the points' visibility values averaged that will be used in RANSAC
+heatmap_matrix_avg_points_values = np.mean(heatmap_matrix, axis=0) #TODO: can get the sum ?
+heatmap_matrix_avg_points_values = heatmap_matrix_avg_points_values / np.sum(heatmap_matrix_avg_points_values)
+np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/heatmap_matrix_avg_points_values.txt", heatmap_matrix_avg_points_values)
+
+print("Saving files...")
+with open('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/session_images_weight.txt', 'w') as file:
+    file.write(json.dumps(session_images_weight))
+# Note that heatmap here has the exponential decay applied the others are just binary matrices
 np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/heatmap_matrix.txt", heatmap_matrix)
 np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/base_visibility_matrix.txt", base_visibility_matrix)
 np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/complete_model_visibility_matrix.txt", complete_model_visibility_matrix)
