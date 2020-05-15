@@ -1,5 +1,6 @@
 # this is to match sfm images descs to the
 # base model and complete model as a benchmark
+#  and also exports the 2D-3D matches for ransac
 import sqlite3
 
 import numpy as np
@@ -27,6 +28,22 @@ def blob_to_array(blob, dtype, shape=(-1,)):
 
 db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/database.db")
 
+# creates 2d-3d matches for ransac
+def get_matches(good_matches_indices, points3D_indexing, points3D, query_image_xy):
+    # same length
+    # good_matches_indices[0] - 2D indices, xy
+    # good_matches_indices[1] - 3D indices, xyz - this is the index you need the id to get xyz
+    matches = np.empty([0,5])
+    for i in range(len(good_matches_indices[1])):
+        points3D_index = good_matches_indices[1][i]
+        points3D_id = points3D_indexing[points3D_index]
+        xy_2D = query_image_xy[good_matches_indices[0][i]]
+        xyz_3D = points3D[points3D_id].xyz
+        match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2]]).reshape([1,5])
+        matches = np.r_[matches, match]
+    return matches
+
+
 # by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
 complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/images.bin"
 complete_model_all_images = read_images_binary(complete_model_images_path)
@@ -48,15 +65,15 @@ with open(path_to_query_images_file) as f:
 test_images = [x.strip() for x in test_images]
 
 print("Loading 3D Points mean descs")
-# this creates the descs means for the base model and the complete model
+# this creates the descs means for the base model and the complete model indexing is the same as points3D indexing
 trainDescriptors_all = np.loadtxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/points_mean_descs_all.txt')
 trainDescriptors_base = np.loadtxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/points_mean_descs_base.txt')
 
 results_base = []
 results_all = []
 
-matches_base = np.empty([0,5])
-matches_all = np.empty([0,5])
+matches_base = {}
+matches_all = {}
 
 images_not_localised = []
 images_localised = []
@@ -64,9 +81,12 @@ images_localised = []
 for test_image in test_images:
     print("Doing image " + test_image)
     image_id = image_localised(test_image, complete_model_all_images)
+
     if(image_id != None):
+        print("Frame "+test_image+" localised..")
         images_localised.append(test_image)
         image_id = str(image_id)
+
         # fetching the x,y,descs for that image
         query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
         query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
@@ -83,7 +103,7 @@ for test_image in test_images:
         query_image_descriptors_data = blob_to_array(query_image_descriptors_data, np.uint8)
         descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
         query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
-        query_keypoints_xy_descriptors = np.concatenate((query_image_keypoints_data_xy, query_image_descriptors_data), axis=1)
+        # query_keypoints_xy_descriptors = np.concatenate((query_image_keypoints_data_xy, query_image_descriptors_data), axis=1) #TODO: remove this ?
 
         # once you have the test images descs now do feature matching here! - Matching on all and base descs means
         queryDescriptors = query_image_descriptors_data.astype(np.float32)
@@ -101,22 +121,28 @@ for test_image in test_images:
         results_all.append(len(good_matches_all[0]))
         results_base.append(len(good_matches_base[0]))
 
-        # matches_all = ma
-        # breakpoint()
+        print("     Creating matches..")
+        matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy)
+        matches_base[test_image] = get_matches(good_matches_base, points3D_indexing, points3D, query_image_keypoints_data_xy)
 
-        print("Found this many good matches (against complete model): " + str(len(good_matches_all[0])) + ", " + str(
+        print("         Found this many good matches (against complete model): " + str(len(good_matches_all[0])) + ", " + str(
             len(good_matches_all[1])))
-        print("Found this many good matches (against base model): " + str(len(good_matches_base[0])) + ", " + str(
+        print("         Found this many good matches (against base model): " + str(len(good_matches_base[0])) + ", " + str(
             len(good_matches_base[1])))
     else:
         print("Frame "+test_image+" not localised..")
         images_not_localised.append(test_image)
 
+print("Saving data...")
+# save the 2D-3D matches
+np.save('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/matches_all.npy', matches_all)
+np.save('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/matches_base.npy', matches_base)
 
+# again this is mostly of visualing results
 np.savetxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/results_all.txt', np.array([results_all]))
 np.savetxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/results_base.txt', np.array([results_base]))
 
-# also write the names for the graphs
+# also write the names for the visualing of the result graphs
 with open('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/images_localised.txt', 'w') as f:
     for item in images_localised:
         f.write("%s\n" % item)
@@ -125,3 +151,4 @@ with open('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/
     for item in images_not_localised:
         f.write("%s\n" % item)
 
+print("Done!")
