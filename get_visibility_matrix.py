@@ -1,4 +1,4 @@
-# applies the exponential decay on images not 3D points as it was before!
+# applies the exponential decay on images - not 3D points as it was before!
 from point3D_loader import read_points3d_default
 from query_image import read_images_binary, get_image_camera_center, image_localised
 import numpy as np
@@ -156,6 +156,7 @@ for k , vm in sessions_vm_matrices.items():
 # This vector will contain the points' visibility values averaged that will be used in RANSAC
 heatmap_matrix_avg_points_values = np.mean(heatmap_matrix, axis=0) #TODO: can get the sum ?
 heatmap_matrix_avg_points_values = heatmap_matrix_avg_points_values / np.sum(heatmap_matrix_avg_points_values)
+# at this point you have now a distribution (i.e sum to 1)
 np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/heatmap_matrix_avg_points_values.txt", heatmap_matrix_avg_points_values)
 
 print("Saving files...")

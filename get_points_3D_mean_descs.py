@@ -1,4 +1,5 @@
-# this is to get a huge np matrix with each points mean desc
+# this is to get a huge np matrix with each points mean desc - for now you manually change the file name and
+# which model you get them from... TODO: bad ! change it!
 # be careful that you can get the base model's avg descs or the complete's model descs
 import sqlite3
 import numpy as np
@@ -65,6 +66,7 @@ for i in range(0,len(points3D)):
             desc = descs[points3D[point_id].point2D_idxs[k]]
             desc = desc.reshape(1, 128)
             points3D_descs = np.r_[points3D_descs, desc]
+    # adding and calulating the mean here!
     points_mean_descs = np.r_[points_mean_descs,points3D_descs.mean(axis=0).reshape(1,128)]
 
 np.savetxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/points_mean_descs_base.txt', points_mean_descs)

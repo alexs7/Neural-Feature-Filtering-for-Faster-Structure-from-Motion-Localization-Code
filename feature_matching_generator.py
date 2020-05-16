@@ -1,6 +1,6 @@
-# this is to match sfm images descs to the
-# base model and complete model as a benchmark
-#  and also exports the 2D-3D matches for ransac
+# this is to match sfm images (already localised) descs against the
+# base model and the complete model as a benchmark and also exports the 2D-3D matches for ransac
+# localization here is done using my function.
 import sqlite3
 
 import numpy as np
@@ -33,13 +33,16 @@ def get_matches(good_matches_indices, points3D_indexing, points3D, query_image_x
     # same length
     # good_matches_indices[0] - 2D indices, xy
     # good_matches_indices[1] - 3D indices, xyz - this is the index you need the id to get xyz
-    matches = np.empty([0,5])
+    matches = np.empty([0, 6])
     for i in range(len(good_matches_indices[1])):
+        # get 3D point data
         points3D_index = good_matches_indices[1][i]
         points3D_id = points3D_indexing[points3D_index]
-        xy_2D = query_image_xy[good_matches_indices[0][i]]
         xyz_3D = points3D[points3D_id].xyz
-        match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2]]).reshape([1,5])
+        # get 2D point data
+        xy_2D = query_image_xy[good_matches_indices[0][i]]
+        # remember points3D_index is aligned with trainDescriptors_*
+        match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index]).reshape([1,6])
         matches = np.r_[matches, match]
     return matches
 
@@ -68,6 +71,8 @@ print("Loading 3D Points mean descs")
 # this creates the descs means for the base model and the complete model indexing is the same as points3D indexing
 trainDescriptors_all = np.loadtxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/points_mean_descs_all.txt')
 trainDescriptors_base = np.loadtxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/points_mean_descs_base.txt')
+trainDescriptors_all = trainDescriptors_all.astype(np.float32)
+trainDescriptors_base = trainDescriptors_base.astype(np.float32)
 
 results_base = []
 results_all = []
@@ -96,7 +101,6 @@ for test_image in test_images:
         query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
         query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows,query_image_keypoints_data_cols)
         query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
-
         query_image_descriptors_data = db.execute(
             "SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
         query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
@@ -107,9 +111,8 @@ for test_image in test_images:
 
         # once you have the test images descs now do feature matching here! - Matching on all and base descs means
         queryDescriptors = query_image_descriptors_data.astype(np.float32)
-        trainDescriptors_all = trainDescriptors_all.astype(np.float32)
-        trainDescriptors_base = trainDescriptors_base.astype(np.float32)
 
+        # actual matching here!
         matching_algo = FeatureMatcherTypes.FLANN  # or FeatureMatcherTypes.BF
         match_ratio_test = Parameters.kFeatureMatchRatioTest
         norm_type = cv2.NORM_L2
@@ -118,19 +121,20 @@ for test_image in test_images:
         good_matches_all = matcher.match(queryDescriptors, trainDescriptors_all)
         good_matches_base = matcher.match(queryDescriptors, trainDescriptors_base)
 
+        # remember these are only indices
         results_all.append(len(good_matches_all[0]))
         results_base.append(len(good_matches_base[0]))
 
         print("     Creating matches..")
+        # queryDescriptors and query_image_keypoints_data_xy = same order
+        # points3D order and trainDescriptors_* = same order
         matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy)
         matches_base[test_image] = get_matches(good_matches_base, points3D_indexing, points3D, query_image_keypoints_data_xy)
 
-        print("         Found this many good matches (against complete model): " + str(len(good_matches_all[0])) + ", " + str(
-            len(good_matches_all[1])))
-        print("         Found this many good matches (against base model): " + str(len(good_matches_base[0])) + ", " + str(
-            len(good_matches_base[1])))
+        print("         Found this many good matches (against complete model): " + str(len(good_matches_all[0])))
+        print("         Found this many good matches (against base model): " + str(len(good_matches_base[0])))
     else:
-        print("Frame "+test_image+" not localised..")
+        print("     Frame "+test_image+" not localised..")
         images_not_localised.append(test_image)
 
 print("Saving data...")
@@ -139,10 +143,11 @@ np.save('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/da
 np.save('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/matches_base.npy', matches_base)
 
 # again this is mostly of visualing results
+# results_* contain the numbers of matches for each image so, length will be the same as the localised images no
 np.savetxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/results_all.txt', np.array([results_all]))
 np.savetxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/results_base.txt', np.array([results_base]))
 
-# also write the names for the visualing of the result graphs
+# also writing the names for the visualizing of the result graphs
 with open('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/images_localised.txt', 'w') as f:
     for item in images_localised:
         f.write("%s\n" % item)
