@@ -1,6 +1,6 @@
 # this is to match sfm images (already localised) descs against the
 # base model and the complete model as a benchmark and also exports the 2D-3D matches for ransac
-# localization here is done using my function.
+# matching here is done using my own DM (direct matching) function.
 import sqlite3
 
 import numpy as np
@@ -74,8 +74,9 @@ trainDescriptors_base = np.loadtxt('/Users/alex/Projects/EngDLocalProjects/LEGO/
 trainDescriptors_all = trainDescriptors_all.astype(np.float32)
 trainDescriptors_base = trainDescriptors_base.astype(np.float32)
 
-results_base = []
-results_all = []
+# create image_name <-> value dict - easier to work with
+results_base = {}
+results_all = {}
 
 matches_base = {}
 matches_all = {}
@@ -122,8 +123,8 @@ for test_image in test_images:
         good_matches_base = matcher.match(queryDescriptors, trainDescriptors_base)
 
         # remember these are only indices
-        results_all.append(len(good_matches_all[0]))
-        results_base.append(len(good_matches_base[0]))
+        results_all[test_image] = len(good_matches_all[0])
+        results_base[test_image] = len(good_matches_base[0])
 
         print("     Creating matches..")
         # queryDescriptors and query_image_keypoints_data_xy = same order
@@ -143,11 +144,12 @@ np.save('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/da
 np.save('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/matches_base.npy', matches_base)
 
 # again this is mostly of visualing results
-# results_* contain the numbers of matches for each image so, length will be the same as the localised images no
-np.savetxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/results_all.txt', np.array([results_all]))
-np.savetxt('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/results_base.txt', np.array([results_base]))
+# results_* contain the numbers of matches for each image so, length will be the same as the localised images no.
+np.save('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/results_all.npy', results_all)
+np.save('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/results_base.npy', results_base)
 
 # also writing the names for the visualizing of the result graphs
+# TODO: images_localised do not include the base images.. maybe add them?
 with open('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/images_localised.txt', 'w') as f:
     for item in images_localised:
         f.write("%s\n" % item)

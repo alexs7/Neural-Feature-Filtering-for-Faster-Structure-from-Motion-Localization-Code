@@ -16,7 +16,7 @@ print("Running Vanillia RANSAC")
 #  this will hold inliers_no, ouliers_no, iterations, time for each image
 vanilla_ransac_data = np.empty([0, 4])
 for image in localised_images:
-    matches_for_image = matches_all.item()[image]
+    matches_for_image = matches_all.item()[image] # TODO: might need ..item().items() here ?
 
     start = time.time()
     inliers_no, ouliers_no, iterations, best_model = run_ransac(matches_for_image)

@@ -26,6 +26,7 @@ with open("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/
 images_from_28_03_excluded_from_sfm = [x.strip() for x in images_from_28_03_excluded_from_sfm]
 
 # for the rest of the models this are in .bin files
+# load in TIME order (oldest first!)
 images_from_29_03 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-03-29/coop_local/model/model/0/images.bin")
 images_from_04_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-04/coop_local/model/model/0/images.bin")
 images_from_09_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-09/coop_local_small/model/model/0/images.bin")
