@@ -15,17 +15,20 @@ print("Running Vanillia RANSAC")
 # run vanillia
 #  this will hold inliers_no, ouliers_no, iterations, time for each image
 vanilla_ransac_data = np.empty([0, 4])
+vanilla_ransac_images_pose = {}
 for image in localised_images:
-    matches_for_image = matches_all.item()[image] # TODO: might need ..item().items() here ?
+    matches_for_image = matches_all.item()[image]
 
     start = time.time()
     inliers_no, ouliers_no, iterations, best_model = run_ransac(matches_for_image)
     end  = time.time()
     elapsed_time = end - start
 
+    vanilla_ransac_images_pose[image] = best_model
     vanilla_ransac_data = np.r_[vanilla_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1,4])]
 
-np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_data.npy", vanilla_ransac_data)
+np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_images_pose.npy", vanilla_ransac_images_pose)
+np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_data.npy", vanilla_ransac_data)
 
 # run my version
 distribution = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/heatmap_matrix_avg_points_values.txt")
@@ -49,6 +52,7 @@ for image in localised_images:
 
 print("Running Modified RANSAC")
 modified_ransac_data = np.empty([0, 4])
+modified_ransac_images_pose = {}
 for image in localised_images:
     matches_for_image = matches_all.item()[image]
 
@@ -57,9 +61,11 @@ for image in localised_images:
     end  = time.time()
     elapsed_time = end - start
 
+    modified_ransac_images_pose[image] = best_model
     modified_ransac_data = np.r_[modified_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1,4])]
 
-np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data.npy", modified_ransac_data)
+np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_images_pose.npy", modified_ransac_images_pose)
+np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data.npy", modified_ransac_data)
 
 
 
