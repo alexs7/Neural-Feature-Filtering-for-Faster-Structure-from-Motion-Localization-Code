@@ -1,6 +1,7 @@
 # This is vanilla RANSAC Implementation and Modified one
 import numpy as np
 import cv2
+import time
 
 # intrinsics matrix
 K = np.loadtxt(
@@ -17,10 +18,15 @@ def run_ransac(matches_for_image):
     threshold = 8.0 # same as opencv
     max = np.iinfo(np.int32).min
     best_model = {}
+    elapsed_time_total_for_random_sampling = 0
     while k < no_iterations:
         inliers = []
         # pick 4 random matches (assume they are inliers)
+        start = time.time()
         random_matches = np.random.choice(len(matches_for_image), s, replace=False)
+        end = time.time()
+        elapsed_time = end - start
+        elapsed_time_total_for_random_sampling = elapsed_time_total_for_random_sampling + elapsed_time
         # get 3D and 2D points
         obj_points = matches_for_image[(random_matches), 2:5]
         img_points = matches_for_image[(random_matches), 0:2]
@@ -55,11 +61,11 @@ def run_ransac(matches_for_image):
             N = int(np.floor(N))
             no_iterations = N
             if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
-                return (inlers_no, outliers_no, k, best_model)
+                return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)
 
         k = k + 1
 
-    return (inlers_no, outliers_no, k, best_model)
+    return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)
 
 def run_ransac_modified(matches_for_image, distribution):
     s = 4  # or minimal_sample_size
@@ -72,10 +78,15 @@ def run_ransac_modified(matches_for_image, distribution):
     threshold = 8.0 # same as opencv
     max = np.iinfo(np.int32).min
     best_model = {}
+    elapsed_time_total_for_random_sampling = 0
     while k < no_iterations:
         inliers = []
         # pick 4 random matches (assume they are inliers)
+        start = time.time()
         random_matches = np.random.choice(len(matches_for_image), s , p = distribution, replace=False)
+        end = time.time()
+        elapsed_time = end - start
+        elapsed_time_total_for_random_sampling = elapsed_time_total_for_random_sampling + elapsed_time
         # get 3D and 2D points
         obj_points = matches_for_image[(random_matches), 2:5]
         img_points = matches_for_image[(random_matches), 0:2]
@@ -110,8 +121,8 @@ def run_ransac_modified(matches_for_image, distribution):
             N = int(np.floor(N))
             no_iterations = N
             if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
-                return (inlers_no, outliers_no, k, best_model)
+                return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)
 
         k = k + 1
 
-    return (inlers_no, outliers_no, k, best_model)
+    return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)

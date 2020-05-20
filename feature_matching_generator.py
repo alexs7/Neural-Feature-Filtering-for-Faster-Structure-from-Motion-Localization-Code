@@ -46,7 +46,6 @@ def get_matches(good_matches_indices, points3D_indexing, points3D, query_image_x
         matches = np.r_[matches, match]
     return matches
 
-
 # by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
 complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/images.bin"
 complete_model_all_images = read_images_binary(complete_model_images_path)
