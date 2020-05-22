@@ -30,32 +30,7 @@ exponential_decay_values = np.linspace(0,1, num=10,endpoint=False)[1:10]
 index_for_file_loading = 1 # 1 is for 0.1, 2 is for 0.2 etc etc
 for exponential_decay_value in exponential_decay_values:
 
-    print("Running for exponential decay of value: " + str(exponential_decay_value))
-
-    print("Running Vanillia RANSAC")
-    # run vanillia
-    #  this will hold inliers_no, ouliers_no, iterations, time for each image
-    vanilla_ransac_data = np.empty([0, 4])
-    vanilla_ransac_images_poses = {}
-
-    for image in localised_images:
-        matches_for_image = matches_all.item()[image]
-
-        if(len(matches_for_image) >= 4):
-            start = time.time()
-            inliers_no, ouliers_no, iterations, best_model, elapsed_time_total_for_random_sampling = run_ransac(matches_for_image)
-            end  = time.time()
-            elapsed_time = end - start - elapsed_time_total_for_random_sampling
-
-            vanilla_ransac_images_poses[image] = best_model
-            vanilla_ransac_data = np.r_[vanilla_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1,4])]
-        else:
-            print(image + " has less than 4 matches..")
-
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_images_pose_" + str(index_for_file_loading) + ".npy", vanilla_ransac_images_poses)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_data_" + str(index_for_file_loading) + ".npy", vanilla_ransac_data)
-
-    # run my version, with ordinary distribution, and altered distribution (the one that has values over the mean)
+    #ordinary distributions, and altered distributions (the one that has values over the mean), both same size as 3D points
     ord_distribution = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/heatmap_matrix_avg_points_values_" + str(index_for_file_loading) + ".txt")
     ord_distribution = ord_distribution.reshape([1, ord_distribution.shape[0]])
 
@@ -70,41 +45,60 @@ for exponential_decay_value in exponential_decay_values:
         ord_sub_distributions[image] = get_sub_distribution(matches_for_image, ord_distribution)
         alt_sub_distributions[image] = get_sub_distribution(matches_for_image, alt_distribution)
 
-    print("Running Modified RANSAC with ord_distributions...")
+    print("Running RANSAC versions.. for exponential decay of value: " + str(exponential_decay_value))
+
+    #  this will hold inliers_no, ouliers_no, iterations, time for each image
+    vanilla_ransac_data = np.empty([0, 4])
+    vanilla_ransac_images_poses = {}
+
     ord_modified_ransac_data = np.empty([0, 4])
     ord_modified_ransac_images_poses = {}
 
-    for image in localised_images:
-        matches_for_image = matches_all.item()[image]
-
-        if (len(matches_for_image) >= 4):
-            start = time.time()
-            inliers_no, ouliers_no, iterations, best_model, elapsed_time_total_for_random_sampling = run_ransac_modified(matches_for_image, ord_sub_distributions[image])
-            end  = time.time()
-            elapsed_time = end - start - elapsed_time_total_for_random_sampling
-
-            ord_modified_ransac_images_poses[image] = best_model
-            ord_modified_ransac_data = np.r_[ord_modified_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1, 4])]
-        else:
-            print(image + " has less than 4 matches..")
-
-    print("Running Modified RANSAC with alt_sub_distributions...")
     alt_modified_ransac_data = np.empty([0, 4])
     alt_modified_ransac_images_poses = {}
 
     for image in localised_images:
         matches_for_image = matches_all.item()[image]
 
-        if (len(matches_for_image) >= 4):
+        if(len(matches_for_image) >= 4):
+            print("Doing image: " + image + ", with no of matches: " + str(len(matches_for_image)))
+            # vanilla
+            start = time.time()
+            inliers_no, ouliers_no, iterations, best_model, elapsed_time_total_for_random_sampling = run_ransac(matches_for_image)
+            end  = time.time()
+            elapsed_time = end - start - elapsed_time_total_for_random_sampling
+
+            vanilla_ransac_images_poses[image] = best_model
+            vanilla_ransac_data = np.r_[vanilla_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1,4])]
+
+            # my version using VM ord distris
+            start = time.time()
+            inliers_no, ouliers_no, iterations, best_model, elapsed_time_total_for_random_sampling = run_ransac_modified(matches_for_image, ord_sub_distributions[image])
+            end = time.time()
+            elapsed_time = end - start - elapsed_time_total_for_random_sampling
+
+            ord_modified_ransac_images_poses[image] = best_model
+            ord_modified_ransac_data = np.r_[ord_modified_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1, 4])]
+
+            # my version using VM alt distris
             start = time.time()
             inliers_no, ouliers_no, iterations, best_model, elapsed_time_total_for_random_sampling = run_ransac_modified(matches_for_image, alt_sub_distributions[image])
-            end  = time.time()
+            end = time.time()
             elapsed_time = end - start - elapsed_time_total_for_random_sampling
 
             alt_modified_ransac_images_poses[image] = best_model
             alt_modified_ransac_data = np.r_[alt_modified_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1, 4])]
         else:
             print(image + " has less than 4 matches..")
+
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_images_pose_" + str(index_for_file_loading) + ".npy", vanilla_ransac_images_poses)
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_data_" + str(index_for_file_loading) + ".npy", vanilla_ransac_data)
+
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_images_pose_ord_" + str(index_for_file_loading) + ".npy", ord_modified_ransac_images_poses)
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_ord_" + str(index_for_file_loading) + ".npy", ord_modified_ransac_data)
+
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_images_pose_alt_" + str(index_for_file_loading) + ".npy", alt_modified_ransac_images_poses)
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_alt_" + str(index_for_file_loading) + ".npy", alt_modified_ransac_data)
 
     print("Results for exponential_decay_value " + str(index_for_file_loading/10) + ":")
     print("Vanillia RANSAC")
@@ -122,10 +116,6 @@ for exponential_decay_value in exponential_decay_values:
     print("     Average Outliers: " + str(np.mean(alt_modified_ransac_data[:, 1])))
     print("     Average Time (s): " + str(np.mean(alt_modified_ransac_data[:, 3])))
     print("     Average Iterations: " + str(np.mean(alt_modified_ransac_data[:, 2])))
-
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_images_pose_" + str(index_for_file_loading) + ".npy", ord_modified_ransac_images_poses)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_ord_" + str(index_for_file_loading) + ".npy", ord_modified_ransac_data)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_alt_" + str(index_for_file_loading) + ".npy", alt_modified_ransac_data)
 
     index_for_file_loading = index_for_file_loading + 1
 
