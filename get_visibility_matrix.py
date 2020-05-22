@@ -1,9 +1,9 @@
 # applies the exponential decay on images - not 3D points as it was before!
+
 from point3D_loader import read_points3d_default
-from query_image import read_images_binary, get_image_camera_center, image_localised
+from query_image import read_images_binary, image_localised
 import numpy as np
 import sys
-np.set_printoptions(threshold=sys.maxsize)
 import json
 
 # by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
@@ -16,14 +16,10 @@ points3D = read_points3d_default(complete_model_points3D_path) # base model's 3D
 print("Getting the base model images..")
 # This should have 117 imges not 130, as 13 where left out for testing.
 images_from_28_03 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/model/0/images.bin")
+print("     Number: "+ str(len(images_from_28_03)))
 
 # all future session images - already localised in complete model
 print("Getting images from other future sessions.. (or models)")
-
-# for the base model these are in a text file - might use these for testing (these are 13 - or should be!)
-with open("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-03-28/coop_local/base_model/base_model_query_images.txt") as f:
-    images_from_28_03_excluded_from_sfm = f.readlines()
-images_from_28_03_excluded_from_sfm = [x.strip() for x in images_from_28_03_excluded_from_sfm]
 
 # for the rest of the models this are in .bin files
 # load in TIME order (oldest first!)
@@ -121,7 +117,7 @@ for session_image_set in sessions_image_sets:
                 point_index = point_index + 1  # move by one point (or column)
             session_visibility_matrix = np.r_[session_visibility_matrix, points_row]
 
-    print("         For future session " + str(t) + " images localised " + str(localised_images_no))
+    print("         For future session " + str(t) + " images localised " + str(localised_images_no) +"/"+ str(len(session_image_set)) )
     # print("         Session matrix rows " + str(session_visibility_matrix.shape[0]))
     t = t - 1
     sessions_vm_matrices[t] = session_visibility_matrix
@@ -137,9 +133,12 @@ np.savetxt(
     "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/complete_model_visibility_matrix.txt",
     complete_model_visibility_matrix)
 
+# Now this is where you apply the exponential decay!
 # try different exponential values..
-exponential_decay_values = np.linspace(0,1, num=10,endpoint=False)[1:10]
+# Note: that the higer the exponential_decay_value the slower it decays...
+exponential_decay_values = np.linspace(0,1, num=10, endpoint=False)[1:10]
 
+index_for_file_saving = 1 # 1 is for 0.1, 2 is for 0.2 etc etc
 for exponential_decay_value in exponential_decay_values:
 
     print("Applying exponential decay of value: " + str(exponential_decay_value))
@@ -151,7 +150,7 @@ for exponential_decay_value in exponential_decay_values:
     Nt = N0 * (exponential_decay_value) ** (t / t1_2)
 
     print("     Looking at base model vm, with t value " + str(t))
-    print("     Exponential decay value: " + str(Nt))
+    print("     Exponential decay result (the higher the newer): " + str(Nt))
     session_images_weight[t] = Nt
     heatmap_matrix = np.where(base_visibility_matrix == vm_positive_value, Nt, 0) #apply oldest t on oldest data first
     t = t-1
@@ -162,24 +161,23 @@ for exponential_decay_value in exponential_decay_values:
         Nt = N0 * (exponential_decay_value) ** (t / t1_2)
         print("     Looking at session vm " + str(k) + " and t value is at " + str(t))
         session_images_weight[t] = Nt
-        print("     Exponential decay value: " + str(Nt))
+        print("     Exponential decay result (the higher the newer): " + str(Nt))
         vm = np.where(vm == vm_positive_value, Nt, 0)
         heatmap_matrix = np.r_[heatmap_matrix, vm]
         t = t - 1
 
     # This vector will contain the points' visibility values averaged that will be used in RANSAC
-    heatmap_matrix_avg_points_values = np.mean(heatmap_matrix, axis=0) #TODO: can get the sum ?
+    heatmap_matrix_avg_points_values = np.mean(heatmap_matrix, axis=0)
     heatmap_matrix_avg_points_values = heatmap_matrix_avg_points_values / np.sum(heatmap_matrix_avg_points_values)
     # at this point you have now a distribution (i.e sum to 1) in heatmap_matrix_avg_points_values
 
     print("Saving files...")
-    index_for_file_saving = str(exponential_decay_value).split('.')[1]
-    np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/heatmap_matrix_avg_points_values_"+index_for_file_saving+".txt", heatmap_matrix_avg_points_values)
-    with open("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/session_images_weight_"+index_for_file_saving+".txt", 'w') as file:
-        file.write(json.dumps(session_images_weight))
-    # Note that heatmap here has the exponential decay applied the others are just binary matrices
-    np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/heatmap_matrix_"+index_for_file_saving+".txt", heatmap_matrix)
+    np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/heatmap_matrix_avg_points_values_"+str(index_for_file_saving)+".txt", heatmap_matrix_avg_points_values)
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/session_images_weight_"+str(index_for_file_saving)+".npy", session_images_weight)
+    # Note that heatmap here has the exponential decay applied the others are just binary matrices, it also contains the images from the base model and the future sessions
+    np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/heatmap_matrix_"+str(index_for_file_saving)+".txt", heatmap_matrix)
 
+    index_for_file_saving = index_for_file_saving + 1
 
 # This is still WIP
 # print("Applying Set Cover Problem..")

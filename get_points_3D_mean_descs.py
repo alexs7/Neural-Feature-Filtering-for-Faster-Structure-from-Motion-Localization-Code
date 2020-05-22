@@ -1,6 +1,9 @@
-# this is to get a huge np matrix with each points mean desc - for now you manually change the file name and
-# which model you get them from... TODO: bad ! change it!
+# run this to get the avg of the 3D desc of a point same order as in points3D
 # be careful that you can get the base model's avg descs or the complete's model descs
+
+# the idea here is that a point is seen by the base model images and complete model images
+# obviously the complete model images number > base model images number for a point
+
 import sqlite3
 import numpy as np
 import sys
@@ -60,10 +63,10 @@ for name in query_images_names:
     id = image_localised(name, complete_model_all_images)
     query_images_ids.append(id)
 
-print("query_images_ids size " + str(len(query_images_ids)))
+print("Query_images_ids size: " + str(len(query_images_ids)) + " ( this is also the no of the query images localised)")
 
 all_images_ids = base_images_ids + query_images_ids
-print("all_images_ids size " + str(len(all_images_ids)))
+print("All_images_ids size: " + str(len(all_images_ids)))
 
 # getting all 3D points avg desc and save them in a huge file
 print("Getting the avg descs for the base and all (base + query) points' images")
@@ -80,7 +83,7 @@ for i in range(0,len(points3D)):
     for k in range(len(points3D[point_id].image_ids)): #unique here doesn't really matter
         id = points3D[point_id].image_ids[k]
         # check if the point is viewed by the current base image
-        if(id in base_images_ids): # TODO: remove this to get all the points average
+        if(id in base_images_ids):
             data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(id) + "'")
             data = blob_to_array(data.fetchone()[0], np.uint8)
             descs_rows = int(np.shape(data)[0] / 128)
@@ -88,7 +91,7 @@ for i in range(0,len(points3D)):
             desc = descs[points3D[point_id].point2D_idxs[k]]
             desc = desc.reshape(1, 128)
             points3D_descs_base = np.r_[points3D_descs_base, desc]
-        if (id in all_images_ids):  # TODO: remove this to get all the points average
+        if (id in all_images_ids):
             data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(id) + "'")
             data = blob_to_array(data.fetchone()[0], np.uint8)
             descs_rows = int(np.shape(data)[0] / 128)

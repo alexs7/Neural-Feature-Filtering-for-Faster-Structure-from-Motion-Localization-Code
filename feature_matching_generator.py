@@ -1,6 +1,7 @@
 # this is to match sfm images (already localised) descs against the
 # base model and the complete model as a benchmark and also exports the 2D-3D matches for ransac
 # matching here is done using my own DM (direct matching) function.
+
 import sqlite3
 
 import numpy as np
@@ -28,7 +29,7 @@ def blob_to_array(blob, dtype, shape=(-1,)):
 
 db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/database.db")
 
-# creates 2d-3d matches for ransac
+# creates 2d-3d matches data for ransac
 def get_matches(good_matches_indices, points3D_indexing, points3D, query_image_xy):
     # same length
     # good_matches_indices[0] - 2D indices, xy
@@ -42,6 +43,7 @@ def get_matches(good_matches_indices, points3D_indexing, points3D, query_image_x
         # get 2D point data
         xy_2D = query_image_xy[good_matches_indices[0][i]]
         # remember points3D_index is aligned with trainDescriptors_*
+        # values here are self explanatory..
         match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index]).reshape([1,6])
         matches = np.r_[matches, match]
     return matches
@@ -79,6 +81,9 @@ results_all = {}
 
 matches_base = {}
 matches_all = {}
+
+matches_base_sum = []
+matches_all_sum = []
 
 images_not_localised = []
 images_localised = []
@@ -131,11 +136,20 @@ for test_image in test_images:
         matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy)
         matches_base[test_image] = get_matches(good_matches_base, points3D_indexing, points3D, query_image_keypoints_data_xy)
 
+        matches_base_sum.append(len(good_matches_base[0]))
+        matches_all_sum.append(len(good_matches_all[0]))
+
         print("         Found this many good matches (against complete model): " + str(len(good_matches_all[0])))
         print("         Found this many good matches (against base model): " + str(len(good_matches_base[0])))
     else:
         print("     Frame "+test_image+" not localised..")
         images_not_localised.append(test_image)
+
+print("Averages: ")
+matches_base_avg = np.sum(matches_base_sum) / len(matches_base_sum)
+print("Base model avg matches: " + str(matches_base_avg))
+matches_all_avg = np.sum(matches_all_sum) / len(matches_all_sum)
+print("Complete model avg matches: " + str(matches_all_avg))
 
 print("Saving data...")
 # save the 2D-3D matches

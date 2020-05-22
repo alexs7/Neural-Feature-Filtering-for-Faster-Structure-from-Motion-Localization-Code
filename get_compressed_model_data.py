@@ -1,3 +1,4 @@
+# this was an attempt to compress the model - still WIP
 from point3D_loader import read_points3d_default
 import numpy as np
 import sys
