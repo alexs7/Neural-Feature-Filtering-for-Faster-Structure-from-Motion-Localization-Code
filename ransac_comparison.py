@@ -94,8 +94,8 @@ for exponential_decay_value in exponential_decay_values:
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_images_pose_" + str(index_for_file_loading) + ".npy", vanilla_ransac_images_poses)
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_data_" + str(index_for_file_loading) + ".npy", vanilla_ransac_data)
 
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_images_pose_ord_" + str(index_for_file_loading) + ".npy", ord_modified_ransac_images_poses)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_ord_" + str(index_for_file_loading) + ".npy", ord_modified_ransac_data)
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_images_pose_" + str(index_for_file_loading) + ".npy", ord_modified_ransac_images_poses)
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_" + str(index_for_file_loading) + ".npy", ord_modified_ransac_data)
 
     # np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_images_pose_alt_" + str(index_for_file_loading) + ".npy", alt_modified_ransac_images_poses)
     # np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_alt_" + str(index_for_file_loading) + ".npy", alt_modified_ransac_data)

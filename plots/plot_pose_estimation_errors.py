@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Step 5: Plot RANSAC results for each exponential decay value
+# Plot RANSAC results for each exponential decay value
 images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/images_localised.txt"
 
 images_localised_labels = []
@@ -16,8 +16,6 @@ mean_values_a_vanilla = []
 
 indices_for_loading = np.arange(1,10)
 for index in indices_for_loading:
-
-    print("Running for exponential decay value: 0." + str(index))
 
     # modified and vanilla ransac
     # translation errors
