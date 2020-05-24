@@ -68,7 +68,6 @@ print("Query_images_ids size: " + str(len(query_images_ids)) + " ( this is also 
 all_images_ids = base_images_ids + query_images_ids
 print("All_images_ids size: " + str(len(all_images_ids)))
 
-# getting all 3D points avg desc and save them in a huge file
 print("Getting the avg descs for the base and all (base + query) points' images")
 points_id_desc = {}
 points_mean_descs_all = np.empty([0, 128])

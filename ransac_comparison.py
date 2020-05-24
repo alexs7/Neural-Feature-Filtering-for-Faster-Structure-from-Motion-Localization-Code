@@ -27,7 +27,7 @@ matches_all = np.load('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/
 
 exponential_decay_values = np.linspace(0,1, num=10,endpoint=False)[1:10]
 
-index_for_file_loading = 1 # 1 is for 0.1, 2 is for 0.2 etc etc
+index_for_file_loading = 1 # 1 is for 0.1, 2 is for 0.2 etc etc (referring to exponential decay)
 for exponential_decay_value in exponential_decay_values:
 
     #ordinary distributions, and altered distributions (the one that has values over the mean), both same size as 3D points
@@ -61,7 +61,7 @@ for exponential_decay_value in exponential_decay_values:
         matches_for_image = matches_all.item()[image]
 
         if(len(matches_for_image) >= 4):
-            print("Doing image: " + image + ", with no of matches: " + str(len(matches_for_image)))
+            # print("Doing image: " + image + ", with no of matches: " + str(len(matches_for_image)))
             # vanilla
             start = time.time()
             inliers_no, ouliers_no, iterations, best_model, elapsed_time_total_for_random_sampling = run_ransac(matches_for_image)
@@ -80,14 +80,14 @@ for exponential_decay_value in exponential_decay_values:
             ord_modified_ransac_images_poses[image] = best_model
             ord_modified_ransac_data = np.r_[ord_modified_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1, 4])]
 
-            # my version using VM alt distris
-            start = time.time()
-            inliers_no, ouliers_no, iterations, best_model, elapsed_time_total_for_random_sampling = run_ransac_modified(matches_for_image, alt_sub_distributions[image])
-            end = time.time()
-            elapsed_time = end - start - elapsed_time_total_for_random_sampling
-
-            alt_modified_ransac_images_poses[image] = best_model
-            alt_modified_ransac_data = np.r_[alt_modified_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1, 4])]
+            # my version using VM alt distris TODO: fix
+            # start = time.time()
+            # inliers_no, ouliers_no, iterations, best_model, elapsed_time_total_for_random_sampling = run_ransac_modified(matches_for_image, alt_sub_distributions[image])
+            # end = time.time()
+            # elapsed_time = end - start - elapsed_time_total_for_random_sampling
+            #
+            # alt_modified_ransac_images_poses[image] = best_model
+            # alt_modified_ransac_data = np.r_[alt_modified_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1, 4])]
         else:
             print(image + " has less than 4 matches..")
 
@@ -97,8 +97,8 @@ for exponential_decay_value in exponential_decay_values:
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_images_pose_ord_" + str(index_for_file_loading) + ".npy", ord_modified_ransac_images_poses)
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_ord_" + str(index_for_file_loading) + ".npy", ord_modified_ransac_data)
 
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_images_pose_alt_" + str(index_for_file_loading) + ".npy", alt_modified_ransac_images_poses)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_alt_" + str(index_for_file_loading) + ".npy", alt_modified_ransac_data)
+    # np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_images_pose_alt_" + str(index_for_file_loading) + ".npy", alt_modified_ransac_images_poses)
+    # np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_alt_" + str(index_for_file_loading) + ".npy", alt_modified_ransac_data)
 
     print("Results for exponential_decay_value " + str(index_for_file_loading/10) + ":")
     print("Vanillia RANSAC")
@@ -119,7 +119,10 @@ for exponential_decay_value in exponential_decay_values:
 
     index_for_file_loading = index_for_file_loading + 1
 
-    print()
+    print("<---->")
+    breakpoint()
+
+print("Done!")
 
 
 

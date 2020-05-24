@@ -106,8 +106,7 @@ for test_image in test_images:
         query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
         query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows,query_image_keypoints_data_cols)
         query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
-        query_image_descriptors_data = db.execute(
-            "SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
+        query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
         query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
         query_image_descriptors_data = blob_to_array(query_image_descriptors_data, np.uint8)
         descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
@@ -163,6 +162,7 @@ np.save('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/da
 
 # also writing the names for the visualizing of the result graphs
 # TODO: images_localised do not include the base images.. maybe add them?
+# What COLMAP localised
 with open('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/images_localised.txt', 'w') as f:
     for item in images_localised:
         f.write("%s\n" % item)
