@@ -1,4 +1,4 @@
-# This is to split the frame into equal parts and measure how many points are in there - variance
+# This is to split the frame into equal parts and measure how many points are in there - variance - TODO: WIP
 from query_image import read_images_binary
 from show_2D_points import show_projected_points
 import numpy as np

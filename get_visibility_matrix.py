@@ -1,10 +1,10 @@
 # applies the exponential decay on images - not 3D points as it was before!
-
+# and also generates and saves the base VM and complete VM
+# heatmap VM contains exponential decay applied (so there will be N=exponential_decay_values of those)
+from load_sessions import get_sessions
 from point3D_loader import read_points3d_default
 from query_image import read_images_binary, image_localised
 import numpy as np
-import sys
-import json
 
 # by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
 complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/images.bin"
@@ -20,60 +20,8 @@ print("     Number: "+ str(len(images_from_28_03)))
 
 # all future session images - already localised in complete model
 print("Getting images from other future sessions.. (or models)")
-
-# for the rest of the models this are in .bin files
-# load in TIME order (oldest first!)
-images_from_29_03 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-03-29/coop_local/model/model/0/images.bin")
-images_from_04_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-04/coop_local/model/model/0/images.bin")
-images_from_09_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-09/coop_local_small/model/model/0/images.bin")
-images_from_23_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-23/coop_local_small/model/model/0/images.bin")
-images_from_25_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-25/coop_local/model/model/0/images.bin")
-images_from_26_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-26/coop_local/model/model/0/images.bin")
-images_from_27_04 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-04-27/coop_local/model/model/0/images.bin")
-images_from_02_05 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-05-02/coop_local/model/model/0/images.bin")
-images_from_06_05 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/2020-05-06/coop_local/model/model/0/images.bin")
-
-print("Getting the future sessions images' names..")
-images_from_29_03_names = []
-for k, v in images_from_29_03.items():
-    images_from_29_03_names.append(v.name)
-
-images_from_04_04_names = []
-for k, v in images_from_04_04.items():
-    images_from_04_04_names.append(v.name)
-
-images_from_09_04_names = []
-for k, v in images_from_09_04.items():
-    images_from_09_04_names.append(v.name)
-
-images_from_23_04_names = []
-for k, v in images_from_23_04.items():
-    images_from_23_04_names.append(v.name)
-
-images_from_25_04_names = []
-for k, v in images_from_25_04.items():
-    images_from_25_04_names.append(v.name)
-
-images_from_26_04_names = []
-for k, v in images_from_26_04.items():
-    images_from_26_04_names.append(v.name)
-
-images_from_27_04_names = []
-for k, v in images_from_27_04.items():
-    images_from_27_04_names.append(v.name)
-
-images_from_02_05_names = []
-for k, v in images_from_02_05.items():
-    images_from_02_05_names.append(v.name)
-
-images_from_06_05_names = []
-for k, v in images_from_06_05.items():
-    images_from_06_05_names.append(v.name)
-
 # these have to be sorted by time!
-sessions_image_sets = [images_from_29_03_names, images_from_04_04_names, images_from_09_04_names,
-                       images_from_23_04_names, images_from_25_04_names, images_from_26_04_names,
-                       images_from_27_04_names, images_from_02_05_names, images_from_06_05_names]
+sessions_image_sets = get_sessions()
 
 print("Creating VMs..")
 complete_model_visibility_matrix = np.empty([0, len(points3D)])
@@ -126,11 +74,9 @@ for session_image_set in sessions_image_sets:
 # At this point you have a complete VM matrix without exponential decay
 print("Complete_model_visibility_matrix matrix rows: " + str(complete_model_visibility_matrix.shape[0]))
 
-np.savetxt(
-    "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/base_visibility_matrix.txt",
+np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/base_visibility_matrix.txt",
     base_visibility_matrix)
-np.savetxt(
-    "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/complete_model_visibility_matrix.txt",
+np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/complete_model_visibility_matrix.txt",
     complete_model_visibility_matrix)
 
 # Now this is where you apply the exponential decay!

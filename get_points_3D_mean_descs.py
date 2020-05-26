@@ -63,7 +63,7 @@ for name in query_images_names:
     id = image_localised(name, complete_model_all_images)
     query_images_ids.append(id)
 
-print("Query_images_ids size: " + str(len(query_images_ids)) + " ( this is also the no of the query images localised)")
+print("Query_images_ids size: " + str(len(query_images_ids)) + " (this is also the no of the query images localised)")
 
 all_images_ids = base_images_ids + query_images_ids
 print("All_images_ids size: " + str(len(all_images_ids)))
