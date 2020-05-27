@@ -14,7 +14,6 @@ points3D = read_points3d_default(complete_model_points3D_path) # base model's 3D
 
 # all base model images
 print("Getting the base model images..")
-# This should have 117 imges not 130, as 13 where left out for testing.
 images_from_28_03 = read_images_binary("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/model/0/images.bin")
 print("     Number: "+ str(len(images_from_28_03)))
 
