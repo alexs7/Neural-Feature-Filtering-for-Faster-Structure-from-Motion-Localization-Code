@@ -28,7 +28,6 @@ for session_name, session_images in all_sessions_dic.items():
         if( image_name in session_images): # i.e is in current session
             temp_session_result_base.append(matches_no)
 
-
     results_all_over_sessions.append(np.sum(temp_session_result_all))
     results_base_over_sessions.append(np.sum(temp_session_result_base))
 

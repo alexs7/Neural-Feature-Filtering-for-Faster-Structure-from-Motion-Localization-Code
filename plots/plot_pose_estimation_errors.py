@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Plot RANSAC results for each exponential decay value
+# Plot RANSAC pose results for each exponential decay value
+# TODO: Add pose refinement stage here ?
 images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/images_localised.txt"
 
 images_localised_labels = []

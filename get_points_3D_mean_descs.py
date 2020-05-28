@@ -204,6 +204,8 @@ for features_no in colmap_features_no:
     print("Running vanilla get 3D descs avg...")
     # get_desc_avg(features_no)
     print("Running get 3D descs avg with heatmap VM data...")
-    # TODO: using the 0.5 heatmap vm for now - but you will need to test all..
-    heatmap_vm = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/heatmap_matrix_5.txt")
-    get_desc_avg_with_extra_exponential_decay_data(features_no, heatmap_vm, "5")
+    # TODO: This doesn't make sense as the query image will have zero for that value... so you are just increasing the distance.. YES! but the most prominent ones will be closer :)
+    exponential_decay_rates = ["1","2","3","4","5","6","7","8","9"]
+    for exponential_decay_rate in exponential_decay_rates:
+        heatmap_vm = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/heatmap_matrix_"+exponential_decay_rate+".txt")
+        get_desc_avg_with_extra_exponential_decay_data(features_no, heatmap_vm, exponential_decay_rate)
