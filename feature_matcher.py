@@ -142,7 +142,7 @@ class FeatureMatcher(object):
         len_des2 = len(des2)
         idx1, idx2 = [], []  
         # good_matches = []           
-        if ratio_test is None: 
+        if ratio_test is None:
             ratio_test = self.ratio_test
         if matches is not None:         
             float_inf = float('inf')

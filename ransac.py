@@ -53,6 +53,8 @@ def run_ransac(matches_for_image):
         img_points = matches_for_image[(random_matches), 0:2]
 
         # calculate pose
+        # this is required for SOLVEPNP_P3P
+        img_points = np.ascontiguousarray(img_points[:, :2]).reshape((img_points.shape[0], 1, 2))
         retval, rvec, tvec = cv2.solvePnP(obj_points, img_points, K, distCoeffs, flags=cv2.SOLVEPNP_P3P)
         rotm = cv2.Rodrigues(rvec)[0]
         Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
@@ -109,6 +111,7 @@ def run_ransac_modified(matches_for_image, distribution):
         end = time.time()
         elapsed_time = end - start
         elapsed_time_total_for_random_sampling = elapsed_time_total_for_random_sampling + elapsed_time
+
         # get 3D and 2D points
         obj_points = matches_for_image[(random_matches), 2:5]
         img_points = matches_for_image[(random_matches), 0:2]

@@ -120,7 +120,7 @@ def get_desc_avg(features_no):
 def get_desc_avg_with_extra_exponential_decay_data(features_no, heatmap_vm, heatmap_exp_id):
     # This version of the method will append the the 128 mean descs for each point3D of all the images, 1 extra value
     # that is the sum or mean of the exponential decay value of each point
-    print("-- Doing features_no " + features_no + " --")
+    print("-- Doing features_no " + features_no + " and exponential_decay_rate "+exponential_decay_rate+" --")
 
     db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db")
 
@@ -176,7 +176,7 @@ def get_desc_avg_with_extra_exponential_decay_data(features_no, heatmap_vm, heat
         print("Doing point " + str(i) + "/" + str(len(points3D)), end="\r")
         point_id = points3D_indexing[i]
         points3D_descs_all = np.empty([0, 129])
-        desc_extra_data = np.sum(heatmap_vm[:,i]) #TODO: Change to mean and test ?
+        desc_extra_data = np.sum(heatmap_vm[:,i]) #TODO: Change to mean and test feature_matching again?
         # Loop through the points' image ids and check if it is seen by all_images
         # If it is seen then get the descs for each id
         for k in range(len(points3D[point_id].image_ids)): #unique here doesn't really matter
@@ -202,9 +202,10 @@ colmap_features_no = ["2k", "1k", "0.5k", "0.25k"]
 # run for each no of features
 for features_no in colmap_features_no:
     print("Running vanilla get 3D descs avg...")
-    # get_desc_avg(features_no)
+    get_desc_avg(features_no)
+
     print("Running get 3D descs avg with heatmap VM data...")
-    # TODO: This doesn't make sense as the query image will have zero for that value... so you are just increasing the distance.. YES! but the most prominent ones will be closer :)
+    # TODO: This doesn't make sense as the query image will have zero for that value... so you are just increasing the distance.. YES! but the most prominent ones will be further :)
     exponential_decay_rates = ["1","2","3","4","5","6","7","8","9"]
     for exponential_decay_rate in exponential_decay_rates:
         heatmap_vm = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/heatmap_matrix_"+exponential_decay_rate+".txt")
