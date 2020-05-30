@@ -3,7 +3,7 @@ import numpy as np
 
 # Plot RANSAC pose results for each exponential decay value
 # TODO: Add pose refinement stage here ?
-images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/images_localised.txt"
+images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/2k/images_localised_no_base.txt"
 
 images_localised_labels = []
 with open(images_localised_path) as f:
@@ -15,26 +15,24 @@ mean_values_t_vanilla = []
 mean_values_a_modified = []
 mean_values_a_vanilla = []
 
-indices_for_loading = np.arange(1,10)
-for index in indices_for_loading:
+index_for_loading = "5" # refers to exponential decay value
 
-    # modified and vanilla ransac
-    # translation errors
-    vanilla_ransac_results_t = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_results_t_"+str(index)+".npy")
-    mean_values_t_vanilla.append(np.mean(vanilla_ransac_results_t))
+# modified and vanilla ransac
+# translation errors
+vanilla_ransac_results_t = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_t_"+index_for_loading+".npy")
+mean_values_t_vanilla.append(np.mean(vanilla_ransac_results_t))
 
-    modified_ransac_results_t = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_results_t_"+str(index)+".npy")
-    mean_values_t_modified.append(np.mean(modified_ransac_results_t))
+modified_ransac_results_t = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_t_"+index_for_loading+".npy")
+mean_values_t_modified.append(np.mean(modified_ransac_results_t))
 
-    # rotation errors
-    vanilla_ransac_results_a = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_results_a_"+str(index)+".npy")
-    mean_values_a_vanilla.append(np.mean(vanilla_ransac_results_a))
+# rotation errors
+vanilla_ransac_results_a = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_a_"+index_for_loading+".npy")
+mean_values_a_vanilla.append(np.mean(vanilla_ransac_results_a))
 
-    modified_ransac_results_a = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_results_a_"+str(index)+".npy")
-    mean_values_a_modified.append(np.mean(modified_ransac_results_a))
+modified_ransac_results_a = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_a_"+index_for_loading+".npy")
+mean_values_a_modified.append(np.mean(modified_ransac_results_a))
 
-
-labels = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']
+labels = ['0.5']
 x = np.arange(len(labels))  # the label locations
 width = 0.2  # the width of the bars
 

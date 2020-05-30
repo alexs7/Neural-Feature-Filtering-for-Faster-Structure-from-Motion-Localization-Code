@@ -29,7 +29,8 @@ def run_ransac_comparison(features_no):
     # TODO: why not using matches_base ?!?!! and comparing to that ?
     matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all.npy")
 
-    starting_index_val = 5
+    starting_index_val = 1
+    breakpoint()
     for exponential_decay_value in range(starting_index_val,10):
 
         #ordinary distributions, and altered distributions (the one that has values over the mean), both same size as 3D points
@@ -95,13 +96,13 @@ def run_ransac_comparison(features_no):
         print("Vanillia RANSAC")
         print("     Average Inliers: " + str(np.mean(vanilla_ransac_data[:,0])))
         print("     Average Outliers: " + str(np.mean(vanilla_ransac_data[:,1])))
-        print("     Average Time (s): " + str(np.mean(vanilla_ransac_data[:,3])))
         print("     Average Iterations: " + str(np.mean(vanilla_ransac_data[:,2])))
+        print("     Average Time (s): " + str(np.mean(vanilla_ransac_data[:,3])))
         print("Modified RANSAC with ord_distributions")
         print("     Average Inliers: " + str(np.mean(ord_modified_ransac_data[:, 0])))
         print("     Average Outliers: " + str(np.mean(ord_modified_ransac_data[:, 1])))
-        print("     Average Time (s): " + str(np.mean(ord_modified_ransac_data[:, 3])))
         print("     Average Iterations: " + str(np.mean(ord_modified_ransac_data[:, 2])))
+        print("     Average Time (s): " + str(np.mean(ord_modified_ransac_data[:, 3])))
         print("<---->")
 
 

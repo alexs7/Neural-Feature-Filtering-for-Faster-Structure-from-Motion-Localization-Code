@@ -2,101 +2,65 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Plot RANSAC performance graphs
+def plot_ransac(data, features_no):
 
-mean_inliers_modified = []
-mean_outliers_modified = []
-mean_iterations_modified = []
-mean_time_modified = []
+    mean_data_vanillia = []
+    mean_data_modified = []
 
-mean_inliers_vanillia = []
-mean_outliers_vanillia = []
-mean_iterations_vanillia = []
-mean_time_vanillia = []
+    exp_decay_rates_values = ["0.5", "0.6", "0.7", "0.8", "0.9"]
+    exp_decay_rates_index = ["5", "6", "7", "8", "9"]
 
-indices_for_loading = np.arange(1,10)
-for index in indices_for_loading:
+    data_index = 0
+    upper_limit = 0
+    if data == "inliers":
+        data_index = 0
+        upper_limit = 120
+    if data == "outliers":
+        data_index = 1
+        upper_limit = 110
+    if data == "avg_iters":
+        data_index = 2
+        upper_limit = 120
+    if data == "avg_time":
+        data_index = 3
+        upper_limit = 0.5
 
-    vanilla_ransac_data = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/vanilla_ransac_data_"+str(index)+".npy")
-    mean_inliers_vanillia.append(np.mean(vanilla_ransac_data[:,0]))
-    mean_outliers_vanillia.append(np.mean(vanilla_ransac_data[:,1]))
-    mean_iterations_vanillia.append(np.mean(vanilla_ransac_data[:,2]))
-    mean_time_vanillia.append(np.mean(vanilla_ransac_data[:,3]))
+    for exp_decay_rate_index in exp_decay_rates_index:
+        # get the data for each features_no for both RANSAC version
+        vanilla_ransac_data = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_data_"+exp_decay_rate_index+".npy")
+        mean_data_vanillia.append(np.mean(vanilla_ransac_data[:,data_index]))
 
-    modified_ransac_data = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/benchmarks/modified_ransac_data_"+str(index)+".npy")
-    mean_inliers_modified.append(np.mean(modified_ransac_data[:,0]))
-    mean_outliers_modified.append(np.mean(modified_ransac_data[:,1]))
-    mean_iterations_modified.append(np.mean(modified_ransac_data[:,2]))
-    mean_time_modified.append(np.mean(modified_ransac_data[:,3]))
+        modified_ransac_data = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_ransac_data_"+exp_decay_rate_index+".npy")
+        mean_data_modified.append(np.mean(modified_ransac_data[:,data_index]))
 
-labels = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']
-x = np.arange(len(labels))  # the label locations
-width = 0.2  # the width of the bars
+    labels = exp_decay_rates_values
+    x = np.arange(len(labels))  # the label locations
+    width = 0.2  # the width of the bars
 
-# first plot - for inliers
-fig0, ax0 = plt.subplots()
+    # first plot - for inliers
+    fig, ax = plt.subplots(figsize=(18,10))
 
-# legends
-rects1 = ax0.bar(x - width/2, mean_inliers_vanillia, width, label='Inliers Mean for Vanilla RANSAC')
-rects2 = ax0.bar(x + width/2, mean_inliers_modified, width, label='Inliers Mean for Modified RANSAC')
+    # legends
+    rects1 = ax.bar(x - width/2, mean_data_modified, width, label='Mean for Modified RANSAC ' + data)
+    rects2 = ax.bar(x + width/2, mean_data_vanillia, width, label='Mean for Vanilla RANSAC ' + data)
 
-# Add some text for labels, title and custom x-axis tick labels, etc.
-ax0.set_ylabel('Inliers Number Mean')
-ax0.set_title('Modified vs Vanilla RANSAC Inliers')
-ax0.set_xticks(x)
-ax0.set_xticklabels(labels)
-ax0.legend()
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Number Mean for ' + data)
+    ax.set_title('Modified vs Vanilla RANSAC for ' + data + " and features_no " + features_no)
+    ax.set_ylim(0, upper_limit)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
 
-fig0.tight_layout()
+    fig.tight_layout()
 
-# second plot - for outliers
-fig1, ax1 = plt.subplots()
+    # plt.show()
+    plt.savefig("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/plots/"+data+"_for_features_no_"+features_no+".png")
 
-# legends
-rects11 = ax1.bar(x - width/2, mean_outliers_vanillia, width, label='Outliers Mean for Vanilla RANSAC')
-rects21 = ax1.bar(x + width/2, mean_outliers_modified, width, label='Outliers Mean for Modified RANSAC')
-
-# Add some text for labels, title and custom x-axis tick labels, etc.
-ax1.set_ylabel('Outliers Number Mean')
-ax1.set_title('Modified vs Vanilla RANSAC Outliers')
-ax1.set_xticks(x)
-ax1.set_xticklabels(labels)
-ax1.legend()
-
-fig1.tight_layout()
-
-# third plot - for iterations
-fig1, ax2 = plt.subplots()
-
-# legends
-rects11 = ax2.bar(x - width/2, mean_iterations_vanillia, width, label='Iterations Mean Vanilla RANSAC')
-rects21 = ax2.bar(x + width/2, mean_iterations_modified, width, label='Iterations Mean Modified RANSAC')
-
-# Add some text for labels, title and custom x-axis tick labels, etc.
-ax2.set_ylabel('Iterations Number Mean')
-ax2.set_title('Modified vs Vanilla RANSAC Iterations')
-ax2.set_xticks(x)
-ax2.set_xticklabels(labels)
-ax2.legend()
-
-fig1.tight_layout()
-
-# fourth plot - for time
-fig1, ax3 = plt.subplots()
-
-# legends
-rects11 = ax3.bar(x - width/2, mean_time_vanillia, width, label='Time in (s) Mean Vanilla RANSAC')
-rects21 = ax3.bar(x + width/2, mean_time_modified, width, label='Time in (s) Mean Modified RANSAC')
-
-# Add some text for labels, title and custom x-axis tick labels, etc.
-ax3.set_ylabel('Time Mean in Seconds')
-ax3.set_title('Modified vs Vanilla RANSAC Time in (s)')
-ax3.set_xticks(x)
-ax3.set_xticklabels(labels)
-ax3.legend()
-
-fig1.tight_layout()
-
-plt.show()
-
-
-
+# NOTE: remember time is in seconds
+data_to_show = ["inliers", "outliers", "avg_iters", "avg_time"]
+colmap_features_no = ["2k", "1k", "0.5k", "0.25k"]
+for data in data_to_show:
+    for features_no in colmap_features_no:
+        print("Getting " + data + " for features_no: " + features_no)
+        plot_ransac(data, features_no)

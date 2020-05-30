@@ -1,4 +1,4 @@
-# this is to match sfm images (already localised) descs against the
+# This is to match sfm images (already localised) descs against the
 # base model and the complete model as a benchmark and also exports the 2D-3D matches for ransac
 # matching here is done using my own DM (direct matching) function.
 
@@ -294,7 +294,8 @@ for features_no in colmap_features_no:
     feature_matcher_wrapper(features_no)
 
     # This time take into account the exponential decay matrix values
-    print("Doing feature matching with exponential decay rates")
-    exponential_decay_rates = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
-    for exponential_decay_rate in exponential_decay_rates:
-        feature_matcher_wrapper_with_extra_exponential_decay_data(features_no, exponential_decay_rate)
+    # TODO: Review
+    # print("Doing feature matching with exponential decay rates")
+    # exponential_decay_rates = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    # for exponential_decay_rate in exponential_decay_rates:
+    #     feature_matcher_wrapper_with_extra_exponential_decay_data(features_no, exponential_decay_rate)
