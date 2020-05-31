@@ -1,71 +1,65 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Plot RANSAC pose results for each exponential decay value
 # TODO: Add pose refinement stage here ?
-images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/2k/images_localised_no_base.txt"
+def plot_pose_errors(error, features_no):
 
-images_localised_labels = []
-with open(images_localised_path) as f:
-    images_localised_labels = f.readlines()
-images_localised_labels = [x.strip() for x in images_localised_labels]
+    mean_error_data_vanillia = []
+    mean_error_data_modified = []
 
-mean_values_t_modified = []
-mean_values_t_vanilla = []
-mean_values_a_modified = []
-mean_values_a_vanilla = []
+    exp_decay_rates_values = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9"]
+    exp_decay_rates_index = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
-index_for_loading = "5" # refers to exponential decay value
+    data_index = 0
+    upper_limit = 0
+    if error == "translation":
+        error_index = "t"
+    if error == "rotation":
+        error_index = "a"
 
-# modified and vanilla ransac
-# translation errors
-vanilla_ransac_results_t = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_t_"+index_for_loading+".npy")
-mean_values_t_vanilla.append(np.mean(vanilla_ransac_results_t))
+    images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/images_localised_no_base.txt"
 
-modified_ransac_results_t = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_t_"+index_for_loading+".npy")
-mean_values_t_modified.append(np.mean(modified_ransac_results_t))
+    images_localised_labels = []
+    with open(images_localised_path) as f:
+        images_localised_labels = f.readlines()
+    images_localised_labels = [x.strip() for x in images_localised_labels]
 
-# rotation errors
-vanilla_ransac_results_a = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_a_"+index_for_loading+".npy")
-mean_values_a_vanilla.append(np.mean(vanilla_ransac_results_a))
+    # Plot RANSAC pose results for each exponential decay value
+    for exp_decay_rate_index in exp_decay_rates_index:
+        # get the data for each features_no for both RANSAC version
+        vanilla_pose_data = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_"+error_index+"_"+features_no+"_"+exp_decay_rate_index+".npy")
+        mean_error_data_vanillia.append(np.mean(vanilla_pose_data))
 
-modified_ransac_results_a = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_a_"+index_for_loading+".npy")
-mean_values_a_modified.append(np.mean(modified_ransac_results_a))
+        modified_pose_data = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_"+error_index+"_"+features_no+"_"+exp_decay_rate_index+".npy")
+        mean_error_data_modified.append(np.mean(modified_pose_data))
 
-labels = ['0.5']
-x = np.arange(len(labels))  # the label locations
-width = 0.2  # the width of the bars
+    labels = exp_decay_rates_values
+    x = np.arange(len(labels))  # the label locations
+    width = 0.2  # the width of the bars
 
-# first plot - for translations
-fig0, ax0 = plt.subplots()
+    # first plot - for inliers
+    fig, ax = plt.subplots(figsize=(18,10))
 
-# legends
-rects1 = ax0.bar(x - width/2, mean_values_t_vanilla, width, label='Translation Errors Vanilla RANSAC')
-rects2 = ax0.bar(x + width/2, mean_values_t_modified, width, label='Translation Errors Modified RANSAC')
+    # legends
+    rects1 = ax.bar(x - width/2, mean_error_data_modified, width, label='Mean error for each image Modified RANSAC ' + error)
+    rects2 = ax.bar(x + width/2, mean_error_data_vanillia, width, label='Mean error for each Vanillia RANSAC  ' + error)
 
-# Add some text for labels, title and custom x-axis tick labels, etc.
-ax0.set_ylabel('Translation Errors in COLMAP Units')
-ax0.set_title('Modified vs Vanilla RANSAC')
-ax0.set_xticks(x)
-ax0.set_xticklabels(labels)
-ax0.legend()
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Number Mean for ' + error)
+    ax.set_title('Pose Errors for ' + error + " and features_no " + features_no)
+    # ax.set_ylim(0, upper_limit)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
 
-fig0.tight_layout()
+    fig.tight_layout()
 
-# second plot - for rotations
-fig1, ax1 = plt.subplots()
+    # plt.show()
+    plt.savefig("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/plots/pose_errors/"+error+"_error_for_features_no_"+features_no+".png")
 
-# legends
-rects11 = ax1.bar(x - width/2, mean_values_a_vanilla, width, label='Rotation Errors Vanilla RANSAC')
-rects21 = ax1.bar(x + width/2, mean_values_a_modified, width, label='Rotation Errors Modified RANSAC')
-
-# Add some text for labels, title and custom x-axis tick labels, etc.
-ax1.set_ylabel('Rotation Errors in radians')
-ax1.set_title('Modified vs Vanilla RANSAC')
-ax1.set_xticks(x)
-ax1.set_xticklabels(labels)
-ax1.legend()
-
-fig1.tight_layout()
-
-plt.show()
+errors_to_show = ["translation", "rotation"]
+colmap_features_no = ["2k", "1k", "0.5k", "0.25k"]
+for error in errors_to_show:
+    for features_no in colmap_features_no:
+        print("Getting " + error + " errors for features_no: " + features_no)
+        plot_pose_errors(error, features_no)

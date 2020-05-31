@@ -7,8 +7,8 @@ def plot_ransac(data, features_no):
     mean_data_vanillia = []
     mean_data_modified = []
 
-    exp_decay_rates_values = ["0.5", "0.6", "0.7", "0.8", "0.9"]
-    exp_decay_rates_index = ["5", "6", "7", "8", "9"]
+    exp_decay_rates_values = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9"]
+    exp_decay_rates_index = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
     data_index = 0
     upper_limit = 0

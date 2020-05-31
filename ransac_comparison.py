@@ -30,7 +30,7 @@ def run_ransac_comparison(features_no):
     matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all.npy")
 
     starting_index_val = 1
-    breakpoint()
+
     for exponential_decay_value in range(starting_index_val,10):
 
         #ordinary distributions, and altered distributions (the one that has values over the mean), both same size as 3D points
