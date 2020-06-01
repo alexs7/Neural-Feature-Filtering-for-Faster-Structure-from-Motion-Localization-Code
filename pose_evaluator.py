@@ -12,7 +12,7 @@ def pose_evaluate(features_no):
 
     # load localised images names - This are from COLMAP
     localised_images = []
-    path_to_query_images_file = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/images_localised_no_base.txt"
+    path_to_query_images_file = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_localised.txt"
     with open(path_to_query_images_file) as f:
         localised_images = f.readlines()
     localised_images = [x.strip() for x in localised_images]
@@ -41,7 +41,7 @@ def pose_evaluate(features_no):
                 m_r_pose = modified_ransac_images_pose.item()[image]
                 pose_gt = get_query_image_global_pose_new_model(image, complete_model_all_images)
 
-                # translations errors
+                # translations errors TODO: change to camera center (as in Torsten's paper)
                 v_r_pose_t = v_r_pose['Rt'][0:3,3]
                 m_r_pose_t = m_r_pose['Rt'][0:3,3]
                 pose_gt_t = pose_gt[0:3, 3]

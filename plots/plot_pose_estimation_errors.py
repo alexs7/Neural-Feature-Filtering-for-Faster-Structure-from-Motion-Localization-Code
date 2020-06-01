@@ -14,10 +14,12 @@ def plot_pose_errors(error, features_no):
     upper_limit = 0
     if error == "translation":
         error_index = "t"
+        upper_limit = 1.5
     if error == "rotation":
         error_index = "a"
+        upper_limit = 0.08
 
-    images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/images_localised_no_base.txt"
+    images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_localised.txt"
 
     images_localised_labels = []
     with open(images_localised_path) as f:
@@ -47,7 +49,7 @@ def plot_pose_errors(error, features_no):
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('Number Mean for ' + error)
     ax.set_title('Pose Errors for ' + error + " and features_no " + features_no)
-    # ax.set_ylim(0, upper_limit)
+    ax.set_ylim(0, upper_limit)
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()

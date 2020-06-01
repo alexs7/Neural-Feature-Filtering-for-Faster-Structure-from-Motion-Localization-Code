@@ -151,3 +151,10 @@ def get_query_image_id_new_model(name):
             image = v
     id = image.id
     return id
+
+def load_images_from_text_file(path):
+    images = []
+    with open(path) as f:
+        images = f.readlines()
+    images = [x.strip() for x in images]
+    return images

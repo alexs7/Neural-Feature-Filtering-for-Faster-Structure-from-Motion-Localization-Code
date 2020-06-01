@@ -107,6 +107,7 @@ def run_ransac_modified(matches_for_image, distribution):
         inliers = []
         # pick 4 random matches (assume they are inliers)
         start = time.time()
+        # p = distribution, From docs: The probabilities associated with each entry in a. If not given the sample assumes a uniform distribution over all entries in a
         random_matches = np.random.choice(len(matches_for_image), s , p = distribution, replace=False)
         end = time.time()
         elapsed_time = end - start

@@ -89,8 +89,6 @@ def feature_matcher_wrapper(features_no):
     matches_base_sum = []
     matches_all_sum = []
 
-    images_not_localised = []
-    images_localised = []
     #  go through all the test images and match their descs to the 3d points avg descs
     for test_image in test_images:
         print("Doing image " + test_image)
@@ -98,7 +96,6 @@ def feature_matcher_wrapper(features_no):
 
         if(image_id != None):
             print("Frame "+test_image+" localised..")
-            images_localised.append(test_image)
             image_id = str(image_id)
 
             # fetching the x,y,descs for that image
@@ -115,7 +112,6 @@ def feature_matcher_wrapper(features_no):
             query_image_descriptors_data = blob_to_array(query_image_descriptors_data, np.uint8)
             descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
             query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
-            # query_keypoints_xy_descriptors = np.concatenate((query_image_keypoints_data_xy, query_image_descriptors_data), axis=1) #TODO: remove this ?
 
             # once you have the test images descs now do feature matching here! - Matching on all and base descs means
             queryDescriptors = query_image_descriptors_data.astype(np.float32)
@@ -146,7 +142,6 @@ def feature_matcher_wrapper(features_no):
             print("         Found this many good matches (against base model): " + str(len(good_matches_base[0])))
         else:
             print("     Frame "+test_image+" not localised..")
-            images_not_localised.append(test_image)
 
     print("Averages: ")
     matches_base_avg = np.sum(matches_base_sum) / len(matches_base_sum)
@@ -163,17 +158,6 @@ def feature_matcher_wrapper(features_no):
     # results_* contain the numbers of matches for each image so, length will be the same as the localised images no.
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/results_all.npy", results_all)
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/results_base.npy", results_base)
-
-    # also writing the names for the visualizing of the result graphs
-    # TODO: images_localised do not include the base images.. maybe add them?
-    # What COLMAP localised
-    with open("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/images_localised_no_base.txt", 'w') as f:
-        for item in images_localised:
-            f.write("%s\n" % item)
-
-    with open("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/images_not_localised.txt", 'w') as f:
-        for item in images_not_localised:
-            f.write("%s\n" % item)
 
     print("Done!")
 

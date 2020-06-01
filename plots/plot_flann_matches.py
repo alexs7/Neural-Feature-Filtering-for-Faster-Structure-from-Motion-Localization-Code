@@ -3,7 +3,7 @@ import numpy as np
 
 def plot_flann_matches(features_no):
     #  Plot but groups in days / sessions not individual days
-    images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/images_localised_no_base.txt"
+    images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_localised.txt"
 
     all_sessions_dic = np.load('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/sessions_data/images_names/all_sessions_dic.npy')
     all_sessions_dic = all_sessions_dic.item()
