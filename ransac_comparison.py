@@ -26,14 +26,14 @@ def run_ransac_comparison(features_no):
     # of course base images will be localised..
     base_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/base_images.txt")
 
-    # TODO: why not using matches_base ?!?!! and comparing to that ?
-    # and compare what ? ransac will take less time with matches_base given the smaller number of matches, plus the get_sub_distribution might not make sense
+    # Question: why not using matches_base ?!?!! and comparing to that ?
+    # Answer: and compare what ? ransac will take less time with matches_base given the smaller number of matches, plus the get_sub_distribution might not make sense
     # here as for base there are no future sessions yet.
     matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all.npy")
 
     for exponential_decay_value in range(1,10):
 
-        #ordinary distributions, and altered distributions (the one that has values over the mean), both same size as 3D points
+        #distribution; same size as 3D points
         points3D_avg_heatmap_vals = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".txt")
         points3D_avg_heatmap_vals = points3D_avg_heatmap_vals.reshape([1, points3D_avg_heatmap_vals.shape[0]])
 

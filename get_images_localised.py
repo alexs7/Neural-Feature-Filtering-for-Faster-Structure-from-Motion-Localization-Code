@@ -30,6 +30,7 @@ def get_images(features_no):
     print("images_localised : " + str(len(images_localised)))
     print("images_not_localised : " + str(len(images_not_localised)))
 
+    # Needless to say they include the base images too
     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_localised.txt",images_localised,fmt='%s')
     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_not_localised.txt",images_not_localised,fmt='%s')
 

@@ -198,7 +198,6 @@ def get_desc_avg_with_extra_exponential_decay_data(features_no, heatmap_vm, heat
     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all_with_extra_data_"+heatmap_exp_id+".txt", points_mean_descs_all_with_extra_data)
 
 colmap_features_no = ["2k", "1k", "0.5k", "0.25k"]
-
 # run for each no of features
 for features_no in colmap_features_no:
     print("Running vanilla get 3D descs avg...")

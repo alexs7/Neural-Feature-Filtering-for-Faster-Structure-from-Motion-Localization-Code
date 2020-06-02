@@ -17,7 +17,7 @@ def plot_pose_errors(error, features_no):
         upper_limit = 1.5
     if error == "rotation":
         error_index = "a"
-        upper_limit = 0.08
+        upper_limit = 5
 
     images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_localised.txt"
 

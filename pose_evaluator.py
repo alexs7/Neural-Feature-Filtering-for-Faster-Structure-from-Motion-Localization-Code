@@ -1,27 +1,28 @@
 # This file will calculate the pose comaprison between the ones
 # I calculated and the ones from COLMAP
 # NOTE: run after ransac_comparison.py
+
 import numpy as np
-from query_image import read_images_binary, get_query_image_global_pose_new_model
+from query_image import read_images_binary, get_query_image_global_pose_new_model, load_images_from_text_file
 
 def pose_evaluate(features_no):
+
+    print("-- Doing features_no " + features_no + " --")
 
     # images to the complete model containing all the query images (localised_images) + base images (ones used for SFM)
     complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/images.bin"
     complete_model_all_images = read_images_binary(complete_model_images_path)
 
     # load localised images names - This are from COLMAP
-    localised_images = []
-    path_to_query_images_file = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_localised.txt"
-    with open(path_to_query_images_file) as f:
-        localised_images = f.readlines()
-    localised_images = [x.strip() for x in localised_images]
+    localised_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_localised.txt")
+    # of course base images will be localised..
+    base_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/base_images.txt")
 
     exp_decay_rates_index = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
     for exp_decay_rate_index in exp_decay_rates_index:
 
-        # TODO: why not using matches_base ?!?!! and comparing to that ? - need to look in ransac_comparison
-        matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all_exp_dec_val_"+exp_decay_rate_index+".npy")
+        # TODO: why not using matches_base ?!?!! and comparing to that ? - look in ransac_comparison for explanation
+        matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all.npy")
 
         print("Running for exponential decay value: 0." + exp_decay_rate_index)
 
@@ -31,41 +32,40 @@ def pose_evaluate(features_no):
         modified_ransac_results_t = []
         modified_ransac_results_a = []
 
-        #  my poses calculated with my DM function
-        vanilla_ransac_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/2k/vanilla_ransac_images_pose_"+exp_decay_rate_index+".npy")
-        modified_ransac_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/2k/modified_ransac_images_pose_"+exp_decay_rate_index+".npy")
+        #  my poses calculated with my DM function and different RANSAC versions
+        vanilla_ransac_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_images_pose_"+exp_decay_rate_index+".npy")
+        modified_ransac_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_ransac_images_pose_"+exp_decay_rate_index+".npy")
 
         for image in localised_images:
-            if(matches_all.item()[image].shape[0] >= 4):
-                v_r_pose = vanilla_ransac_images_pose.item()[image]
-                m_r_pose = modified_ransac_images_pose.item()[image]
-                pose_gt = get_query_image_global_pose_new_model(image, complete_model_all_images)
+            if(image not in base_images):
+                if(matches_all.item()[image].shape[0] >= 4):
+                    v_r_pose = vanilla_ransac_images_pose.item()[image]
+                    m_r_pose = modified_ransac_images_pose.item()[image]
+                    pose_gt = get_query_image_global_pose_new_model(image, complete_model_all_images)
 
-                # translations errors TODO: change to camera center (as in Torsten's paper)
-                v_r_pose_t = v_r_pose['Rt'][0:3,3]
-                m_r_pose_t = m_r_pose['Rt'][0:3,3]
-                pose_gt_t = pose_gt[0:3, 3]
+                    # camera center errors
+                    v_r_pose_cam_c = v_r_pose['Rt'][0:3,0:3].transpose().dot(v_r_pose['Rt'][0:3,3])
+                    m_r_pose_cam_c = m_r_pose['Rt'][0:3,0:3].transpose().dot(m_r_pose['Rt'][0:3,3])
+                    pose_gt_cam_c = pose_gt[0:3,0:3].transpose().dot(pose_gt[0:3,3])
 
-                dist1 = np.linalg.norm(v_r_pose_t - pose_gt_t)
-                vanilla_ransac_results_t.append(dist1)
-                dist2 = np.linalg.norm(m_r_pose_t - pose_gt_t)
-                modified_ransac_results_t.append(dist2)
+                    dist1 = np.linalg.norm(v_r_pose_cam_c - pose_gt_cam_c)
+                    vanilla_ransac_results_t.append(dist1)
+                    dist2 = np.linalg.norm(m_r_pose_cam_c - pose_gt_cam_c)
+                    modified_ransac_results_t.append(dist2)
 
-                # rotations errors
-                # from paper: Benchmarking 6DOF Outdoor Visual Localization in Changing Conditions
-                v_r_pose_R = v_r_pose['Rt'][0:3, 0:3]
-                m_r_pose_R = m_r_pose['Rt'][0:3, 0:3]
-                pose_gt_R = pose_gt[0:3, 0:3]
+                    # rotations errors
+                    # from paper: Benchmarking 6DOF Outdoor Visual Localization in Changing Conditions
+                    v_r_pose_R = v_r_pose['Rt'][0:3, 0:3]
+                    m_r_pose_R = m_r_pose['Rt'][0:3, 0:3]
+                    pose_gt_R = pose_gt[0:3, 0:3]
 
-                # NOTE: arccos returns radians
-                a_v = np.arccos((np.trace(np.dot(np.linalg.inv(pose_gt_R), v_r_pose_R)) - 1) / 2)
-                vanilla_ransac_results_a.append(a_v)
-                a_m = np.arccos((np.trace(np.dot(np.linalg.inv(pose_gt_R), m_r_pose_R)) - 1) / 2)
-                modified_ransac_results_a.append(a_m)
-            else:
-                print(image + " has less than 4 matches..")
-
-        print("For exponential decay value: 0."+ exp_decay_rate_index + " results are:")
+                    # NOTE: arccos returns radians - but I convert it to angles
+                    a_v = np.arccos((np.trace(np.dot(np.linalg.inv(pose_gt_R), v_r_pose_R)) - 1) / 2)
+                    vanilla_ransac_results_a.append(np.degrees(a_v))
+                    a_m = np.arccos((np.trace(np.dot(np.linalg.inv(pose_gt_R), m_r_pose_R)) - 1) / 2)
+                    modified_ransac_results_a.append(np.degrees(a_m))
+                else:
+                    print(image + " has less than 4 matches..")
 
         print("Averaged Errors Translations")
         print("     Vanilla RANSAC: " + str(np.mean(vanilla_ransac_results_t)))

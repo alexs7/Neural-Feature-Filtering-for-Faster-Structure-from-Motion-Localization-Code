@@ -11,7 +11,7 @@ import cv2
 from feature_matcher import feature_matcher_factory, FeatureMatcherTypes
 from parameters import Parameters
 from point3D_loader import read_points3d_default
-from query_image import read_images_binary, image_localised
+from query_image import read_images_binary, image_localised, load_images_from_text_file
 
 IS_PYTHON3 = sys.version_info[0] >= 3
 
@@ -66,11 +66,8 @@ def feature_matcher_wrapper(features_no):
         point3D_index = point3D_index + 1
 
     # images to use for testing
-    test_images = []
-    path_to_query_images_file = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_name.txt"
-    with open(path_to_query_images_file) as f:
-        test_images = f.readlines()
-    test_images = [x.strip() for x in test_images]
+    # NOTE: Here you can use the localised images that contain also the base images but there is no point ..
+    test_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_name.txt")
 
     print("Loading 3D Points mean descs")
     # this loads the descs means for the base model and the complete model indexing is the same as points3D indexing
@@ -161,125 +158,9 @@ def feature_matcher_wrapper(features_no):
 
     print("Done!")
 
-def feature_matcher_wrapper_with_extra_exponential_decay_data(features_no, exponential_decay_rate):
-
-    print("-- Doing features_no " + features_no + " and exponential_decay_rate "+exponential_decay_rate+" --")
-
-    db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db")
-
-    # by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
-    complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/images.bin"
-    complete_model_all_images = read_images_binary(complete_model_images_path)
-    complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/points3D.bin"
-    points3D = read_points3d_default(complete_model_points3D_path) # base model's 3D points (same length as complete as we do not add points when localising new points, but different image_ds for each point)
-
-    # The idea behind this is to pick up the points in feature matching that are more prominent.
-    # For example a points with a sum of exponential decay values of 3.4 should be preferred to a point of exponential decay value 0.2.
-    # that is dist(len(complete_model_all_images), 3.4) should be less than dist(len(complete_model_all_images), 0.2)
-    query_desc_last_element_value = len(complete_model_all_images)
-
-    # create points id and index relationship
-    point3D_index = 0
-    points3D_indexing = {}
-    for key, value in points3D.items():
-        points3D_indexing[point3D_index] = value.id
-        point3D_index = point3D_index + 1
-
-    # images to use for testing
-    test_images = []
-    path_to_query_images_file = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_name.txt"
-    with open(path_to_query_images_file) as f:
-        test_images = f.readlines()
-    test_images = [x.strip() for x in test_images]
-
-    print("Loading 3D Points mean descs")
-    # this loads the descs means for the base model and the complete model indexing is the same as points3D indexing for that feature no and exp dec rate
-    trainDescriptors_all = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all_with_extra_data_"+exponential_decay_rate+".txt")
-    trainDescriptors_all = trainDescriptors_all.astype(np.float32)
-
-    # create image_name <-> value dict - easier to work with
-    results_all = {}
-    matches_all = {}
-    matches_all_sum = []
-
-    #  go through all the test images and match their descs to the 3d points avg descs
-    for test_image in test_images:
-        print("Doing image " + test_image)
-        image_id = image_localised(test_image, complete_model_all_images)
-
-        if(image_id != None):
-            print("Frame "+test_image+" localised..")
-            image_id = str(image_id)
-
-            # fetching the x,y,descs for that image
-            query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-            query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
-            query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-            query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
-            query_image_keypoints_data = blob_to_array(query_image_keypoints_data, np.float32)
-            query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
-            query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows,query_image_keypoints_data_cols)
-            query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
-            query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
-            query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
-            query_image_descriptors_data = blob_to_array(query_image_descriptors_data, np.uint8)
-            descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
-            query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
-            # query_keypoints_xy_descriptors = np.concatenate((query_image_keypoints_data_xy, query_image_descriptors_data), axis=1) #TODO: remove this ?
-
-            # append the query_desc_last_element_value that will hopefully make feature matching more accurate
-            queryDescriptors = query_image_descriptors_data
-            queryDescriptors = np.append(queryDescriptors, np.full((queryDescriptors.shape[0], 1), query_desc_last_element_value), axis=1).astype(np.float32)
-
-            # once you have the test images descs now do feature matching here! - Matching on all and base descs means
-            # actual matching here!
-            matching_algo = FeatureMatcherTypes.FLANN  # or FeatureMatcherTypes.BF
-            match_ratio_test = Parameters.kFeatureMatchRatioTest
-            norm_type = cv2.NORM_L2
-            cross_check = False
-            matcher = feature_matcher_factory(norm_type, cross_check, match_ratio_test, matching_algo)
-            # NOTE: that you set the ratio test to 1, which cancel the SIFT ratio test.. You dont have SIFT features at this point
-            # but generic 129 dim vectors
-            good_matches_all = matcher.match(queryDescriptors, trainDescriptors_all, ratio_test=1)
-
-            # remember these are only indices
-            results_all[test_image] = len(good_matches_all[0])
-
-            print("     Creating matches..")
-            # queryDescriptors and query_image_keypoints_data_xy = same order
-            # points3D order and trainDescriptors_* = same order
-            matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy)
-
-            matches_all_sum.append(len(good_matches_all[0]))
-            print("         Found this many good matches (against complete model): " + str(len(good_matches_all[0])))
-        else:
-            print("     Frame "+test_image+" not localised..")
-
-    print("Averages: ")
-    matches_all_avg = np.sum(matches_all_sum) / len(matches_all_sum)
-    print("Complete model avg matches for exp decay rate "+exponential_decay_rate+": " + str(matches_all_avg))
-
-    print("Saving data...")
-    # save the 2D-3D matches
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all_exp_dec_val_"+exponential_decay_rate+".npy", matches_all)
-
-    # again this is mostly of visualing results
-    # results_* contain the numbers of matches for each image so, length will be the same as the localised images no.
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/results_all_exp_dec_val_"+exponential_decay_rate+".npy", results_all)
-
-    print("Done!")
-
 colmap_features_no = ["2k", "1k", "0.5k", "0.25k"]
-
 # run for each no of features
 for features_no in colmap_features_no:
     # Getting feature matches from different features no databases
     print("Doing Vanilla feature matching")
     feature_matcher_wrapper(features_no)
-
-    # This time take into account the exponential decay matrix values
-    # TODO: Review
-    # print("Doing feature matching with exponential decay rates")
-    # exponential_decay_rates = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
-    # for exponential_decay_rate in exponential_decay_rates:
-    #     feature_matcher_wrapper_with_extra_exponential_decay_data(features_no, exponential_decay_rate)
