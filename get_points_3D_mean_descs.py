@@ -112,8 +112,8 @@ def get_desc_avg(features_no):
 
     print("\n Saving data...")
     # folder are created manually..
-    np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_base.txt", points_mean_descs_base)
-    np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all.txt", points_mean_descs_all)
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_base.npy", points_mean_descs_base)
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all.npy", points_mean_descs_all)
 
 # heatmap_exp_id is the number that corresponds to exponential decay rate value. (5 for 0.5, 1 for 0.1 etc..)
 def get_desc_avg_with_session_weights(features_no, exponential_decay_value):
