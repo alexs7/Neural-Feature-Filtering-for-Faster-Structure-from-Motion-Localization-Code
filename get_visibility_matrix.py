@@ -118,9 +118,10 @@ def create_vm(features_no, exponential_decay_value):
 
     # including base images
     base_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/base_images.txt")
+    # NOTE: remember the weights there are normalised
     session_weight_per_image = get_session_weight_per_image(base_images, sessions_image_sets, session_images_weight)
 
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/session_weight_per_image" +
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/session_weight_per_image_" +
                 str(exponential_decay_value) + ".npy", session_weight_per_image)
 
     # Note that heatmap here has the exponential decay applied the others are just binary matrices, it also contains the images from the base model and the future sessions

@@ -26,7 +26,7 @@ def blob_to_array(blob, dtype, shape=(-1,)):
 
 def get_desc_avg(features_no):
 
-    print("-- Doing features_no " + features_no + " --")
+    print("-- Averaging features_no " + features_no + " --")
 
     db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db")
 
@@ -76,11 +76,10 @@ def get_desc_avg(features_no):
     print("All_images_ids size: " + str(len(all_images_ids)))
 
     print("Getting the avg descs for the base and all (base + query) points' images")
-    points_id_desc = {}
     points_mean_descs_all = np.empty([0, 128])
     points_mean_descs_base = np.empty([0, 128])
     for i in range(0,len(points3D)):
-        print("Doing point " + str(i) + "/" + str(len(points3D)), end="\r")
+        print("Doing point " + str(i+1) + "/" + str(len(points3D)), end="\r")
         point_id = points3D_indexing[i]
         points3D_descs_all = np.empty([0, 128])
         points3D_descs_base = np.empty([0, 128])
@@ -117,10 +116,12 @@ def get_desc_avg(features_no):
     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all.txt", points_mean_descs_all)
 
 # heatmap_exp_id is the number that corresponds to exponential decay rate value. (5 for 0.5, 1 for 0.1 etc..)
-def get_desc_avg_with_extra_exponential_decay_data(features_no, heatmap_vm, heatmap_exp_id):
-    # This version of the method will append the the 128 mean descs for each point3D of all the images, 1 extra value
-    # that is the sum or mean of the exponential decay value of each point
-    print("-- Doing features_no " + features_no + " and exponential_decay_rate "+exponential_decay_rate+" --")
+def get_desc_avg_with_session_weights(features_no, exponential_decay_value):
+
+    print("-- Averaging features_no " + features_no + " and exponential_decay_rate "+ str(exponential_decay_value) +" --")
+
+    # This contains weights for all base and query images
+    session_weight_per_image = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/session_weight_per_image_" + str(exponential_decay_value) + ".npy")
 
     db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db")
 
@@ -169,14 +170,13 @@ def get_desc_avg_with_extra_exponential_decay_data(features_no, heatmap_vm, heat
     all_images_ids = base_images_ids + query_images_ids
     print("All_images_ids size: " + str(len(all_images_ids)))
 
-    print("Getting the avg descs for all (base + query) points' images")
-    points_id_desc = {}
-    points_mean_descs_all_with_extra_data = np.empty([0, 129])
+    print("Getting the weighted descs for all (base + query) points' images")
+    points_weighted_descs = np.empty([0, 128])
     for i in range(0,len(points3D)):
-        print("Doing point " + str(i) + "/" + str(len(points3D)), end="\r")
+        print("Doing point " + str(i+1) + "/" + str(len(points3D)), end="\r")
         point_id = points3D_indexing[i]
-        points3D_descs_all = np.empty([0, 129])
-        desc_extra_data = np.sum(heatmap_vm[:,i]) #TODO: Change to mean and test feature_matching again?
+        points3D_descs = np.empty([0,128])
+        all_points_images_weights = []
         # Loop through the points' image ids and check if it is seen by all_images
         # If it is seen then get the descs for each id
         for k in range(len(points3D[point_id].image_ids)): #unique here doesn't really matter
@@ -188,24 +188,27 @@ def get_desc_avg_with_extra_exponential_decay_data(features_no, heatmap_vm, heat
                 descs = data.reshape([descs_rows, 128])
                 desc = descs[points3D[point_id].point2D_idxs[k]]
                 desc = desc.reshape(1, 128)
-                desc = np.c_[desc, desc_extra_data] # add the extra data
-                points3D_descs_all = np.r_[points3D_descs_all, desc]
+                # collect descs for current point
+                points3D_descs = np.r_[points3D_descs, desc]
+                # collect weights
+                image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(id) + "'").fetchone()[0]
+                weight = session_weight_per_image.item()[image_name]
+                all_points_images_weights.append(weight)
+
+        all_points_images_weights = all_points_images_weights / np.sum(all_points_images_weights)
+        # points3D_descs and all_points_images_weights are in the same order
+        points3D_descs = np.multiply(points3D_descs, all_points_images_weights[:, np.newaxis])
         # adding and calulating the mean here!
-        points_mean_descs_all_with_extra_data = np.r_[points_mean_descs_all_with_extra_data, points3D_descs_all.mean(axis=0).reshape(1,129)]
+        points_weighted_descs = np.r_[points_weighted_descs, points3D_descs.sum(axis=0).reshape(1,128)]
 
     print("\n Saving data...")
     # folder are created manually..
-    np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all_with_extra_data_"+heatmap_exp_id+".txt", points_mean_descs_all_with_extra_data)
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_weighted_descs_all_with_extra_data_"+str(exponential_decay_value)+".npy", points_weighted_descs)
 
-colmap_features_no = ["2k", "1k", "0.5k", "0.25k"]
-# run for each no of features
-for features_no in colmap_features_no:
-    print("Running vanilla get 3D descs avg...")
-    get_desc_avg(features_no)
+# colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
+# exponential_decay can be any of 0.1 to 0.9
+print("Running vanilla get 3D descs avg...")
+get_desc_avg("1k")
 
-    print("Running get 3D descs avg with heatmap VM data...")
-    # TODO: This doesn't make sense as the query image will have zero for that value... so you are just increasing the distance.. YES! but the most prominent ones will be further :)
-    exponential_decay_rates = ["1","2","3","4","5","6","7","8","9"]
-    for exponential_decay_rate in exponential_decay_rates:
-        heatmap_vm = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/heatmap_matrix_"+exponential_decay_rate+".txt")
-        get_desc_avg_with_extra_exponential_decay_data(features_no, heatmap_vm, exponential_decay_rate)
+print("Running get 3D descs avg with session weights...")
+get_desc_avg_with_session_weights("1k", 0.5)

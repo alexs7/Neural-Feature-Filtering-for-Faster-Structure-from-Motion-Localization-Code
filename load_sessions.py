@@ -4,6 +4,7 @@ from query_image import read_images_binary
 import numpy as np
 
 def get_session_weight_per_image(base_images, future_sessions, session_weights):
+
     images_weight = {}
     base_images_weight = session_weights[len(session_weights)-1]
 
