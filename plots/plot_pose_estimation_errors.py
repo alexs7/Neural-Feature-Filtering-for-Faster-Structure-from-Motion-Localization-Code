@@ -1,6 +1,16 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+def autolabel(rects, ax):
+    """Attach a text label above each bar in *rects*, displaying its height."""
+    for rect in rects:
+        height = rect.get_height()
+        ax.annotate('{:.2f}'.format(height),
+                    xy=(rect.get_x() + rect.get_width() / 2, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha='center', va='bottom')
+
 # TODO: Add pose refinement stage here ?
 def plot_pose_errors(error, features_no):
 
@@ -45,6 +55,9 @@ def plot_pose_errors(error, features_no):
     # legends
     rects1 = ax.bar(x - width/2, mean_error_data_modified, width, label='Mean error for each image Modified RANSAC ' + error)
     rects2 = ax.bar(x + width/2, mean_error_data_vanillia, width, label='Mean error for each Vanillia RANSAC  ' + error)
+
+    autolabel(rects1,ax)
+    autolabel(rects2,ax)
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('Number Mean for ' + error)

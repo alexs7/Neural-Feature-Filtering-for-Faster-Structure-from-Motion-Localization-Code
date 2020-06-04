@@ -3,6 +3,24 @@
 from query_image import read_images_binary
 import numpy as np
 
+def get_session_weight_per_image(base_images, future_sessions, session_weights):
+    images_weight = {}
+    base_images_weight = session_weights[len(session_weights)-1]
+
+    for image in base_images:
+        images_weight[image] = base_images_weight
+
+    index = len(future_sessions)-1
+    # these are already sorted, look at get_sessions()
+    # 0 is the oldest, 29_03 etc ...
+    for image_set in future_sessions:
+        for image in image_set:
+            images_weight[image] = session_weights[index]
+        index = index - 1 # increase to get the weight of hte next session
+
+    return images_weight
+
+
 def get_sessions():
     all_sessions_dic = {}
 
