@@ -195,7 +195,9 @@ def get_desc_avg_with_session_weights(features_no, exponential_decay_value):
                 weight = session_weight_per_image.item()[image_name]
                 all_points_images_weights.append(weight)
 
-        all_points_images_weights = all_points_images_weights / np.sum(all_points_images_weights)
+        # TODO: removed normalising factor - maybe consider it later ?
+        # all_points_images_weights = all_points_images_weights / np.sum(all_points_images_weights)
+        all_points_images_weights = np.array(all_points_images_weights)
         # points3D_descs and all_points_images_weights are in the same order
         points3D_descs = np.multiply(points3D_descs, all_points_images_weights[:, np.newaxis])
         # adding and calulating the mean here!
