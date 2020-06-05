@@ -88,11 +88,9 @@ def feature_matcher_wrapper(features_no):
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for test_image in test_images:
-        print("Doing image " + test_image)
         image_id = image_localised(test_image, complete_model_all_images)
 
         if(image_id != None):
-            print("Frame "+test_image+" localised..")
             image_id = str(image_id)
 
             # fetching the x,y,descs for that image
@@ -126,7 +124,6 @@ def feature_matcher_wrapper(features_no):
             results_all[test_image] = len(good_matches_all[0])
             results_base[test_image] = len(good_matches_base[0])
 
-            print("     Creating matches..")
             # queryDescriptors and query_image_keypoints_data_xy = same order
             # points3D order and trainDescriptors_* = same order
             matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy)
@@ -134,11 +131,6 @@ def feature_matcher_wrapper(features_no):
 
             matches_base_sum.append(len(good_matches_base[0]))
             matches_all_sum.append(len(good_matches_all[0]))
-
-            print("         Found this many good matches (against complete model): " + str(len(good_matches_all[0])))
-            print("         Found this many good matches (against base model): " + str(len(good_matches_base[0])))
-        else:
-            print("     Frame "+test_image+" not localised..")
 
     print("Averages: ")
     matches_base_avg = np.sum(matches_base_sum) / len(matches_base_sum)
@@ -182,7 +174,7 @@ def feature_matcher_wrapper_weighted(features_no, exponential_decay_value):
 
     print("Loading 3D Points weighted descs")
     # this loads the descs means for the base model and the complete model indexing is the same as points3D indexing
-    trainDescriptors_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_weighted_descs_all_with_extra_data_0.5.npy")
+    trainDescriptors_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_weighted_descs_all_with_extra_data_"+str(exponential_decay_value)+".npy")
     trainDescriptors_base = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_base.npy")
     trainDescriptors_all = trainDescriptors_all.astype(np.float32)
     trainDescriptors_base = trainDescriptors_base.astype(np.float32)
@@ -199,11 +191,9 @@ def feature_matcher_wrapper_weighted(features_no, exponential_decay_value):
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for test_image in test_images:
-        print("Doing image " + test_image)
         image_id = image_localised(test_image, complete_model_all_images)
 
         if(image_id != None):
-            print("Frame "+test_image+" localised..")
             image_id = str(image_id)
 
             # fetching the x,y,descs for that image
@@ -237,7 +227,6 @@ def feature_matcher_wrapper_weighted(features_no, exponential_decay_value):
             results_all[test_image] = len(good_matches_all[0])
             results_base[test_image] = len(good_matches_base[0])
 
-            print("     Creating matches..")
             # queryDescriptors and query_image_keypoints_data_xy = same order
             # points3D order and trainDescriptors_* = same order
             matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy)
@@ -245,11 +234,6 @@ def feature_matcher_wrapper_weighted(features_no, exponential_decay_value):
 
             matches_base_sum.append(len(good_matches_base[0]))
             matches_all_sum.append(len(good_matches_all[0]))
-
-            print("         Found this many good matches (against complete model): " + str(len(good_matches_all[0])))
-            print("         Found this many good matches (against base model): " + str(len(good_matches_base[0])))
-        else:
-            print("     Frame "+test_image+" not localised..")
 
     print("Averages: ")
     matches_base_avg = np.sum(matches_base_sum) / len(matches_base_sum)
