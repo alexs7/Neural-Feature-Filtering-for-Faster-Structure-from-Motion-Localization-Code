@@ -85,7 +85,6 @@ def run_ransac(matches_for_image):
             no_iterations = N
             if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
                 return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)
-
         k = k + 1
 
     return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)

@@ -126,7 +126,7 @@ def get_desc_avg_with_session_weights(features_no, exponential_decay_value):
     db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db")
 
     # by "complete model" I mean all the frames from future sessions localised in the base model (28/03) and the base model..
-    # NOTE: I don't think is matters here to use features_no as the points3D and images are the same no matter what features_no was used in COLMAP. The database.db changes though..
+    # NOTE: I don't think is matters here (for image.bin) to use features_no as the points3D and images are the same no matter what features_no was used in COLMAP. The database.db changes though..
     complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/images.bin"
     complete_model_all_images = read_images_binary(complete_model_images_path)
     complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/points3D.bin"

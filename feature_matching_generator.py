@@ -2,6 +2,12 @@
 # base model and the complete model as a benchmark and also exports the 2D-3D matches for ransac
 # matching here is done using my own DM (direct matching) function.
 
+# NOTE: One can argue why am I using the query images only (query_name.txt)? It makes sense more intuitively as
+# I am localising the new (future sessions images) against a base model and a complete model. So the difference is in
+# the model you are localising against.. But you could use all images. If you do then localising base images against the
+# base model doesn't really makes sense, because at this point you are localising images the model has already seen but then again
+# you can say the same thing for localising future images against the complete model
+
 import sqlite3
 
 import numpy as np
@@ -30,8 +36,8 @@ def blob_to_array(blob, dtype, shape=(-1,)):
 # creates 2d-3d matches data for ransac
 def get_matches(good_matches_indices, points3D_indexing, points3D, query_image_xy):
     # same length
-    # good_matches_indices[0] - 2D indices, xy
-    # good_matches_indices[1] - 3D indices, xyz - this is the index you need the id to get xyz
+    # good_matches_indices[0] - 2D point indices,
+    # good_matches_indices[1] - 3D point indices, - this is the index you need the id to get xyz
     matches = np.empty([0, 6])
     for i in range(len(good_matches_indices[1])):
         # get 3D point data
