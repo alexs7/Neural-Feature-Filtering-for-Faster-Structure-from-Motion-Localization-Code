@@ -43,7 +43,6 @@ def pose_evaluate(features_no, exponential_decay_value, weighted=False):
     modified_ransac_results_t = []
     modified_ransac_results_a = []
 
-
     for image in localised_query_images_only:
         if(matches_all.item()[image].shape[0] >= 4):
             v_r_pose = vanilla_ransac_images_pose.item()[image]

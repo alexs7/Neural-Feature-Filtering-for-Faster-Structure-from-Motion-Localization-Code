@@ -12,56 +12,47 @@ def autolabel(rects, ax):
                     ha='center', va='bottom')
 
 # TODO: Add pose refinement stage here ?
-def plot_pose_errors(error, features_no):
+def plot_pose_errors(error, features_no, exponential_decay_value):
 
-    mean_error_data_vanillia = []
-    mean_error_data_modified = []
-
-    exp_decay_rates_values = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9"]
-    exp_decay_rates_index = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    mean_error_data_vanillia = 0
+    mean_error_data_modified = 0
 
     data_index = 0
     upper_limit = 0
     if error == "translation":
         error_index = "t"
-        upper_limit = 1.5
+        upper_limit = 2
     if error == "rotation":
         error_index = "a"
         upper_limit = 5
 
     images_localised_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_localised.txt"
 
-    images_localised_labels = []
-    with open(images_localised_path) as f:
-        images_localised_labels = f.readlines()
-    images_localised_labels = [x.strip() for x in images_localised_labels]
+    # get the data for each features_no for both RANSAC versions
+    vanilla_pose_data = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_"+error_index+"_"+features_no+"_"+str(exponential_decay_value)+".npy")
+    mean_error_data_vanillia = np.mean(vanilla_pose_data)
+    error_bar_std_vanillia = np.std(vanilla_pose_data)
 
-    # Plot RANSAC pose results for each exponential decay value
-    for exp_decay_rate_index in exp_decay_rates_index:
-        # get the data for each features_no for both RANSAC version
-        vanilla_pose_data = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_"+error_index+"_"+features_no+"_"+exp_decay_rate_index+".npy")
-        mean_error_data_vanillia.append(np.mean(vanilla_pose_data))
+    modified_pose_data = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_"+error_index+"_"+features_no+"_"+str(exponential_decay_value)+".npy")
+    mean_error_data_modified = np.mean(modified_pose_data)
+    error_bar_std_modified = np.std(modified_pose_data)
 
-        modified_pose_data = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_"+error_index+"_"+features_no+"_"+exp_decay_rate_index+".npy")
-        mean_error_data_modified.append(np.mean(modified_pose_data))
-
-    labels = exp_decay_rates_values
+    labels = ["Modified", "Vanillia"]
     x = np.arange(len(labels))  # the label locations
     width = 0.2  # the width of the bars
+    errors = [error_bar_std_modified, error_bar_std_vanillia]
+    data = [mean_error_data_modified, mean_error_data_vanillia]
 
     # first plot - for inliers
-    fig, ax = plt.subplots(figsize=(18,10))
+    fig, ax = plt.subplots()
 
     # legends
-    rects1 = ax.bar(x - width/2, mean_error_data_modified, width, label='Mean error for each image Modified RANSAC ' + error)
-    rects2 = ax.bar(x + width/2, mean_error_data_vanillia, width, label='Mean error for each Vanillia RANSAC  ' + error)
-
-    autolabel(rects1,ax)
-    autolabel(rects2,ax)
+    rects1 = ax.bar(labels, data, yerr=errors, label='Mean error for each Vanillia RANSAC  ' + error)
+    autolabel(rects1, ax)
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax.set_ylabel('Number Mean for ' + error)
-    ax.set_title('Pose Errors for ' + error + " and features_no " + features_no)
+    ax.set_ylabel('Mean Error for ' + error)
+    ax.set_title('Pose Errors for ' + error + " and feat. " + features_no + " exp. " + str(exponential_decay_value))
     ax.set_ylim(0, upper_limit)
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
@@ -75,6 +66,5 @@ def plot_pose_errors(error, features_no):
 errors_to_show = ["translation", "rotation"]
 colmap_features_no = ["2k", "1k", "0.5k", "0.25k"]
 for error in errors_to_show:
-    for features_no in colmap_features_no:
-        print("Getting " + error + " errors for features_no: " + features_no)
-        plot_pose_errors(error, features_no)
+    print("Getting " + error + " errors for features_no: " + "1k")
+    plot_pose_errors(error, "1k", 0.5)
