@@ -1,5 +1,6 @@
 import numpy as np
 
+from point3D_loader import read_points3d_default
 from query_image import load_images_from_text_file, read_images_binary
 from ransac import run_ransac, run_ransac_modified
 import time
@@ -17,19 +18,19 @@ def run_ransac_comparison(features_no, exponential_decay_value, weighted=False):
     print("-- Doing features_no " + features_no + " --")
 
     # load localised images names (including base ones)
-    localised_query_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no + "/images_localised.txt")
+    localised_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no + "/images_localised.txt")
     # of course base images will be localised..
     base_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/base_images.txt")
     # Now, get localised images from the query images only. Not the base images.
     localised_query_images_only = []
-    for image in localised_query_images:
+    for image in localised_images:
         if(image not in base_images):
             localised_query_images_only.append(image)
 
     # Question: why not using matches_base ?!?!! and comparing to that ?
     # Answer: and compare what ? ransac will take less time with matches_base given the smaller number of all matches,
     # plus the get_sub_distribution might not make sense here as for base there are no future sessions yet.
-    if(weighted):
+    if(weighted): #if statement here is self explanatory
         matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all_weighted.npy")
     else:
         matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/matches_all.npy")
@@ -124,10 +125,35 @@ def run_ransac_comparison(features_no, exponential_decay_value, weighted=False):
 
     print("Done!")
 
+def run_prosac_comparison(features_no, exponential_decay_value):
+
+    complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/points3D.bin"
+    points3D = read_points3d_default(complete_model_points3D_path)
+    points_values = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_"+str(exponential_decay_value)+".txt")
+
+    # create index and point value relationship
+    # remember points3D and points_values have the same order
+    point3D_index = 0
+    points3D_indexing = {}
+    for key, value in points3D.items():
+        points3D_indexing[point3D_index] = points_values[point3D_index]
+        point3D_index = point3D_index + 1
+
+    # sorted in desceding, values for prosac
+    points3D_indexing = {k: v for k, v in sorted(points3D_indexing.items(), key=lambda item: -item[1])}
+    points_values_desc = list(points3D_indexing.values())
+
+    breakpoint()
+
+
+
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 # exponential_decay can be any of 0.1 to 0.9
 print("Running RANSAC comparison against un-weighted matches")
 run_ransac_comparison("1k", 0.5)
 print("Running RANSAC comparison against weighted matches")
 run_ransac_comparison("1k", 0.5, True)
+# print("Running PROSAC comparison against weighted matches")
+# run_prosac_comparison("1k", 0.5)
+
 

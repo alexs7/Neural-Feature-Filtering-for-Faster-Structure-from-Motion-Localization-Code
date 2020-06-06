@@ -153,3 +153,7 @@ def run_ransac_modified(matches_for_image, distribution):
 
         k = k + 1
     return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)
+
+def prosac(matches_for_image):
+    print()
+
