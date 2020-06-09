@@ -169,7 +169,7 @@ def prosac(sorted_matches):
     P_GOOD_SAMPLE = 0.99
     TEST_NB_OF_DRAWS = 60000
     TEST_INLIERS_RATIO = 0.5
-    BETA = 0.1
+    BETA = 0.05
     ETA0 = 0.05
 
     def niter_RANSAC(p, epsilon, s, Nmax):
