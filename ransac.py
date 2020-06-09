@@ -158,11 +158,12 @@ def run_ransac_modified(matches_for_image, distribution):
         k = k + 1
     return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)
 
-def prosac_new(sorted_matches):
+def prosac(sorted_matches):
     # TODO: move this distCoeffs out!
     distCoeffs = np.zeros((5, 1))  # assume zero for now
 
     CORRESPONDENCES = sorted_matches.shape[0]
+    # isInlier = np.zeros([1,CORRESPONDENCES])
     SAMPLE_SIZE = 4
     MAX_OUTLIERS_PROPORTION = 0.8
     P_GOOD_SAMPLE = 0.99
@@ -266,6 +267,20 @@ def prosac_new(sorted_matches):
             I_n_best = I_N
             best_model = model
 
+            # I_n_test = I_N
+            # if(1):
+            #     epsilon_n_best = I_n_best / n_best
+            #     for n_test in range(N, m, -1):
+            #         if (not (n_test >= I_n_test)):
+            #             print("C++ Assertion failed - 3")
+            #         if ( (I_n_test * n_best > I_n_best * n_test) and (I_n_test > epsilon_n_best * n_test + np.sqrt(n_test * epsilon_n_best * (1 - epsilon_n_best) * 2.706) ) ):
+            #             if (I_n_test < Imin(m, n_test, beta)):
+            #                 break
+            #             n_best = n_test
+            #             I_n_best = I_n_test
+            #             epsilon_n_best = I_n_best / n_best
+            #     I_n_test = I_n_test - isInlier[n_test - 1]
+
             if (I_n_best * n_star > I_n_star * n_best):
                 if(not (n_best >= I_n_best)):
                     print("C++ Assertion failed - 2")
@@ -281,98 +296,7 @@ def prosac_new(sorted_matches):
     # elif(t > k_n_star):
     #     print("t={0} > k_n_star={1} (T_N={2})\n".format(t ,k_n_star, T_N))
 
-    return I_N, len(sorted_matches) - I_N, t, best_model
-
-# def prosac(sorted_matches, beta=0.5, phi=0.05, eta=0.05):
-#     # TODO: move this distCoeffs out!
-#     distCoeffs = np.zeros((5, 1))  # assume zero for now
-#
-#     # https: // github.com / willGuimont / PROSAC / blob / master / random_consensus.py
-#     T_N = 20000
-#     N = sorted_matches.shape[0]
-#     m = 4
-#     t = 0
-#     n = m
-#     n_star = N
-#     Tn = T_N
-#     for i in range(m):
-#         Tn = Tn * (n-i) / (N-i)
-#
-#     Tn_prime = 1 #as defined above equation (4)
-#
-#     model = {}
-#
-#     while t < T_N:
-#         inliers = []
-#         # 1. Choice of the hypothesis generation set
-#         t = t + 1
-#         if t > Tn_prime and n < n_star:
-#             Tn_1 = (Tn * (n + 1)) / (n + 1 - m)
-#             n = n + 1
-#             if(n == 26) : breakpoint()
-#             Tn_prime = Tn_prime + np.ceil(Tn_1 - Tn) #make Tn integer
-#             Tn = Tn_1
-#
-#         # 2. Semi-random sample M of size m
-#         if t > Tn_prime:
-#             pts_idx = random.sample(range(n), m)
-#         else:
-#             pts_idx = [n] + random.sample(range(n - 1), m - 1)
-#
-#         print(pts_idx)
-#         # if (26 in pts_idx):
-#         #     print("n: " + str(n))
-#         #     breakpoint()
-#
-#         sample = sorted_matches[pts_idx]
-#
-#         # 3. Model parameter estimation
-#         obj_points = sample[:, 2:5]
-#         img_points = sample[:, 0:2]
-#
-#         img_points = np.ascontiguousarray(img_points[:, :2]).reshape((img_points.shape[0], 1, 2)) # this is required for SOLVEPNP_P3P
-#         retval, rvec, tvec = cv2.solvePnP(obj_points.astype(np.float32), img_points.astype(np.float32), K, distCoeffs, flags=cv2.SOLVEPNP_P3P)
-#         rotm = cv2.Rodrigues(rvec)[0]
-#         Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
-#         model['Rt'] = Rt
-#
-#         # 4. Model verification
-#         for i in range(len(sorted_matches)): # run against all the other matches (all of them doesn't matter here)
-#             obj_point = sorted_matches[i, 2:5]
-#             img_point_gt = sorted_matches[i, 0:2]
-#             obj_point = np.r_[obj_point, 1]  # make homogeneous
-#             img_point_est = K.dot(Rt.dot(obj_point.transpose())[0:3])
-#             img_point_est = img_point_est / img_point_est[2]  # divide by last coordinate
-#             dist = np.linalg.norm(img_point_gt - img_point_est[0:2])
-#             if (dist < 8.0):
-#                 inliers.append(sorted_matches[i])
-#
-#         if(len(inliers) >= 6):
-#             print("Found " + str(len(inliers)) + "/" + str(len(sorted_matches)) + " inlers")
-#         num_inliers = len(inliers)
-#         outliers_no = len(sorted_matches) - num_inliers
-#
-#         # 4.1 Non random solution
-#         def P(i):
-#             return (beta ** (i - m)) * ((1 - beta) ** (n - i + m)) * scipy.special.binom(n - m, i - m)
-#
-#         def Imin_value(j):
-#             return sum(P(i) for i in range(j, n + 1))
-#
-#         imin = 0
-#         for j in range(m, N - m):
-#             value = Imin_value(j)
-#             if value < phi:
-#                 imin = j
-#                 break
-#
-#         non_random = num_inliers > imin
-#
-#         # 4.2 Maximality
-#         Pin = scipy.special.binom(num_inliers, m) / scipy.special.binom(n_star, m)
-#         maximality = (1 - Pin) ** t <= eta
-#
-#         if non_random and maximality:
-#             break
-#
-#     return (num_inliers, outliers_no, t, model)
+    inlier_no = I_N
+    outliers_no = len(sorted_matches) - I_N
+    iterations = t
+    return inlier_no, outliers_no, iterations, best_model

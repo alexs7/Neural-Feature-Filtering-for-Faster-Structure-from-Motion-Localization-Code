@@ -2,7 +2,7 @@ import numpy as np
 
 from point3D_loader import read_points3d_default
 from query_image import load_images_from_text_file, read_images_binary
-from ransac import run_ransac, run_ransac_modified, prosac_new
+from ransac import run_ransac, run_ransac_modified, prosac
 import time
 
 # get the "sub_distributions" for each matches set for each image
@@ -205,7 +205,7 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
 
             # prosac
             start = time.time()
-            inliers_no, ouliers_no, iterations, best_model = prosac_new(sorted_matches)
+            inliers_no, ouliers_no, iterations, best_model = prosac(sorted_matches)
             end = time.time()
             elapsed_time = end - start
 
@@ -213,7 +213,7 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
             prosac_data = np.r_[prosac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1, 4])]
         else:
             print(image + " has less than 4 matches..")
-            
+
     # NOTE: folders .../RANSAC_results/"+features_no+"/... where created manually..
     if(weighted):
         np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_images_pose_" + str(exponential_decay_value) + "_weighted.npy", vanilla_ransac_images_poses)
