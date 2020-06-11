@@ -140,7 +140,7 @@ class FeatureMatcher(object):
     # N.B.: this returns matches where each trainIdx index is associated to only one queryIdx index    
     def goodMatchesOneToOne(self, matches, des1, des2, ratio_test=None):
         len_des2 = len(des2)
-        idx1, idx2 = [], []  
+        idx1, idx2, lowes_distances = [], [], []
         # good_matches = []           
         if ratio_test is None:
             ratio_test = self.ratio_test
@@ -152,21 +152,23 @@ class FeatureMatcher(object):
                 if m.distance > ratio_test * n.distance:
                     continue     
                 dist = dist_match[m.trainIdx]
-                if dist == float_inf: 
+                if dist == float_inf:
                     # trainIdx has not been matched yet
                     dist_match[m.trainIdx] = m.distance
                     idx1.append(m.queryIdx)
                     idx2.append(m.trainIdx)
+                    lowes_distances.append(n.distance / m.distance)
                     index_match[m.trainIdx] = len(idx2)-1
                 else:
-                    if m.distance < dist: 
+                    if m.distance < dist:
                         # we have already a match for trainIdx: if stored match is worse => replace it
                         #print("double match on trainIdx: ", m.trainIdx)
                         index = index_match[m.trainIdx]
-                        assert(idx2[index] == m.trainIdx) 
+                        assert(idx2[index] == m.trainIdx)
                         idx1[index]=m.queryIdx
-                        idx2[index]=m.trainIdx                        
-        return idx1, idx2
+                        idx2[index]=m.trainIdx
+                        lowes_distances[index] = n.distance / m.distance
+        return idx1, idx2, lowes_distances
 
 
     # input: des1 = query-descriptors, des2 = train-descriptors

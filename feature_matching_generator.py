@@ -34,21 +34,23 @@ def blob_to_array(blob, dtype, shape=(-1,)):
         return np.frombuffer(blob, dtype=dtype).reshape(*shape)
 
 # creates 2d-3d matches data for ransac
-def get_matches(good_matches_indices, points3D_indexing, points3D, query_image_xy):
+def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy):
     # same length
-    # good_matches_indices[0] - 2D point indices,
-    # good_matches_indices[1] - 3D point indices, - this is the index you need the id to get xyz
-    matches = np.empty([0, 6])
-    for i in range(len(good_matches_indices[1])):
+    # good_matches_data[0] - 2D point indices,
+    # good_matches_data[1] - 3D point indices, - this is the index you need the id to get xyz
+    # good_matches_data[2] lowe's distance inverse ratio
+    matches = np.empty([0, 7])
+    for i in range(len(good_matches_data[1])):
         # get 3D point data
-        points3D_index = good_matches_indices[1][i]
+        points3D_index = good_matches_data[1][i]
         points3D_id = points3D_indexing[points3D_index]
         xyz_3D = points3D[points3D_id].xyz
         # get 2D point data
-        xy_2D = query_image_xy[good_matches_indices[0][i]]
+        xy_2D = query_image_xy[good_matches_data[0][i]]
         # remember points3D_index is aligned with trainDescriptors_*
+        lowes_distance_inverse_ratio = good_matches_data[2][i]
         # values here are self explanatory..
-        match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index]).reshape([1,6])
+        match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index, lowes_distance_inverse_ratio]).reshape([1,7])
         matches = np.r_[matches, match]
     return matches
 
@@ -123,6 +125,7 @@ def feature_matcher_wrapper(features_no):
             norm_type = cv2.NORM_L2
             cross_check = False
             matcher = feature_matcher_factory(norm_type, cross_check, match_ratio_test, matching_algo)
+            # NOTE: 09/06/2020 - match() has been changed to return lowes_distances in REVERSE! (https://willguimont.github.io/cs/2019/12/26/prosac-algorithm.html)
             good_matches_all = matcher.match(queryDescriptors, trainDescriptors_all)
             good_matches_base = matcher.match(queryDescriptors, trainDescriptors_base)
 
