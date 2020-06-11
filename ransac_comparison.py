@@ -127,17 +127,6 @@ def run_ransac_comparison(features_no, exponential_decay_value, weighted=False):
 
 def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
 
-    complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/points3D.bin"
-    points3D = read_points3d_default(complete_model_points3D_path)
-    points_heatmap_values = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_"+str(exponential_decay_value)+".txt")
-
-    # create points id and index relationship
-    point3D_index = 0
-    points3D_indexing = {}
-    for key, value in points3D.items():
-        points3D_indexing[point3D_index] = value.id
-        point3D_index = point3D_index + 1
-
     print("-- Doing features_no " + features_no + " --")
 
     # load localised images names (including base ones)
@@ -157,17 +146,6 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
         matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all_weighted.npy")
     else:
         matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/matches_all.npy")
-
-    #distribution; row vector, same size as 3D points
-    points3D_avg_heatmap_vals = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".txt")
-    points3D_avg_heatmap_vals = points3D_avg_heatmap_vals.reshape([1, points3D_avg_heatmap_vals.shape[0]])
-
-    # print("Getting sub_distributions..")
-    # distributions = {}
-    # for image in localised_query_images_only:
-    #     matches_for_image = matches_all.item()[image]
-    #     breakpoint()
-    #     distributions[image] = get_sub_distribution(matches_for_image, points3D_avg_heatmap_vals)
 
     print("Running RANSAC/PROSAC.. for exponential decay of value: " + str(exponential_decay_value))
 
@@ -194,9 +172,11 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
             vanilla_ransac_data = np.r_[vanilla_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1,4])]
 
             # get sorted image matches
-            indices = matches_for_image[:, 5].astype(int)
-            values_for_matches = np.array(points_heatmap_values)[indices]
-            matches_for_image[:,5] = values_for_matches
+            score_list_1 = matches_for_image[:, 7] * matches_for_image[:, 8]
+            score_list_2 = matches_for_image[:, 8]
+
+            breakpoint()
+
             # sorted_indices
             sorted_indices = np.argsort(matches_for_image[:, 5])
             # in descending order
@@ -219,8 +199,8 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
         np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_images_pose_" + str(exponential_decay_value) + "_weighted.npy", vanilla_ransac_images_poses)
         np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_data_" + str(exponential_decay_value) + "_weighted.npy", vanilla_ransac_data)
 
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_ransac_images_pose_" + str(exponential_decay_value) + "_weighted.npy", prosac_images_poses)
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_ransac_data_" + str(exponential_decay_value) + "_weighted.npy", prosac_data)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanillia_prosac_images_pose_" + str(exponential_decay_value) + "_weighted.npy", prosac_images_poses)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanillia_prosac_data_" + str(exponential_decay_value) + "_weighted.npy", prosac_data)
 
         print("\n")
         print("Weighted Matches Results for exponential_decay_value " + str(exponential_decay_value/10) + ":")
@@ -239,8 +219,8 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
         np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_images_pose_" + str(exponential_decay_value) + ".npy", vanilla_ransac_images_poses)
         np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_data_" + str(exponential_decay_value) + ".npy", vanilla_ransac_data)
 
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_ransac_images_pose_" + str(exponential_decay_value) + ".npy", prosac_images_poses)
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_ransac_data_" + str(exponential_decay_value) + ".npy", prosac_data)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanillia_prosac_images_pose_" + str(exponential_decay_value) + ".npy", prosac_images_poses)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanillia_prosac_data_" + str(exponential_decay_value) + ".npy", prosac_data)
 
         print("\n")
         print("Non-Weighted Matches Results for exponential_decay_value " + str(exponential_decay_value/10) + ":")

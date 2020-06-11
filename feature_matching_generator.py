@@ -34,12 +34,13 @@ def blob_to_array(blob, dtype, shape=(-1,)):
         return np.frombuffer(blob, dtype=dtype).reshape(*shape)
 
 # creates 2d-3d matches data for ransac
-def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy):
+def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, points3D_avg_heatmap_vals):
     # same length
     # good_matches_data[0] - 2D point indices,
     # good_matches_data[1] - 3D point indices, - this is the index you need the id to get xyz
     # good_matches_data[2] lowe's distance inverse ratio
-    matches = np.empty([0, 7])
+    data_size = 8
+    matches = np.empty([0, data_size])
     for i in range(len(good_matches_data[1])):
         # get 3D point data
         points3D_index = good_matches_data[1][i]
@@ -49,12 +50,14 @@ def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy):
         xy_2D = query_image_xy[good_matches_data[0][i]]
         # remember points3D_index is aligned with trainDescriptors_*
         lowes_distance_inverse_ratio = good_matches_data[2][i]
+        # the heatmap dist value (points3D_avg_heatmap_vals.sum() = 1)
+        heat_map_val = points3D_avg_heatmap_vals[0,points3D_index]
         # values here are self explanatory..
-        match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index, lowes_distance_inverse_ratio]).reshape([1,7])
+        match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index, lowes_distance_inverse_ratio, heat_map_val]).reshape([1, data_size])
         matches = np.r_[matches, match]
     return matches
 
-def feature_matcher_wrapper(features_no):
+def feature_matcher_wrapper(features_no, points3D_avg_heatmap_vals):
 
     print("-- Matching features_no " + features_no + " --")
 
@@ -135,8 +138,8 @@ def feature_matcher_wrapper(features_no):
 
             # queryDescriptors and query_image_keypoints_data_xy = same order
             # points3D order and trainDescriptors_* = same order
-            matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy)
-            matches_base[test_image] = get_matches(good_matches_base, points3D_indexing, points3D, query_image_keypoints_data_xy)
+            matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
+            matches_base[test_image] = get_matches(good_matches_base, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
 
             matches_base_sum.append(len(good_matches_base[0]))
             matches_all_sum.append(len(good_matches_all[0]))
@@ -158,7 +161,7 @@ def feature_matcher_wrapper(features_no):
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/results_base.npy", results_base)
     print("Done!")
 
-def feature_matcher_wrapper_weighted(features_no, exponential_decay_value):
+def feature_matcher_wrapper_weighted(features_no, exponential_decay_value, points3D_avg_heatmap_vals):
 
     print("-- Matching features_no " + features_no + " --")
 
@@ -238,8 +241,8 @@ def feature_matcher_wrapper_weighted(features_no, exponential_decay_value):
 
             # queryDescriptors and query_image_keypoints_data_xy = same order
             # points3D order and trainDescriptors_* = same order
-            matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy)
-            matches_base[test_image] = get_matches(good_matches_base, points3D_indexing, points3D, query_image_keypoints_data_xy)
+            matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
+            matches_base[test_image] = get_matches(good_matches_base, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
 
             matches_base_sum.append(len(good_matches_base[0]))
             matches_all_sum.append(len(good_matches_all[0]))
@@ -263,8 +266,15 @@ def feature_matcher_wrapper_weighted(features_no, exponential_decay_value):
 
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 # exponential_decay can be any of 0.1 to 0.9
+features_no = "1k"
+exponential_decay_value = 0.5
+
+#distribution; row vector, same size as 3D points
+points3D_avg_heatmap_vals = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".txt")
+points3D_avg_heatmap_vals = points3D_avg_heatmap_vals.reshape([1, points3D_avg_heatmap_vals.shape[0]])
+
 print("Doing Vanilla feature matching")
-feature_matcher_wrapper("1k")
+feature_matcher_wrapper(features_no, points3D_avg_heatmap_vals)
 
 print("Doing weighted feature matching")
-feature_matcher_wrapper_weighted("1k", 0.5)
+feature_matcher_wrapper_weighted(features_no, exponential_decay_value, points3D_avg_heatmap_vals)
