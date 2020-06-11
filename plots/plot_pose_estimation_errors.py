@@ -11,7 +11,7 @@ def autolabel(rects, ax):
                     textcoords="offset points",
                     ha='center', va='bottom')
 
-# TODO: Add pose refinement stage here ?
+# TODO: Add pose refinement stage here - no add in pose evaluator maybe ?
 def plot_pose_errors(error, features_no, exponential_decay_value):
 
     mean_error_data_vanillia = 0

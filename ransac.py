@@ -129,7 +129,7 @@ def run_ransac_modified(matches_for_image, distribution):
         k = k + 1
     return (inlers_no, outliers_no, k, best_model)
 
-def prosac(sorted_matches):
+def run_prosac(sorted_matches):
     # TODO: move this distCoeffs out!
     distCoeffs = np.zeros((5, 1))  # assume zero for now
 
@@ -140,7 +140,7 @@ def prosac(sorted_matches):
     P_GOOD_SAMPLE = 0.99
     TEST_NB_OF_DRAWS = 60000
     TEST_INLIERS_RATIO = 0.5
-    BETA = 0.05
+    BETA = 0.01
     ETA0 = 0.05
 
     def niter_RANSAC(p, epsilon, s, Nmax):
