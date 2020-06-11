@@ -5,7 +5,7 @@
 import numpy as np
 from query_image import read_images_binary, get_query_image_global_pose_new_model, load_images_from_text_file
 
-def pose_evaluate(features_no, exponential_decay_value, weighted=False):
+def pose_evaluate(features_no, exponential_decay_value, weighted, poses_name_1, poses_name_2):
 
     print("-- Doing features_no " + features_no + " --")
 
@@ -26,14 +26,12 @@ def pose_evaluate(features_no, exponential_decay_value, weighted=False):
     # TODO: why not using matches_base ?!?!! and comparing to that ? - look in ransac_comparison for explanation
     if(weighted): #if statement here is self explanatory
         matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all_weighted.npy")
-        #  my poses calculated with my DM function and different RANSAC versions
-        vanilla_ransac_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/vanilla_ransac_images_pose_" + str(exponential_decay_value) + "_weighted.npy")
-        modified_ransac_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/modified_ransac_images_pose_" + str(exponential_decay_value) + "_weighted.npy")
+        vanilla_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/"+poses_name_1+"_ransac_images_pose_" + str(exponential_decay_value) + "_weighted.npy")
+        modified_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/"+poses_name_2+"_ransac_images_pose_" + str(exponential_decay_value) + "_weighted.npy")
     else:
         matches_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all.npy")
-        #  my poses calculated with my DM function and different RANSAC versions
-        vanilla_ransac_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/vanilla_ransac_images_pose_" + str(exponential_decay_value) + ".npy")
-        modified_ransac_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/modified_ransac_images_pose_" + str(exponential_decay_value) + ".npy")
+        vanilla_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/"+poses_name_1+"_ransac_images_pose_" + str(exponential_decay_value) + ".npy")
+        modified_images_pose = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/"+poses_name_2+"_ransac_images_pose_" + str(exponential_decay_value) + ".npy")
 
     print("Running for exponential decay value: " + str(exponential_decay_value))
 
@@ -45,8 +43,8 @@ def pose_evaluate(features_no, exponential_decay_value, weighted=False):
 
     for image in localised_query_images_only:
         if(matches_all.item()[image].shape[0] >= 4):
-            v_r_pose = vanilla_ransac_images_pose.item()[image]
-            m_r_pose = modified_ransac_images_pose.item()[image]
+            v_r_pose = vanilla_images_pose.item()[image]
+            m_r_pose = modified_images_pose.item()[image]
             pose_gt = get_query_image_global_pose_new_model(image, complete_model_all_images)
 
             # camera center errors
@@ -94,22 +92,25 @@ def pose_evaluate(features_no, exponential_decay_value, weighted=False):
 
     print("Saving Data..")
     if (weighted):
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_t_"+features_no+"_"+str(exponential_decay_value)+"_weighted.npy", vanilla_ransac_results_t)
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_t_"+features_no+"_"+str(exponential_decay_value)+"_weighted.npy", modified_ransac_results_t)
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_a_"+features_no+"_"+str(exponential_decay_value)+"_weighted.npy", vanilla_ransac_results_a)
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_a_"+features_no+"_"+str(exponential_decay_value)+"_weighted.npy", modified_ransac_results_a)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/"+poses_name_1+"_ransac_results_t_"+features_no+"_"+str(exponential_decay_value)+"_weighted.npy", vanilla_ransac_results_t)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/"+poses_name_1+"_ransac_results_a_"+features_no+"_"+str(exponential_decay_value)+"_weighted.npy", vanilla_ransac_results_a)
+
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/"+poses_name_2+"_ransac_results_t_"+features_no+"_"+str(exponential_decay_value)+"_weighted.npy", modified_ransac_results_t)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/"+poses_name_2+"_ransac_results_a_"+features_no+"_"+str(exponential_decay_value)+"_weighted.npy", modified_ransac_results_a)
     else:
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_t_" + features_no + "_" + str(exponential_decay_value) + ".npy", vanilla_ransac_results_t)
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_t_" + features_no + "_" + str(exponential_decay_value) + ".npy", modified_ransac_results_t)
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanilla_ransac_results_a_" + features_no + "_" + str(exponential_decay_value) + ".npy", vanilla_ransac_results_a)
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_ransac_results_a_" + features_no + "_" + str(exponential_decay_value) + ".npy", modified_ransac_results_a)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/"+poses_name_1+"_ransac_results_t_" + features_no + "_" + str(exponential_decay_value) + ".npy", vanilla_ransac_results_t)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/"+poses_name_1+"_ransac_results_a_" + features_no + "_" + str(exponential_decay_value) + ".npy", vanilla_ransac_results_a)
+
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/"+poses_name_2+"_ransac_results_t_" + features_no + "_" + str(exponential_decay_value) + ".npy", modified_ransac_results_t)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/"+poses_name_2+"_ransac_results_a_" + features_no + "_" + str(exponential_decay_value) + ".npy", modified_ransac_results_a)
 
     print("")
 
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 # exponential_decay can be any of 0.1 to 0.9
+# which poses to evaluate,  vanillia VS modified
 print("Getting pose error with un-weighted descs")
-pose_evaluate("1k", 0.5)
+pose_evaluate("1k", 0.5, False, "vanillia", "modified")
 
 print("Getting pose error with weighted descs")
-pose_evaluate("1k", 0.5, True)
+pose_evaluate("1k", 0.5, True, "vanillia", "modified")

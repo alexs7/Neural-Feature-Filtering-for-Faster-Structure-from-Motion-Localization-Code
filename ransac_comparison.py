@@ -239,11 +239,14 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
 
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 # exponential_decay can be any of 0.1 to 0.9
-# print("Running RANSAC comparison against un-weighted matches")
-# run_ransac_comparison("1k", 0.5)
-# print("Running RANSAC comparison against weighted matches")
-# run_ransac_comparison("1k", 0.5, True)
-print("Running PROSAC comparison against weighted matches")
+print("Running RANSAC comparison against un-weighted matches")
+run_ransac_comparison("1k", 0.5)
+print("Running RANSAC comparison against weighted matches")
+run_ransac_comparison("1k", 0.5, True)
+
+print("Running PROSAC comparison against un-weighted matches")
 run_prosac_comparison("1k", 0.5)
+print("Running PROSAC comparison against weighted matches")
+run_prosac_comparison("1k", 0.5, True)
 
 
