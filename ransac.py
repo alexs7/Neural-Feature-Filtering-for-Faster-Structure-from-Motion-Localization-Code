@@ -6,29 +6,7 @@ import time
 import scipy.special
 
 # intrinsics matrix
-K = np.loadtxt(
-        "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt")
-
-# def get_distance(matches_for_image, i, K ,Rt):
-#     img_point_gt = matches_for_image[i, 0:2]
-#     obj_point = matches_for_image[i, 2:5]
-#     obj_point = np.r_[obj_point, 1]  # make homogeneous
-#     img_point_est = K.dot(Rt.dot(obj_point.transpose())[0:3])
-#     img_point_est = img_point_est / img_point_est[2]  # divide by last coordinate
-#     dist = np.linalg.norm(img_point_gt - img_point_est[0:2])
-#     return dist
-#
-# def get_inlers(matches_for_image,random_matches,threshold, K, Rt):
-#     total_dist = 0
-#     inliers = []
-#     for i in range(len(matches_for_image)):
-#         if (i not in random_matches):
-#             dist = get_distance(matches_for_image, i, K, Rt)
-#             total_dist = total_dist + dist
-#             if (dist < threshold):
-#                 inliers.append(matches_for_image[i])
-#     print(total_dist)
-#     return inliers
+K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt")
 
 def run_ransac(matches_for_image):
     s = 4  # or minimal_sample_size
@@ -41,16 +19,13 @@ def run_ransac(matches_for_image):
     threshold = 8.0 # same as opencv
     max = np.iinfo(np.int32).min
     best_model = {}
-    elapsed_time_total_for_random_sampling = 0
+
     while k < no_iterations:
 
         inliers = []
         # pick 4 random matches (assume they are inliers)
-        start = time.time()
         random_matches = np.random.choice(len(matches_for_image), s, replace=False)
-        end = time.time()
-        elapsed_time = end - start
-        elapsed_time_total_for_random_sampling = elapsed_time_total_for_random_sampling + elapsed_time
+
         # get 3D and 2D points
         obj_points = matches_for_image[(random_matches), 2:5]
         img_points = matches_for_image[(random_matches), 0:2]
@@ -87,11 +62,11 @@ def run_ransac(matches_for_image):
             N = int(np.floor(N))
             no_iterations = N
             if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
-                return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)
+                return (inlers_no, outliers_no, k, best_model)
 
         k = k + 1
 
-    return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)
+    return (inlers_no, outliers_no, k, best_model)
 
 def run_ransac_modified(matches_for_image, distribution):
     s = 4  # or minimal_sample_size
@@ -104,17 +79,13 @@ def run_ransac_modified(matches_for_image, distribution):
     threshold = 8.0 # same as opencv
     max = np.iinfo(np.int32).min
     best_model = {}
-    elapsed_time_total_for_random_sampling = 0
 
     while k < no_iterations:
         inliers = []
+
         # pick 4 random matches (assume they are inliers)
-        start = time.time()
         # p = distribution, From docs: The probabilities associated with each entry in a. If not given the sample assumes a uniform distribution over all entries in a
         random_matches = np.random.choice(len(matches_for_image), s , p = distribution, replace=False)
-        end = time.time()
-        elapsed_time = end - start
-        elapsed_time_total_for_random_sampling = elapsed_time_total_for_random_sampling + elapsed_time
 
         # get 3D and 2D points
         obj_points = matches_for_image[(random_matches), 2:5]
@@ -153,10 +124,10 @@ def run_ransac_modified(matches_for_image, distribution):
             N = int(np.floor(N))
             no_iterations = N
             if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
-                return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)
+                return (inlers_no, outliers_no, k, best_model)
 
         k = k + 1
-    return (inlers_no, outliers_no, k, best_model, elapsed_time_total_for_random_sampling)
+    return (inlers_no, outliers_no, k, best_model)
 
 def prosac(sorted_matches):
     # TODO: move this distCoeffs out!

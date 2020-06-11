@@ -63,18 +63,18 @@ def run_ransac_comparison(features_no, exponential_decay_value, weighted=False):
         if(len(matches_for_image) >= 4):
             # vanilla
             start = time.time()
-            inliers_no, ouliers_no, iterations, best_model, elapsed_time_total_for_random_sampling = run_ransac(matches_for_image)
+            inliers_no, ouliers_no, iterations, best_model = run_ransac(matches_for_image)
             end  = time.time()
-            elapsed_time = end - start - elapsed_time_total_for_random_sampling
+            elapsed_time = end - start
 
             vanilla_ransac_images_poses[image] = best_model
             vanilla_ransac_data = np.r_[vanilla_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1,4])]
 
             # my version using VM ord distris
             start = time.time()
-            inliers_no, ouliers_no, iterations, best_model, elapsed_time_total_for_random_sampling = run_ransac_modified(matches_for_image, distributions[image])
+            inliers_no, ouliers_no, iterations, best_model = run_ransac_modified(matches_for_image, distributions[image])
             end = time.time()
-            elapsed_time = end - start - elapsed_time_total_for_random_sampling
+            elapsed_time = end - start
 
             ord_modified_ransac_images_poses[image] = best_model
             ord_modified_ransac_data = np.r_[ord_modified_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1, 4])]
@@ -164,7 +164,7 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
         if(len(matches_for_image) >= 4):
             # vanilla
             start = time.time()
-            inliers_no, ouliers_no, iterations, best_model, _ = run_ransac(matches_for_image)
+            inliers_no, ouliers_no, iterations, best_model = run_ransac(matches_for_image)
             end  = time.time()
             elapsed_time = end - start
 
@@ -198,8 +198,8 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
         np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_images_pose_" + str(exponential_decay_value) + "_weighted.npy", vanilla_ransac_images_poses)
         np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_data_" + str(exponential_decay_value) + "_weighted.npy", vanilla_ransac_data)
 
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanillia_prosac_images_pose_" + str(exponential_decay_value) + "_weighted.npy", prosac_images_poses)
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanillia_prosac_data_" + str(exponential_decay_value) + "_weighted.npy", prosac_data)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/prosac_images_pose_" + str(exponential_decay_value) + "_weighted.npy", prosac_images_poses)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/prosac_data_" + str(exponential_decay_value) + "_weighted.npy", prosac_data)
 
         print("\n")
         print("Weighted Matches Results for exponential_decay_value " + str(exponential_decay_value/10) + ":")
@@ -218,8 +218,8 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
         np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_images_pose_" + str(exponential_decay_value) + ".npy", vanilla_ransac_images_poses)
         np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_ransac_data_" + str(exponential_decay_value) + ".npy", vanilla_ransac_data)
 
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanillia_prosac_images_pose_" + str(exponential_decay_value) + ".npy", prosac_images_poses)
-        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanillia_prosac_data_" + str(exponential_decay_value) + ".npy", prosac_data)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/prosac_images_pose_" + str(exponential_decay_value) + ".npy", prosac_images_poses)
+        np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/prosac_data_" + str(exponential_decay_value) + ".npy", prosac_data)
 
         print("\n")
         print("Non-Weighted Matches Results for exponential_decay_value " + str(exponential_decay_value/10) + ":")
@@ -237,16 +237,19 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
 
     print("Done!")
 
+# NOTE: for saving files, vanilla_ransac_images_pose and vanilla_ransac_data are repeating but it does not really matter
+# because run_ransac_comparison and run_prosac_comparison will save the same data regarding those.
+
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 # exponential_decay can be any of 0.1 to 0.9
-print("Running RANSAC comparison against un-weighted matches")
-run_ransac_comparison("1k", 0.5)
-print("Running RANSAC comparison against weighted matches")
-run_ransac_comparison("1k", 0.5, True)
+# print("Running RANSAC comparison against un-weighted matches")
+# run_ransac_comparison("1k", 0.5)
+# print("Running RANSAC comparison against weighted matches")
+# run_ransac_comparison("1k", 0.5, True)
 
 print("Running PROSAC comparison against un-weighted matches")
 run_prosac_comparison("1k", 0.5)
-print("Running PROSAC comparison against weighted matches")
-run_prosac_comparison("1k", 0.5, True)
+# print("Running PROSAC comparison against weighted matches")
+# run_prosac_comparison("1k", 0.5, True)
 
 
