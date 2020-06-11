@@ -172,16 +172,15 @@ def run_prosac_comparison(features_no, exponential_decay_value, weighted=False):
             vanilla_ransac_data = np.r_[vanilla_ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1,4])]
 
             # get sorted image matches
-            score_list_1 = matches_for_image[:, 7] * matches_for_image[:, 8]
-            score_list_2 = matches_for_image[:, 8]
-
-            breakpoint()
+            # 6 is the lowes_distance_inverse, 7 is the heatmap value
+            lowes_distances = matches_for_image[:, 6]
+            heatmap_vals = matches_for_image[:, 7] / matches_for_image[:, 7].sum()
+            score_list = lowes_distances * heatmap_vals # or you can use, score_list = lowes_distances
 
             # sorted_indices
-            sorted_indices = np.argsort(matches_for_image[:, 5])
+            sorted_indices = np.argsort(score_list)
             # in descending order
             sorted_matches = matches_for_image[sorted_indices[::-1]]
-            # sorted_matches[:, 5] = sorted_matches[:, 5] / sorted_matches[:, 5].sum()
 
             # prosac
             start = time.time()
