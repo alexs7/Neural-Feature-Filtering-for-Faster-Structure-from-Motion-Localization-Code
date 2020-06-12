@@ -16,7 +16,7 @@ def run_ransac(matches_for_image):
     no_iterations = 20000  # can set this to whatever you want to start with
     k = 0
     distCoeffs = np.zeros((5, 1))  # assume zero for now
-    threshold = 1.0 # 8.0 same as opencv
+    threshold = 8.0 # 8.0 same as opencv
     max = np.iinfo(np.int32).min
     best_model = {}
 
@@ -62,11 +62,12 @@ def run_ransac(matches_for_image):
             N = int(np.floor(N))
             no_iterations = N
             if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
-                return (inlers_no, outliers_no, k, best_model)
+                breakpoint()
+                return inlers_no, outliers_no, k, best_model, inliers
 
         k = k + 1
-
-    return (inlers_no, outliers_no, k, best_model)
+    breakpoint()
+    return inlers_no, outliers_no, k, best_model, inliers
 
 def run_ransac_modified(matches_for_image, distribution):
     s = 4  # or minimal_sample_size
@@ -132,7 +133,7 @@ def run_ransac_modified(matches_for_image, distribution):
 def run_prosac(sorted_matches):
     # TODO: move this distCoeffs out!
     distCoeffs = np.zeros((5, 1))  # assume zero for now
-    threshold = 1.0  # 8.0 same as opencv
+    threshold = 8.0  # 8.0 same as opencv
 
     CORRESPONDENCES = sorted_matches.shape[0]
     isInlier = np.zeros([1,CORRESPONDENCES])
@@ -164,9 +165,8 @@ def run_prosac(sorted_matches):
         return  np.ceil(m + mu + sigma * np.sqrt(2.706))
 
     def findSupport(n, isInlier):
-        total_inliers = 0
-        for i in range(0,n):
-            total_inliers = total_inliers + isInlier[0,i]
+        #n is N and it is not used here
+        total_inliers = isInlier.sum() # this can change to a another function (i.e kernel) as it is, it is too simple ?
         return total_inliers, isInlier
 
     N = CORRESPONDENCES
@@ -175,11 +175,6 @@ def run_prosac(sorted_matches):
     beta = BETA
     I_N_min = (1 - MAX_OUTLIERS_PROPORTION)*N
     logeta0 = np.log(ETA0)
-
-    # print("PROSAC sampling test\n")
-    # print("number of correspondences (N):{0}\n".format(N))
-    # print("sample size (m):{0}\n".format(m))
-    # print("showing the first {0} draws from PROSAC\n".format(TEST_NB_OF_DRAWS))
 
     n_star = N
     I_n_star = 0
@@ -200,7 +195,6 @@ def run_prosac(sorted_matches):
         model = {}
         inliers = []
         t = t + 1
-        # print("Iteration t=%d, " % t)
 
         if ((t > T_n_prime) and (n < n_star)):
             T_nplus1 = (T_n * (n+1)) / (n+1-m)
@@ -237,9 +231,7 @@ def run_prosac(sorted_matches):
                 isInlier[0,i] = 1
                 inliers.append(sorted_matches[i])
 
-
         I_N, isInlier = findSupport(N, isInlier)
-        # print("found {0} inliers!\n".format(I_N))
 
         if(I_N > I_N_best):
             I_N_best = I_N
@@ -268,15 +260,15 @@ def run_prosac(sorted_matches):
                 I_n_star = I_n_best
                 k_n_star = niter_RANSAC(1 - ETA0, 1 - I_n_star / n_star, m, T_N)
 
-    # print("PROSAC finished, reason:\n");
+    # print("PROSAC finished, reason:");
     # if(t > TEST_NB_OF_DRAWS):
-    #     print("t={0} > max_t={1} (k_n_star={2}, T_N={3})\n".format(t, TEST_NB_OF_DRAWS, k_n_star, T_N))
+    #     print("t={0} > max_t={1} (k_n_star={2}, T_N={3})".format(t, TEST_NB_OF_DRAWS, k_n_star, T_N))
     # elif(t > T_N):
-    #     print("t={0} > T_N={1} (k_n_star={2})\n".format(t, T_N, k_n_star))
+    #     print("t={0} > T_N={1} (k_n_star={2})".format(t, T_N, k_n_star))
     # elif(t > k_n_star):
-    #     print("t={0} > k_n_star={1} (T_N={2})\n".format(t ,k_n_star, T_N))
+    #     print("t={0} > k_n_star={1} (T_N={2})".format(t ,k_n_star, T_N))
 
     inlier_no = I_N
     outliers_no = len(sorted_matches) - I_N
     iterations = t
-    return inlier_no, outliers_no, iterations, best_model
+    return inlier_no, outliers_no, iterations, best_model, inliers

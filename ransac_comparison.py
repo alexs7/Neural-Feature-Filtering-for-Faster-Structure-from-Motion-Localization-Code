@@ -1,7 +1,7 @@
 import numpy as np
 
 from point3D_loader import read_points3d_default
-from query_image import load_images_from_text_file, read_images_binary
+from query_image import load_images_from_text_file, read_images_binary, get_query_image_global_pose_new_model
 from ransac import run_ransac, run_ransac_modified, run_prosac
 import time
 
@@ -13,6 +13,8 @@ import time
 #     sub_distribution = distribution[0, indices]
 #     sub_distribution = sub_distribution / np.sum(sub_distribution)
 #     return sub_distribution
+from show_2D_points import show_projected_points
+
 
 def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac, matches_path,
                    vanillia_data_path_save_poses, modified_data_path_save_poses,
@@ -44,6 +46,10 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
     modified_data = np.empty([0, 4])
     modified_images_poses = {}
 
+    # images to the complete model containing all the query images (localised_images) + base images (ones used for SFM)
+    complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/images.bin"
+    complete_model_all_images = read_images_binary(complete_model_images_path)
+
     for i in range(len(localised_query_images_only)):
         image = localised_query_images_only[i]
         matches_for_image = matches_all.item()[image]
@@ -52,12 +58,15 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
         if(len(matches_for_image) >= 4):
             # vanilla
             start = time.time()
-            inliers_no, ouliers_no, iterations, best_model = run_ransac(matches_for_image)
+            inliers_no, ouliers_no, iterations, best_model, inliers = run_ransac(matches_for_image)
             end  = time.time()
             elapsed_time = end - start
 
             vanilla_images_poses[image] = best_model
             vanilla_data = np.r_[vanilla_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1,4])]
+
+            # breakpoint()
+            # show_projected_points("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/current_query_image/"+image, )
 
             # get sorted image matches
             # 6 is the lowes_distance_inverse, 7 is the heatmap value
@@ -72,12 +81,40 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
 
             # prosac (or modified)
             start = time.time()
-            inliers_no, ouliers_no, iterations, best_model = run_prosac(sorted_matches)
+            inliers_no_mod, ouliers_no_mod, iterations_mod, best_model_mod, inliers_mod = run_prosac(sorted_matches)
             end = time.time()
-            elapsed_time = end - start
+            elapsed_time_mod = end - start
 
-            modified_images_poses[image] = best_model
-            modified_data = np.r_[modified_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1, 4])]
+            modified_images_poses[image] = best_model_mod
+            modified_data = np.r_[modified_data, np.array([inliers_no_mod, ouliers_no_mod, iterations_mod, elapsed_time_mod]).reshape([1, 4])]
+
+            v_r_pose = best_model
+            m_r_pose = best_model_mod
+            pose_gt = get_query_image_global_pose_new_model(image, complete_model_all_images)
+            v_r_pose_cam_c = v_r_pose['Rt'][0:3, 0:3].transpose().dot(v_r_pose['Rt'][0:3, 3])
+            m_r_pose_cam_c = m_r_pose['Rt'][0:3, 0:3].transpose().dot(m_r_pose['Rt'][0:3, 3])
+            pose_gt_cam_c = pose_gt[0:3, 0:3].transpose().dot(pose_gt[0:3, 3])
+
+            dist1 = np.linalg.norm(v_r_pose_cam_c - pose_gt_cam_c)
+            dist2 = np.linalg.norm(m_r_pose_cam_c - pose_gt_cam_c)
+
+            v_r_pose_R = v_r_pose['Rt'][0:3, 0:3]
+            m_r_pose_R = m_r_pose['Rt'][0:3, 0:3]
+            pose_gt_R = pose_gt[0:3, 0:3]
+
+            a_v = np.arccos((np.trace(np.dot(np.linalg.inv(pose_gt_R), v_r_pose_R)) - 1) / 2)
+            a_m = np.arccos((np.trace(np.dot(np.linalg.inv(pose_gt_R), m_r_pose_R)) - 1) / 2)
+
+            print()
+            print("Iterations: RANSAC/PROSAC " + str(iterations)+ " , "+ str(iterations_mod))
+            # binary instead of mean ?
+            print("Translation error RANSAC/PROSAC: " + str(dist1) +" , "+ str(dist2) + " , " + str(dist2 < dist1))
+            print("Rotational error RANSAC/PROSAC: " + str(a_v) +" , "+ str(a_m) + " , " + str(a_m < a_v))
+
+
+
+            breakpoint()
+
         else:
             print(image + " has less than 4 matches..")
 
