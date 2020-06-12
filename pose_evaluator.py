@@ -77,16 +77,16 @@ def pose_evaluate(features_no, exponential_decay_value,
     print("     Vanilla: " + str(np.mean(vanilla_ransac_results_t)))
     print("     Modified: " + str(np.mean(modified_ransac_results_t)))
 
-    print("Averaged Errors Rotations")
+    print("Averaged Errors Rotations (Degrees)")
     print("     Vanilla: " + str(np.mean(vanilla_ransac_results_a)))
     print("     Modified: " + str(np.mean(modified_ransac_results_a)))
 
     print("Saving Data..")
-    np.savetxt(save_path_vanillia_trans, vanilla_ransac_results_t)
-    np.savetxt(save_path_vanillia_angles, vanilla_ransac_results_a)
+    np.save(save_path_vanillia_trans, vanilla_ransac_results_t)
+    np.save(save_path_vanillia_angles, vanilla_ransac_results_a)
 
-    np.savetxt(save_path_modified_trans, modified_ransac_results_t)
-    np.savetxt(save_path_modified_angles, modified_ransac_results_a)
+    np.save(save_path_modified_trans, modified_ransac_results_t)
+    np.save(save_path_modified_angles, modified_ransac_results_a)
 
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 # exponential_decay can be any of 0.1 to 0.9
@@ -97,10 +97,10 @@ matches_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_
 vanillia_data_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_images_pose_"+str(exponential_decay_value)+".npy"
 modified_data_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_images_pose_"+str(exponential_decay_value)+".npy"
 
-save_path_vanillia_trans = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanillia_results_t_"+features_no+"_"+str(exponential_decay_value)+".txt"
-save_path_vanillia_angles = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanillia_results_a_"+features_no+"_"+str(exponential_decay_value)+".txt"
-save_path_modified_trans = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_results_t_"+features_no+"_"+str(exponential_decay_value)+".txt"
-save_path_modified_angles = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_results_a_"+features_no+"_"+str(exponential_decay_value)+".txt"
+save_path_vanillia_trans = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanillia_results_t_"+features_no+"_"+str(exponential_decay_value)+".npy"
+save_path_vanillia_angles = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanillia_results_a_"+features_no+"_"+str(exponential_decay_value)+".npy"
+save_path_modified_trans = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_results_t_"+features_no+"_"+str(exponential_decay_value)+".npy"
+save_path_modified_angles = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_results_a_"+features_no+"_"+str(exponential_decay_value)+".npy"
 
 print("Evaluating Poses")
 pose_evaluate("1k", 0.5, matches_path, vanillia_data_path, modified_data_path,

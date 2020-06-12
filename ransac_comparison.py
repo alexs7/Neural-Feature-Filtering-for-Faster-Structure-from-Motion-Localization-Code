@@ -46,15 +46,6 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
     modified_data = np.empty([0, 4])
     modified_images_poses = {}
 
-    # images to the complete model containing all the query images (localised_images) + base images (ones used for SFM)
-    complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/images.bin"
-    complete_model_all_images = read_images_binary(complete_model_images_path)
-
-    v_a_errors = []
-    v_t_errors = []
-    m_a_errors = []
-    m_t_errors = []
-
     for i in range(len(localised_query_images_only)):
         image = localised_query_images_only[i]
         matches_for_image = matches_all.item()[image]
@@ -75,7 +66,7 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
 
             # get sorted image matches
             # 6 is the lowes_distance_inverse, 7 is the heatmap value
-            breakpoint()
+            # TODO: Normalise both ?
             lowes_distances = matches_for_image[:, 6]
             heatmap_vals = matches_for_image[:, 7] / matches_for_image[:, 7].sum()
             score_list = lowes_distances * heatmap_vals # or you can use, score_list = lowes_distances
@@ -93,28 +84,6 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
 
             modified_images_poses[image] = best_model_mod
             modified_data = np.r_[modified_data, np.array([inliers_no_mod, ouliers_no_mod, iterations_mod, elapsed_time_mod]).reshape([1, 4])]
-
-            v_r_pose = best_model
-            m_r_pose = best_model_mod
-            pose_gt = get_query_image_global_pose_new_model(image, complete_model_all_images)
-            v_r_pose_cam_c = v_r_pose['Rt'][0:3, 0:3].transpose().dot(v_r_pose['Rt'][0:3, 3])
-            m_r_pose_cam_c = m_r_pose['Rt'][0:3, 0:3].transpose().dot(m_r_pose['Rt'][0:3, 3])
-            pose_gt_cam_c = pose_gt[0:3, 0:3].transpose().dot(pose_gt[0:3, 3])
-
-            dist1 = np.linalg.norm(v_r_pose_cam_c - pose_gt_cam_c)
-            dist2 = np.linalg.norm(m_r_pose_cam_c - pose_gt_cam_c)
-
-            v_r_pose_R = v_r_pose['Rt'][0:3, 0:3]
-            m_r_pose_R = m_r_pose['Rt'][0:3, 0:3]
-            pose_gt_R = pose_gt[0:3, 0:3]
-
-            a_v = np.arccos((np.trace(np.dot(np.linalg.inv(pose_gt_R), v_r_pose_R)) - 1) / 2)
-            a_m = np.arccos((np.trace(np.dot(np.linalg.inv(pose_gt_R), m_r_pose_R)) - 1) / 2)
-
-            v_a_errors.append(a_v)
-            v_t_errors.append(dist1)
-            m_a_errors.append(a_m)
-            m_t_errors.append(dist2)
         else:
             print(image + " has less than 4 matches..")
 
@@ -132,15 +101,11 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
     print("     Average Outliers: " + str(np.mean(vanilla_data[:,1])))
     print("     Average Iterations: " + str(np.mean(vanilla_data[:,2])))
     print("     Average Time (s): " + str(np.mean(vanilla_data[:,3])))
-    print("     Average Trans. Error : " + str(np.mean(v_t_errors)))
-    print("     Average Rotational Error : " + str(np.mean(v_a_errors)))
     print("Modified")
     print("     Average Inliers: " + str(np.mean(modified_data[:, 0])))
     print("     Average Outliers: " + str(np.mean(modified_data[:, 1])))
     print("     Average Iterations: " + str(np.mean(modified_data[:, 2])))
     print("     Average Time (s): " + str(np.mean(modified_data[:, 3])))
-    print("     Average Trans. Error : " + str(np.mean(m_t_errors)))
-    print("     Average Rotational Error : " + str(np.mean(m_a_errors)))
     print("<---->")
 
     print("Done!")
