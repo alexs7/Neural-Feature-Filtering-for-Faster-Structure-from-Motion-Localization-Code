@@ -50,6 +50,11 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
     complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/images.bin"
     complete_model_all_images = read_images_binary(complete_model_images_path)
 
+    v_a_errors = []
+    v_t_errors = []
+    m_a_errors = []
+    m_t_errors = []
+
     for i in range(len(localised_query_images_only)):
         image = localised_query_images_only[i]
         matches_for_image = matches_all.item()[image]
@@ -70,6 +75,7 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
 
             # get sorted image matches
             # 6 is the lowes_distance_inverse, 7 is the heatmap value
+            breakpoint()
             lowes_distances = matches_for_image[:, 6]
             heatmap_vals = matches_for_image[:, 7] / matches_for_image[:, 7].sum()
             score_list = lowes_distances * heatmap_vals # or you can use, score_list = lowes_distances
@@ -105,16 +111,10 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
             a_v = np.arccos((np.trace(np.dot(np.linalg.inv(pose_gt_R), v_r_pose_R)) - 1) / 2)
             a_m = np.arccos((np.trace(np.dot(np.linalg.inv(pose_gt_R), m_r_pose_R)) - 1) / 2)
 
-            print()
-            print("Iterations: RANSAC/PROSAC " + str(iterations)+ " , "+ str(iterations_mod))
-            # binary instead of mean ?
-            print("Translation error RANSAC/PROSAC: " + str(dist1) +" , "+ str(dist2) + " , " + str(dist2 < dist1))
-            print("Rotational error RANSAC/PROSAC: " + str(a_v) +" , "+ str(a_m) + " , " + str(a_m < a_v))
-
-
-
-            breakpoint()
-
+            v_a_errors.append(a_v)
+            v_t_errors.append(dist1)
+            m_a_errors.append(a_m)
+            m_t_errors.append(dist2)
         else:
             print(image + " has less than 4 matches..")
 
@@ -132,11 +132,15 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
     print("     Average Outliers: " + str(np.mean(vanilla_data[:,1])))
     print("     Average Iterations: " + str(np.mean(vanilla_data[:,2])))
     print("     Average Time (s): " + str(np.mean(vanilla_data[:,3])))
+    print("     Average Trans. Error : " + str(np.mean(v_t_errors)))
+    print("     Average Rotational Error : " + str(np.mean(v_a_errors)))
     print("Modified")
     print("     Average Inliers: " + str(np.mean(modified_data[:, 0])))
     print("     Average Outliers: " + str(np.mean(modified_data[:, 1])))
     print("     Average Iterations: " + str(np.mean(modified_data[:, 2])))
     print("     Average Time (s): " + str(np.mean(modified_data[:, 3])))
+    print("     Average Trans. Error : " + str(np.mean(m_t_errors)))
+    print("     Average Rotational Error : " + str(np.mean(m_a_errors)))
     print("<---->")
 
     print("Done!")

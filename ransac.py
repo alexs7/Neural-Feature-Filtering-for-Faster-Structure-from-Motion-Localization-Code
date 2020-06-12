@@ -62,11 +62,9 @@ def run_ransac(matches_for_image):
             N = int(np.floor(N))
             no_iterations = N
             if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
-                breakpoint()
                 return inlers_no, outliers_no, k, best_model, inliers
 
         k = k + 1
-    breakpoint()
     return inlers_no, outliers_no, k, best_model, inliers
 
 def run_ransac_modified(matches_for_image, distribution):
@@ -220,6 +218,7 @@ def run_prosac(sorted_matches):
         model['Rt'] = Rt
 
         # 4. Model verification
+        isInlier = np.zeros([1, CORRESPONDENCES])
         for i in range(len(sorted_matches)):  # run against all the other matches (all of them doesn't matter here)
             obj_point = sorted_matches[i, 2:5]
             img_point_gt = sorted_matches[i, 0:2]
