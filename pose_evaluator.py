@@ -74,12 +74,12 @@ def pose_evaluate(features_no, exponential_decay_value,
             print(image + " has less than 4 matches..")
 
     print("Averaged Errors Translations")
-    print("     Vanilla: " + str(np.mean(vanilla_ransac_results_t)))
-    print("     Modified: " + str(np.mean(modified_ransac_results_t)))
+    print("     Vanilla: " + str(np.std(vanilla_ransac_results_t) / np.sqrt(len(vanilla_ransac_results_t))))
+    print("     Modified: " + str(np.std(modified_ransac_results_t) / np.sqrt(len(modified_ransac_results_t))))
 
     print("Averaged Errors Rotations (Degrees)")
-    print("     Vanilla: " + str(np.mean(vanilla_ransac_results_a)))
-    print("     Modified: " + str(np.mean(modified_ransac_results_a)))
+    print("     Vanilla: " + str(np.std(vanilla_ransac_results_a) / np.sqrt(len(vanilla_ransac_results_a))))
+    print("     Modified: " + str(np.std(modified_ransac_results_a) / np.sqrt(len(modified_ransac_results_a))))
 
     print("Saving Data..")
     np.save(save_path_vanillia_trans, vanilla_ransac_results_t)
