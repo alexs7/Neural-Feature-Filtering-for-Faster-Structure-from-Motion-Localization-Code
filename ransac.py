@@ -16,7 +16,7 @@ def run_ransac(matches_for_image):
     no_iterations = 20000  # can set this to whatever you want to start with
     k = 0
     distCoeffs = np.zeros((5, 1))  # assume zero for now
-    threshold = 8.0 # same as opencv
+    threshold = 1.0 # 8.0 same as opencv
     max = np.iinfo(np.int32).min
     best_model = {}
 
@@ -132,6 +132,7 @@ def run_ransac_modified(matches_for_image, distribution):
 def run_prosac(sorted_matches):
     # TODO: move this distCoeffs out!
     distCoeffs = np.zeros((5, 1))  # assume zero for now
+    threshold = 1.0  # 8.0 same as opencv
 
     CORRESPONDENCES = sorted_matches.shape[0]
     isInlier = np.zeros([1,CORRESPONDENCES])
@@ -158,7 +159,7 @@ def run_prosac(sorted_matches):
         return Nmax
 
     def Imin(m, n, beta):
-        mu = n*beta
+        mu = n * beta
         sigma = np.sqrt(n * beta * (1 - beta))
         return  np.ceil(m + mu + sigma * np.sqrt(2.706))
 
@@ -194,6 +195,7 @@ def run_prosac(sorted_matches):
     k_n_star = T_N
 
     best_model = {}
+
     while (((I_N_best < I_N_min) or t <= k_n_star) and t < T_N and t <= TEST_NB_OF_DRAWS):
         model = {}
         inliers = []
@@ -231,9 +233,10 @@ def run_prosac(sorted_matches):
             img_point_est = K.dot(Rt.dot(obj_point.transpose())[0:3])
             img_point_est = img_point_est / img_point_est[2]  # divide by last coordinate
             dist = np.linalg.norm(img_point_gt - img_point_est[0:2])
-            if (dist < 8.0):
+            if (dist < threshold):
                 isInlier[0,i] = 1
                 inliers.append(sorted_matches[i])
+
 
         I_N, isInlier = findSupport(N, isInlier)
         # print("found {0} inliers!\n".format(I_N))
