@@ -73,6 +73,7 @@ def pose_evaluate(features_no, exponential_decay_value,
         else:
             print(image + " has less than 4 matches..")
 
+    # TODO: standard error might give different results than plots - that is a float issue
     print("Averaged Errors Translations")
     print("     Vanilla: " + str(np.std(vanilla_ransac_results_t) / np.sqrt(len(vanilla_ransac_results_t))))
     print("     Modified: " + str(np.std(modified_ransac_results_t) / np.sqrt(len(modified_ransac_results_t))))
