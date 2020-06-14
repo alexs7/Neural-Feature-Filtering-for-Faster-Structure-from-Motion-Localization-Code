@@ -34,8 +34,7 @@ def get_images(features_no):
     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_localised.txt",images_localised,fmt='%s')
     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no +"/images_not_localised.txt",images_not_localised,fmt='%s')
 
-colmap_features_no = ["2k", "1k", "0.5k", "0.25k"]
-# run for each no of features
-for features_no in colmap_features_no:
-    print("Getting localized and non localised images for features_no " + features_no )
-    get_images(features_no)
+# colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
+colmap_features_no = "1k"
+print("Getting localized and non localised images for features_no " + colmap_features_no )
+get_images(colmap_features_no)
