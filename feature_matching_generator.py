@@ -57,224 +57,109 @@ def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, 
         matches = np.r_[matches, match]
     return matches
 
-def feature_matcher_wrapper(features_no, points3D_avg_heatmap_vals):
+def feature_matcher_wrapper(points3D_avg_heatmap_vals, db_path, images_path, train_descriptors_path, points3D, points3D_indexing, matcher):
 
-    print("-- Matching features_no " + features_no + " --")
-
-    db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db")
-
-    # by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
-    complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/images.bin"
-    complete_model_all_images = read_images_binary(complete_model_images_path)
-    complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/points3D.bin"
-    points3D = read_points3d_default(complete_model_points3D_path) # base model's 3D points (same length as complete as we do not add points when localising new points, but different image_ds for each point)
-
-    # create points id and index relationship
-    point3D_index = 0
-    points3D_indexing = {}
-    for key, value in points3D.items():
-        points3D_indexing[point3D_index] = value.id
-        point3D_index = point3D_index + 1
+    db = COLMAPDatabase.connect(db_path)
 
     # images to use for testing
     # NOTE: Here you can use the localised images that contain also the base images but there is no point ..
-    test_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_name.txt")
+    test_images = load_images_from_text_file(images_path)
 
-    print("Loading 3D Points mean descs")
     # this loads the descs means for the base model and the complete model indexing is the same as points3D indexing
-    trainDescriptors_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all.npy")
-    trainDescriptors_base = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_base.npy")
-    trainDescriptors_all = trainDescriptors_all.astype(np.float32)
-    trainDescriptors_base = trainDescriptors_base.astype(np.float32)
+    trainDescriptors = np.load(train_descriptors_path)
+    trainDescriptors = trainDescriptors.astype(np.float32)
 
     # create image_name <-> value dict - easier to work with
-    results_base = {}
-    results_all = {}
-
-    matches_base = {}
-    matches_all = {}
-
-    matches_base_sum = []
-    matches_all_sum = []
+    matches = {}
+    matches_sum = []
 
     #  go through all the test images and match their descs to the 3d points avg descs
-    for test_image in test_images:
-        image_id = image_localised(test_image, complete_model_all_images)
+    for i in range(len(test_images)):
+        test_image = test_images[i]
+        print("Matching image " + str(i + 1) + "/" + str(len(test_images)) + ", " + test_image, end="\r")
 
-        if(image_id != None):
-            image_id = str(image_id)
+        image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + test_image + "'")
+        image_id = str(image_id.fetchone()[0])
+        # fetching the x,y,descs for that image
+        query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
+        query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
+        query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
+        query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
+        query_image_keypoints_data = blob_to_array(query_image_keypoints_data, np.float32)
+        query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
+        query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows,query_image_keypoints_data_cols)
+        query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
+        query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
+        query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
+        query_image_descriptors_data = blob_to_array(query_image_descriptors_data, np.uint8)
+        descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
+        query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
 
-            # fetching the x,y,descs for that image
-            query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-            query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
-            query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-            query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
-            query_image_keypoints_data = blob_to_array(query_image_keypoints_data, np.float32)
-            query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
-            query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows,query_image_keypoints_data_cols)
-            query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
-            query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
-            query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
-            query_image_descriptors_data = blob_to_array(query_image_descriptors_data, np.uint8)
-            descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
-            query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
+        # once you have the test images descs now do feature matching here! - Matching on all and base descs means
+        queryDescriptors = query_image_descriptors_data.astype(np.float32)
 
-            # once you have the test images descs now do feature matching here! - Matching on all and base descs means
-            queryDescriptors = query_image_descriptors_data.astype(np.float32)
+        # actual matching here!
+        # NOTE: 09/06/2020 - match() has been changed to return lowes_distances in REVERSE! (https://willguimont.github.io/cs/2019/12/26/prosac-algorithm.html)
+        good_matches = matcher.match(queryDescriptors, trainDescriptors)
+        # good_matches_base = matcher.match(queryDescriptors, trainDescriptors_base)
 
-            # actual matching here!
-            matching_algo = FeatureMatcherTypes.FLANN  # or FeatureMatcherTypes.BF
-            match_ratio_test = Parameters.kFeatureMatchRatioTest
-            norm_type = cv2.NORM_L2
-            cross_check = False
-            matcher = feature_matcher_factory(norm_type, cross_check, match_ratio_test, matching_algo)
-            # NOTE: 09/06/2020 - match() has been changed to return lowes_distances in REVERSE! (https://willguimont.github.io/cs/2019/12/26/prosac-algorithm.html)
-            good_matches_all = matcher.match(queryDescriptors, trainDescriptors_all)
-            good_matches_base = matcher.match(queryDescriptors, trainDescriptors_base)
+        # remember these are only indices
+        results_all[test_image] = len(good_matches[0])
 
-            # remember these are only indices
-            results_all[test_image] = len(good_matches_all[0])
-            results_base[test_image] = len(good_matches_base[0])
+        # queryDescriptors and query_image_keypoints_data_xy = same order
+        # points3D order and trainDescriptors_* = same order
+        # returns extra data for each match
+        matches[test_image] = get_matches(good_matches, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
+        matches_sum.append(len(good_matches[0]))
 
-            # queryDescriptors and query_image_keypoints_data_xy = same order
-            # points3D order and trainDescriptors_* = same order
-            matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
-            matches_base[test_image] = get_matches(good_matches_base, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
+    print()
+    matches_all_avg = np.sum(matches_sum) / len(matches_sum)
+    print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(test_images)) )
 
-            matches_base_sum.append(len(good_matches_base[0]))
-            matches_all_sum.append(len(good_matches_all[0]))
+    return matches
 
-    print("Averages: ")
-    matches_base_avg = np.sum(matches_base_sum) / len(matches_base_sum)
-    print("Base model avg matches: " + str(matches_base_avg))
-    matches_all_avg = np.sum(matches_all_sum) / len(matches_all_sum)
-    print("Complete model avg matches: " + str(matches_all_avg))
-
-    print("Saving data...")
-    # save the 2D-3D matches
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all.npy", matches_all)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_base.npy", matches_base)
-
-    # again this is mostly of visualing results
-    # results_* contain the numbers of matches for each image so, length will be the same as the localised images no.
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/results_all.npy", results_all)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/results_base.npy", results_base)
-    print("Done!")
-
-def feature_matcher_wrapper_weighted(features_no, exponential_decay_value, points3D_avg_heatmap_vals):
-
-    print("-- Matching features_no " + features_no + " --")
-
-    db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db")
-
-    # by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
-    complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/images.bin"
-    complete_model_all_images = read_images_binary(complete_model_images_path)
-    complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/points3D.bin"
-    points3D = read_points3d_default(complete_model_points3D_path) # base model's 3D points (same length as complete as we do not add points when localising new points, but different image_ds for each point)
-
-    # create points id and index relationship
-    point3D_index = 0
-    points3D_indexing = {}
-    for key, value in points3D.items():
-        points3D_indexing[point3D_index] = value.id
-        point3D_index = point3D_index + 1
-
-    # images to use for testing
-    # NOTE: Here you can use the localised images that contain also the base images but there is no point ..
-    test_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_name.txt")
-
-    print("Loading 3D Points weighted descs")
-    # this loads the descs means for the base model and the complete model indexing is the same as points3D indexing
-    trainDescriptors_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_weighted_descs_all_with_extra_data_"+str(exponential_decay_value)+".npy")
-    trainDescriptors_base = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_base.npy")
-    trainDescriptors_all = trainDescriptors_all.astype(np.float32)
-    trainDescriptors_base = trainDescriptors_base.astype(np.float32)
-
-    # create image_name <-> value dict - easier to work with
-    results_base = {}
-    results_all = {}
-
-    matches_base = {}
-    matches_all = {}
-
-    matches_base_sum = []
-    matches_all_sum = []
-
-    #  go through all the test images and match their descs to the 3d points avg descs
-    for test_image in test_images:
-        image_id = image_localised(test_image, complete_model_all_images)
-
-        if(image_id != None):
-            image_id = str(image_id)
-
-            # fetching the x,y,descs for that image
-            query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-            query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
-            query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-            query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
-            query_image_keypoints_data = blob_to_array(query_image_keypoints_data, np.float32)
-            query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
-            query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows,query_image_keypoints_data_cols)
-            query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
-            query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
-            query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
-            query_image_descriptors_data = blob_to_array(query_image_descriptors_data, np.uint8)
-            descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
-            query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
-
-            # once you have the test images descs now do feature matching here! - Matching on all and base descs means
-            queryDescriptors = query_image_descriptors_data.astype(np.float32)
-
-            # actual matching here!
-            matching_algo = FeatureMatcherTypes.FLANN  # or FeatureMatcherTypes.BF
-            match_ratio_test = Parameters.kFeatureMatchRatioTest
-            norm_type = cv2.NORM_L2
-            cross_check = False
-            matcher = feature_matcher_factory(norm_type, cross_check, match_ratio_test, matching_algo)
-            good_matches_all = matcher.match(queryDescriptors, trainDescriptors_all)
-            good_matches_base = matcher.match(queryDescriptors, trainDescriptors_base)
-
-            # remember these are only indices
-            results_all[test_image] = len(good_matches_all[0])
-            results_base[test_image] = len(good_matches_base[0])
-
-            # queryDescriptors and query_image_keypoints_data_xy = same order
-            # points3D order and trainDescriptors_* = same order
-            matches_all[test_image] = get_matches(good_matches_all, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
-            matches_base[test_image] = get_matches(good_matches_base, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
-
-            matches_base_sum.append(len(good_matches_base[0]))
-            matches_all_sum.append(len(good_matches_all[0]))
-
-    print("Averages: ")
-    matches_base_avg = np.sum(matches_base_sum) / len(matches_base_sum)
-    print("Base model avg matches: " + str(matches_base_avg))
-    matches_all_avg = np.sum(matches_all_sum) / len(matches_all_sum)
-    print("Complete model avg matches: " + str(matches_all_avg))
-
-    print("Saving data...")
-    # save the 2D-3D matches
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all_weighted.npy", matches_all)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_base_weighted.npy", matches_base)
-
-    # again this is mostly of visualing results
-    # results_* contain the numbers of matches for each image so, length will be the same as the localised images no.
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/results_all.npy", results_all)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/results_base.npy", results_base)
-    print("Done!")
-
+# Arguments
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 # exponential_decay can be any of 0.1 to 0.9
 features_no = "1k"
 exponential_decay_value = 0.5
+db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db"
+# list of images to get 2D-3D matches from
+# NOTE: Here you can use the "colmap_data/data/query_name.txt" if you want to exlude base images..
+images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no + "/images_localised.txt"
+train_descriptors_all_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all.npy"
+train_descriptors_base_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_base.npy"
+
+# by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
+complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/points3D.bin"
+points3D = read_points3d_default(complete_model_points3D_path)  # base model's 3D points (same length as complete as we do not add points when localising new points, but different image_ds for each point)
+
+# create points id and index relationship
+point3D_index = 0
+points3D_indexing = {}
+for key, value in points3D.items():
+    points3D_indexing[point3D_index] = value.id
+    point3D_index = point3D_index + 1
+
+# define matcher
+matching_algo = FeatureMatcherTypes.FLANN  # or FeatureMatcherTypes.BF
+match_ratio_test = Parameters.kFeatureMatchRatioTest
+norm_type = cv2.NORM_L2
+cross_check = False
+matcher = feature_matcher_factory(norm_type, cross_check, match_ratio_test, matching_algo)
 
 #distribution; row vector, same size as 3D points
 points3D_avg_heatmap_vals = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".txt")
 points3D_avg_heatmap_vals = points3D_avg_heatmap_vals.reshape([1, points3D_avg_heatmap_vals.shape[0]])
 
-print("Doing Vanilla feature matching")
-feature_matcher_wrapper(features_no, points3D_avg_heatmap_vals)
+matches = feature_matcher_wrapper(points3D_avg_heatmap_vals, db_path, images_path, train_descriptors_all_path, points3D, points3D_indexing, matcher)
+breakpoint()
 
-print("Doing weighted feature matching")
-feature_matcher_wrapper_weighted(features_no, exponential_decay_value, points3D_avg_heatmap_vals)
+print("Saving data...")
+# save the 2D-3D matches
+np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/matches_all.npy", matches)
+# again this is mostly of visualing results
+# results_* contain the numbers of matches for each image so, length will be the same as the localised images no.
+np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/results_all.npy", results)
+print("Done!")
+
