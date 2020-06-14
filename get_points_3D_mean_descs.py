@@ -7,24 +7,12 @@
 import sqlite3
 import numpy as np
 import sys
+
+from database import COLMAPDatabase, blob_to_array
 from point3D_loader import read_points3d_default
 from query_image import read_images_binary, image_localised
 
-IS_PYTHON3 = sys.version_info[0] >= 3
-
-class COLMAPDatabase(sqlite3.Connection):
-
-    @staticmethod
-    def connect(database_path):
-        return sqlite3.connect(database_path, factory=COLMAPDatabase)
-
-def blob_to_array(blob, dtype, shape=(-1,)):
-    if IS_PYTHON3:
-        return np.frombuffer(blob, dtype=dtype).reshape(*shape)
-    else:
-        return np.frombuffer(blob, dtype=dtype).reshape(*shape)
-
-def get_desc_avg(features_no):
+def get_desc_avg(features_no, out_path_base, out_path_all):
 
     print("-- Averaging features_no " + features_no + " --")
 
@@ -71,7 +59,7 @@ def get_desc_avg(features_no):
     print("Localised and NonLocalised query_images_ids size: " + str(len(query_images_ids)))
 
     # This is used to check if a point3D was seen by an image in the base model - if so add that desc to the , points_mean_descs_base
-    # it is also used to check if a point3D was seen by an image in the base model and future sessions (i.e query image) - if so add that desc to the , points_mean_descs_all
+    # it is also used to check if a point3D was seen by an image in the base model OR future sessions (i.e query image) - if so add that desc to points_mean_descs_all
     all_images_ids = base_images_ids + query_images_ids
     print("All_images_ids size: " + str(len(all_images_ids)))
 
@@ -112,10 +100,10 @@ def get_desc_avg(features_no):
 
     print("\n Saving data...")
     # folder are created manually..
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_base.npy", points_mean_descs_base)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all.npy", points_mean_descs_all)
+    np.save(out_path_base, points_mean_descs_base)
+    np.save(out_path_all, points_mean_descs_all)
 
-def get_desc_avg_with_session_weights(features_no, exponential_decay_value):
+def get_desc_avg_with_session_weights(features_no, exponential_decay_value, out_path):
 
     print("-- Averaging features_no " + features_no + " and exponential_decay_rate "+ str(exponential_decay_value) +" --")
 
@@ -164,8 +152,6 @@ def get_desc_avg_with_session_weights(features_no, exponential_decay_value):
 
     print("Localised and NonLocalised query_images_ids size: " + str(len(query_images_ids)))
 
-    # This is used to check if a point3D was seen by an image in the base model - if so add that desc to the , points_mean_descs_base
-    # it is also used to check if a point3D was seen by an image in the base model and future sessions (i.e query image) - if so add that desc to the , points_mean_descs_all
     all_images_ids = base_images_ids + query_images_ids
     print("All_images_ids size: " + str(len(all_images_ids)))
 
@@ -202,12 +188,19 @@ def get_desc_avg_with_session_weights(features_no, exponential_decay_value):
 
     print("\n Saving data...")
     # folder are created manually..
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_weighted_descs_all_with_extra_data_"+str(exponential_decay_value)+".npy", points_weighted_descs)
+    np.save(out_path, points_weighted_descs)
 
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 # exponential_decay can be any of 0.1 to 0.9
-print("Running vanilla get 3D descs avg...")
-get_desc_avg("1k")
+# exponential_decay can be any of 0.1 to 0.9
+features_no = "1k"
+exponential_decay_value = 0.5
 
+print("Running vanilla get 3D descs avg...")
+out_path_base = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_base.npy"
+out_path_all = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all.npy"
+get_desc_avg("1k", out_path_base, out_path_all)
+
+out_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_weighted_descs_all_with_extra_data_"+str(exponential_decay_value)+".npy"
 print("Running get 3D descs avg with session weights...")
-get_desc_avg_with_session_weights("1k", 0.5)
+get_desc_avg_with_session_weights("1k", 0.5, out_path)
