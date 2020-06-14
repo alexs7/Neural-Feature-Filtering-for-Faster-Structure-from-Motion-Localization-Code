@@ -13,7 +13,7 @@ def plot_flann_matches(features_no):
         images_localised_labels = f.readlines()
     images_localised_labels = [x.strip() for x in images_localised_labels]
 
-    # load matching results (number of matches for each image)
+    # load matching results (number of matches for each image) - NOTE: 14/06 results_all.npy not generated anymore
     results_all = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/results_all.npy").item()
     results_base = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/results_base.npy").item()
 
