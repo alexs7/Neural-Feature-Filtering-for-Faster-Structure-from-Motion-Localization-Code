@@ -103,9 +103,6 @@ def feature_matcher_wrapper(points3D_avg_heatmap_vals, db_path, images_path, tra
         good_matches = matcher.match(queryDescriptors, trainDescriptors)
         # good_matches_base = matcher.match(queryDescriptors, trainDescriptors_base)
 
-        # remember these are only indices
-        results_all[test_image] = len(good_matches[0])
-
         # queryDescriptors and query_image_keypoints_data_xy = same order
         # points3D order and trainDescriptors_* = same order
         # returns extra data for each match
@@ -117,49 +114,4 @@ def feature_matcher_wrapper(points3D_avg_heatmap_vals, db_path, images_path, tra
     print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(test_images)) )
 
     return matches
-
-# Arguments
-# colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
-# exponential_decay can be any of 0.1 to 0.9
-features_no = "1k"
-exponential_decay_value = 0.5
-db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db"
-# list of images to get 2D-3D matches from
-# NOTE: Here you can use the "colmap_data/data/query_name.txt" if you want to exlude base images..
-images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no + "/images_localised.txt"
-train_descriptors_all_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all.npy"
-train_descriptors_base_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_base.npy"
-
-# by "complete model" I mean all the frames from future sessions localised in the base model (28/03)
-complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/points3D.bin"
-points3D = read_points3d_default(complete_model_points3D_path)  # base model's 3D points (same length as complete as we do not add points when localising new points, but different image_ds for each point)
-
-# create points id and index relationship
-point3D_index = 0
-points3D_indexing = {}
-for key, value in points3D.items():
-    points3D_indexing[point3D_index] = value.id
-    point3D_index = point3D_index + 1
-
-# define matcher
-matching_algo = FeatureMatcherTypes.FLANN  # or FeatureMatcherTypes.BF
-match_ratio_test = Parameters.kFeatureMatchRatioTest
-norm_type = cv2.NORM_L2
-cross_check = False
-matcher = feature_matcher_factory(norm_type, cross_check, match_ratio_test, matching_algo)
-
-#distribution; row vector, same size as 3D points
-points3D_avg_heatmap_vals = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".txt")
-points3D_avg_heatmap_vals = points3D_avg_heatmap_vals.reshape([1, points3D_avg_heatmap_vals.shape[0]])
-
-matches = feature_matcher_wrapper(points3D_avg_heatmap_vals, db_path, images_path, train_descriptors_all_path, points3D, points3D_indexing, matcher)
-breakpoint()
-
-print("Saving data...")
-# save the 2D-3D matches
-np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/matches_all.npy", matches)
-# again this is mostly of visualing results
-# results_* contain the numbers of matches for each image so, length will be the same as the localised images no.
-np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/results_all.npy", results)
-print("Done!")
 
