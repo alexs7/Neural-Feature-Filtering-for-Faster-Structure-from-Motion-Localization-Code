@@ -163,6 +163,20 @@ def run_prosac(sorted_matches):
         return  np.ceil(m + mu + sigma * np.sqrt(2.706))
 
     def findSupport(n, isInlier):
+        # from emails - with author
+        # Yes, it is okay.
+        # A better one is considering also errors of points. For example:
+        # sum_errors = 0; num_inliers = 0
+        # for pt in points:
+        #    error = estimator.getError(model, pt) # e.g., estimator is PnP,
+        # error function computes reprojection error
+        #    if error < threshold:
+        #        sum_errors += error
+        #        num_inliers += 1
+        # sum_errors += (len(points) - num_inliers) * threshold
+        # So, you can compare models either by number of inliers (higher is
+        # better) or by sum of errors (lower is better).
+
         #n is N and it is not used here
         total_inliers = isInlier.sum() # this can change to a another function (i.e kernel) as it is, it is too simple ?
         return total_inliers, isInlier
