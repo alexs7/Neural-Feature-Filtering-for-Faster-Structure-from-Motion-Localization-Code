@@ -1,9 +1,8 @@
 import numpy as np
 
-from point3D_loader import read_points3d_default
 from query_image import load_images_from_text_file, read_images_binary, get_query_image_global_pose_new_model
-from ransac import run_ransac, run_ransac_modified, run_prosac
 import time
+from ransac_prosac import ransac, prosac
 
 # This was used with the old modified RANSAC version
 # get the "sub_distributions" for each matches set for each image - This will have to be relooked at!
@@ -13,19 +12,13 @@ import time
 #     sub_distribution = distribution[0, indices]
 #     sub_distribution = sub_distribution / np.sum(sub_distribution)
 #     return sub_distribution
-from show_2D_points import show_projected_points
+def run_comparison(exponential_decay_value, ransac, prosac, matches_path, localised_images_path, base_images_path):
 
-
-def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac, matches_path,
-                   vanillia_data_path_save_poses, modified_data_path_save_poses,
-                   vanillia_data_path_save_info, modified_data_path_save_info):
-
-    print("-- Doing features_no " + features_no + " --")
-
-    # load localised images names (including base ones)
-    localised_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/images_localised_and_not_localised/" + features_no + "/images_localised.txt")
+    # load COLMAP localised images names (including base ones)
+    localised_images = load_images_from_text_file(localised_images_path)
     # of course base images will be localised..
-    base_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/base_images.txt")
+    base_images = load_images_from_text_file(base_images_path)
+
     # Now, get localised images from the query images only. Not the base images.
     localised_query_images_only = []
     for image in localised_images:
@@ -54,15 +47,12 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
         if(len(matches_for_image) >= 4):
             # vanilla
             start = time.time()
-            inliers_no, ouliers_no, iterations, best_model, inliers = run_ransac(matches_for_image)
+            inliers_no, ouliers_no, iterations, best_model, inliers = ransac(matches_for_image)
             end  = time.time()
             elapsed_time = end - start
 
             vanilla_images_poses[image] = best_model
             vanilla_data = np.r_[vanilla_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1,4])]
-
-            # breakpoint()
-            # show_projected_points("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/current_query_image/"+image, )
 
             # get sorted image matches
             # 6 is the lowes_distance_inverse, 7 is the heatmap value
@@ -78,7 +68,7 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
 
             # prosac (or modified)
             start = time.time()
-            inliers_no_mod, ouliers_no_mod, iterations_mod, best_model_mod, inliers_mod = run_prosac(sorted_matches)
+            inliers_no_mod, ouliers_no_mod, iterations_mod, best_model_mod, inliers_mod = prosac(sorted_matches)
             end = time.time()
             elapsed_time_mod = end - start
 
@@ -86,13 +76,6 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
             modified_data = np.r_[modified_data, np.array([inliers_no_mod, ouliers_no_mod, iterations_mod, elapsed_time_mod]).reshape([1, 4])]
         else:
             print(image + " has less than 4 matches..")
-
-    # NOTE: folders .../RANSAC_results/"+features_no+"/... where created manually..
-    print("Saving Data..")
-    np.save(vanillia_data_path_save_poses, vanilla_images_poses)
-    np.save(vanillia_data_path_save_info, vanilla_data)
-    np.save(modified_data_path_save_poses, modified_images_poses)
-    np.save(modified_data_path_save_info, modified_data)
 
     print("\n")
     print("Results for exponential_decay_value " + str(exponential_decay_value/10) + ":")
@@ -108,27 +91,6 @@ def run_comparison(features_no, exponential_decay_value, run_ransac, run_prosac,
     print("     Average Time (s): " + str(np.mean(modified_data[:, 3])))
     print("<---->")
 
-    print("Done!")
-
-# NOTE: for saving files, vanilla_ransac_images_pose and vanilla_ransac_data are repeating but it does not really matter
-# because run_ransac_comparison and run_prosac_comparison will save the same data regarding those.
-
-# colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
-# exponential_decay can be any of 0.1 to 0.9
-features_no = "1k"
-exponential_decay_value = 0.5
-
-print("Running PROSAC comparison against un-weighted matches")
-matches_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all.npy"
-vanillia_data_path_save_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_images_pose_"+str(exponential_decay_value)+".npy"
-modified_data_path_save_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_images_pose_"+str(exponential_decay_value)+".npy"
-
-vanillia_data_path_save_info = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanillia_data_" + str(exponential_decay_value) + ".npy"
-modified_data_path_save_info = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_data_" + str(exponential_decay_value) + ".npy"
-
-run_comparison("1k", 0.5, run_ransac, run_prosac, matches_path,
-               vanillia_data_path_save_poses, modified_data_path_save_poses,
-               vanillia_data_path_save_info, modified_data_path_save_info)
-
-
-
+    # NOTE: for saving files, vanilla_ransac_images_pose and vanilla_ransac_data are repeating but it does not really matter
+    # because run_ransac_comparison and run_prosac_comparison will save the same data regarding those.
+    return vanilla_images_poses, vanilla_data, modified_images_poses, modified_data
