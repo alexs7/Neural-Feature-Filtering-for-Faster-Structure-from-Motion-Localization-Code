@@ -25,7 +25,7 @@ def plot_pose_errors(features_no, exponential_decay_value,
     standard_error_data_modified = np.mean(m_errors) / np.sqrt(m_errors.shape[0])
     error_bar_std_modified = np.std(m_errors)
 
-    labels = ["Modified", "Vanillia"]
+    labels = ["PROSAC", "RANSAC"]
     x = np.arange(len(labels))  # the label locations
     data = [standard_error_data_modified, standard_error_data_vanillia]
 

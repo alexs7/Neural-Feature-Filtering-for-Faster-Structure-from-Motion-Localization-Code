@@ -1,5 +1,4 @@
 import numpy as np
-
 from query_image import load_images_from_text_file, read_images_binary, get_query_image_global_pose_new_model
 import time
 from ransac_prosac import ransac, prosac
@@ -78,7 +77,7 @@ def run_comparison(exponential_decay_value, ransac, prosac, matches_path, locali
             print(image + " has less than 4 matches..")
 
     print("\n")
-    print("Results for exponential_decay_value " + str(exponential_decay_value/10) + ":")
+    print("Results for exponential_decay_value " + str(exponential_decay_value) + ":")
     print("Vanillia")
     print("     Average Inliers: " + str(np.mean(vanilla_data[:,0])))
     print("     Average Outliers: " + str(np.mean(vanilla_data[:,1])))

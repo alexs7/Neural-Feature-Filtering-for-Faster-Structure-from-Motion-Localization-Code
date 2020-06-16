@@ -9,7 +9,6 @@
 # you can say the same thing for localising future images against the complete model
 
 import sqlite3
-
 import numpy as np
 import sys
 import cv2
@@ -18,20 +17,7 @@ from feature_matcher import feature_matcher_factory, FeatureMatcherTypes
 from parameters import Parameters
 from point3D_loader import read_points3d_default
 from query_image import read_images_binary, image_localised, load_images_from_text_file
-
-IS_PYTHON3 = sys.version_info[0] >= 3
-
-class COLMAPDatabase(sqlite3.Connection):
-
-    @staticmethod
-    def connect(database_path):
-        return sqlite3.connect(database_path, factory=COLMAPDatabase)
-
-def blob_to_array(blob, dtype, shape=(-1,)):
-    if IS_PYTHON3:
-        return np.frombuffer(blob, dtype=dtype).reshape(*shape)
-    else:
-        return np.frombuffer(blob, dtype=dtype).reshape(*shape)
+from database import COLMAPDatabase, blob_to_array
 
 # creates 2d-3d matches data for ransac
 def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, points3D_avg_heatmap_vals):

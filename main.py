@@ -43,23 +43,26 @@ points3D_avg_heatmap_vals = points3D_avg_heatmap_vals.reshape([1, points3D_avg_h
 
 matches_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/"+features_no+"/matches_all.npy"
 
+# RANSAC Comparison save locations
 vanillia_data_path_save_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanilla_images_pose_"+str(exponential_decay_value)+".npy"
 modified_data_path_save_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_images_pose_"+str(exponential_decay_value)+".npy"
-
 vanillia_data_path_save_info = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/vanillia_data_" + str(exponential_decay_value) + ".npy"
 modified_data_path_save_info = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/"+features_no+"/modified_data_" + str(exponential_decay_value) + ".npy"
 
 # Run Code here
 # 1: Feature matching
-matches = feature_matcher_wrapper(points3D_avg_heatmap_vals, db_path, images_path, train_descriptors_all_path, points3D, points3D_indexing, matcher)
-breakpoint()
+# matches = feature_matcher_wrapper(points3D_avg_heatmap_vals, db_path, images_path, train_descriptors_all_path, points3D, points3D_indexing, matcher)
 
-print("Saving matches...")
+# print("Saving matches...")
 # save the 2D-3D matches
-np.save(matches_path, matches)
+# np.save(matches_path, matches)
 
 # 2: RANSAC Comparison
 vanilla_images_poses, vanilla_data, modified_images_poses, modified_data = run_comparison(0.5, ransac, prosac, matches_path, images_path, base_images_path)
 
 print("Saving RANSAC data...")
 # NOTE: folders .../RANSAC_results/"+features_no+"/... where created manually..
+np.save(vanillia_data_path_save_poses, vanilla_images_poses)
+np.save(vanillia_data_path_save_info, vanilla_data)
+np.save(modified_data_path_save_poses, modified_images_poses)
+np.save(modified_data_path_save_info, modified_data)
