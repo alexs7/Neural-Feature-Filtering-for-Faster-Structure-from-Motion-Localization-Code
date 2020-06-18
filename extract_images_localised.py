@@ -1,3 +1,8 @@
+# This will create 2 files
+# images that were localised in the model including the base images and the ones from the query images that managed to get localised
+# images that were not localised from the query images that colmap does not register anyway, so the only way to get them is to
+# have manually create a text file of base_images.txt and query_name.txt and to loop through that and comapre it to COLAMP localised db images
+
 from query_image import image_localised, read_images_binary
 import numpy as np
 
@@ -13,7 +18,7 @@ query_images_names = [x.strip() for x in query_images_names]
 
 complete_model_images = base_images_names + query_images_names
 
-def get_images(features_no):
+def create_images_files(features_no):
 
     images_localised = []
     images_not_localised = []
@@ -37,4 +42,4 @@ def get_images(features_no):
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 colmap_features_no = "1k"
 print("Getting localized and non localised images for features_no " + colmap_features_no )
-get_images(colmap_features_no)
+create_images_files(colmap_features_no)

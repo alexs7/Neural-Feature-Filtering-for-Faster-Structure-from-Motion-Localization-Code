@@ -116,7 +116,7 @@ def create_vm(features_no, exponential_decay_value):
     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_" +
                str(exponential_decay_value) + ".txt", heatmap_matrix_avg_points_values)
 
-    # including base images
+    # including base images (base images has to be created manually TODO: change this)
     base_images = load_images_from_text_file("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/base_images.txt")
     # NOTE: remember the weights there are normalised
     session_weight_per_image = get_session_weight_per_image(base_images, sessions_image_sets, session_images_weight)
