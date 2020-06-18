@@ -15,7 +15,7 @@ import cv2
 
 from feature_matcher import feature_matcher_factory, FeatureMatcherTypes
 from parameters import Parameters
-from point3D_loader import read_points3d_default
+from point3D_loader import read_points3d_default, index_dict
 from query_image import read_images_binary, image_localised, load_images_from_text_file
 from database import COLMAPDatabase, blob_to_array
 
@@ -43,13 +43,11 @@ def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, 
         matches = np.r_[matches, match]
     return matches
 
-def feature_matcher_wrapper(points3D_avg_heatmap_vals, db_path, images_path, train_descriptors_path, points3D, points3D_indexing, matcher):
+def feature_matcher_wrapper(points3D_avg_heatmap_vals, db_path, test_images, train_descriptors_path, points3D, matcher):
 
     db = COLMAPDatabase.connect(db_path)
 
-    # images to use for testing
-    # NOTE: Here you can use the localised images that contain also the base images but there is no point ..
-    test_images = load_images_from_text_file(images_path)
+    points3D_indexing = index_dict(points3D)
 
     # this loads the descs means for the base model and the complete model indexing is the same as points3D indexing
     trainDescriptors = np.load(train_descriptors_path)
