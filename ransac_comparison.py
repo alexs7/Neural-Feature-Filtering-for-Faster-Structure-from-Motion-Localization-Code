@@ -1,7 +1,6 @@
 import numpy as np
 from query_image import load_images_from_text_file, read_images_binary, get_query_image_global_pose_new_model
 import time
-from ransac_prosac import ransac, prosac
 
 # This was used with the old modified RANSAC version
 # get the "sub_distributions" for each matches set for each image - This will have to be relooked at!
@@ -11,18 +10,8 @@ from ransac_prosac import ransac, prosac
 #     sub_distribution = distribution[0, indices]
 #     sub_distribution = sub_distribution / np.sum(sub_distribution)
 #     return sub_distribution
-def run_comparison(exponential_decay_value, ransac, prosac, matches_path, localised_images_path, base_images_path):
 
-    # load COLMAP localised images names (including base ones)
-    localised_images = load_images_from_text_file(localised_images_path)
-    # of course base images will be localised..
-    base_images = load_images_from_text_file(base_images_path)
-
-    # Now, get localised images from the query images only. Not the base images.
-    localised_query_images_only = []
-    for image in localised_images:
-        if(image not in base_images):
-            localised_query_images_only.append(image)
+def run_comparison(exponential_decay_value, ransac, prosac, matches_path, test_images):
 
     # Question: why not using matches_base ?!?!! and comparing to that ?
     # Answer: and compare what ? ransac will take less time with matches_base given the smaller number of all matches,
@@ -38,10 +27,10 @@ def run_comparison(exponential_decay_value, ransac, prosac, matches_path, locali
     modified_data = np.empty([0, 4])
     modified_images_poses = {}
 
-    for i in range(len(localised_query_images_only)):
-        image = localised_query_images_only[i]
+    for i in range(len(test_images)):
+        image = test_images[i]
         matches_for_image = matches_all.item()[image]
-        print("Doing image " + str(i+1) + "/" + str(len(localised_query_images_only)) + ", " + image , end="\r")
+        print("Doing image " + str(i+1) + "/" + str(len(test_images)) + ", " + image , end="\r")
 
         if(len(matches_for_image) >= 4):
             # vanilla
