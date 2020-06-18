@@ -4,203 +4,103 @@
 # the idea here is that a point is seen by the base model images and complete model images
 # obviously the complete model images number > base model images number for a point
 
-import sqlite3
 import numpy as np
-import sys
-
 from database import COLMAPDatabase, blob_to_array
-from point3D_loader import read_points3d_default
-from query_image import read_images_binary, image_localised
+from point3D_loader import read_points3d_default, index_dict
+from query_image import read_images_binary, get_images_names_bin, get_images_ids
 
-def get_desc_avg(features_no, out_path_base, out_path_all):
 
-    print("-- Averaging features_no " + features_no + " --")
+def get_desc_avg(save_path, image_ids, points3D, db, exponential_decay_value=None, session_weight_per_image = None):
 
-    db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db")
+    do_weighted = exponential_decay_value == True and session_weight_per_image != None
+    all_points_images_weights = [] # if(exponential_decay_value == True and session_weight_per_image != None)
+    points_mean_descs = np.empty([0, 128])
 
-    # by "complete model" I mean all the frames from future sessions localised in the base model (28/03) and the base model..
-    # NOTE: I don't think it matters here to use features_no since the points3D and images are the same no matter what features_no was used in COLMAP. The database.db changes though..
-    complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/images.bin"
-    complete_model_all_images = read_images_binary(complete_model_images_path)
-    complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/points3D.bin"
-    points3D = read_points3d_default(complete_model_points3D_path) # base model's 3D points (same length as complete as we do not add points when localising new points, but different image_ds for each point)
-
-    # create points id and index relationship
-    point3D_index = 0
-    points3D_indexing = {}
-    for key, value in points3D.items():
-        points3D_indexing[point3D_index] = value.id
-        point3D_index = point3D_index + 1
-
-    # get base images
-    base_images_names = []
-    with open("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/base_images.txt") as f:
-        base_images_names = f.readlines()
-    base_images_names = [x.strip() for x in base_images_names]
-
-    base_images_ids = []
-    for name in base_images_names:
-        id = image_localised(name, complete_model_all_images)
-        base_images_ids.append(id)
-
-    print("base_images_ids size " + str(len(base_images_ids)))
-
-    # get base + query images (query images are the future session images = all)
-    query_images_names = []
-    with open("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_name.txt") as f:
-        query_images_names = f.readlines()
-    query_images_names = [x.strip() for x in query_images_names]
-
-    query_images_ids = []
-    for name in query_images_names:
-        id = image_localised(name, complete_model_all_images)
-        query_images_ids.append(id) #NOTE: This will contain None values too!
-
-    print("Localised and NonLocalised query_images_ids size: " + str(len(query_images_ids)))
-
-    # This is used to check if a point3D was seen by an image in the base model - if so add that desc to the , points_mean_descs_base
-    # it is also used to check if a point3D was seen by an image in the base model OR future sessions (i.e query image) - if so add that desc to points_mean_descs_all
-    all_images_ids = base_images_ids + query_images_ids
-    print("All_images_ids size: " + str(len(all_images_ids)))
-
-    print("Getting the avg descs for the base and all (base + query) points' images")
-    points_mean_descs_all = np.empty([0, 128])
-    points_mean_descs_base = np.empty([0, 128])
-    for i in range(0,len(points3D)):
-        print("Doing point " + str(i+1) + "/" + str(len(points3D)), end="\r")
-        point_id = points3D_indexing[i]
-        points3D_descs_all = np.empty([0, 128])
-        points3D_descs_base = np.empty([0, 128])
-        # Loop through the points' image ids and check if it is seen by any base_images and all_images
-        # If it is seen then get the descs for each id. len(points3D_descs_all) should be larger than len(points3D_descs_base) - always
-        for k in range(len(points3D[point_id].image_ids)): #unique here doesn't really matter
+    for k,v in points3D.items():
+        point_id = v.id
+        points3D_descs = np.empty([0, 128])
+        points_image_ids = points3D[point_id].image_ids
+        # Loop through the points' image ids and check if it is seen by any image_ids
+        # If it is seen then get the desc for each id. len(points3D_descs_all) should be larger than len(points3D_descs_base) - always
+        for k in range(len(points_image_ids)): #unique here doesn't really matter TODO: double  check that
             id = points3D[point_id].image_ids[k]
             # check if the point is viewed by the current base image
-            if(id in base_images_ids):
+            if(id in image_ids):
                 data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(id) + "'")
                 data = blob_to_array(data.fetchone()[0], np.uint8)
                 descs_rows = int(np.shape(data)[0] / 128)
                 descs = data.reshape([descs_rows, 128])
-                desc = descs[points3D[point_id].point2D_idxs[k]]
+                keypoint_index = points3D[point_id].point2D_idxs[k]
+                desc = descs[keypoint_index] #keypoints and descs are ordred the same (so I use the point2D_idxs to index descs )
                 desc = desc.reshape(1, 128)
-                points3D_descs_base = np.r_[points3D_descs_base, desc]
-            if (id in all_images_ids):
-                data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(id) + "'")
-                data = blob_to_array(data.fetchone()[0], np.uint8)
-                descs_rows = int(np.shape(data)[0] / 128)
-                descs = data.reshape([descs_rows, 128])
-                desc = descs[points3D[point_id].point2D_idxs[k]]
-                desc = desc.reshape(1, 128)
-                points3D_descs_all = np.r_[points3D_descs_all, desc]
-        if(len(points3D_descs_base) > len(points3D_descs_all)):
-            raise Exception("points3D_descs_base size is larger than points3D_descs_all !?")
-        # adding and calulating the mean here!
-        points_mean_descs_base = np.r_[points_mean_descs_base, points3D_descs_base.mean(axis=0).reshape(1,128)]
-        points_mean_descs_all = np.r_[points_mean_descs_all, points3D_descs_all.mean(axis=0).reshape(1,128)]
-
-    print("\n Saving data...")
-    # folder are created manually..
-    np.save(out_path_base, points_mean_descs_base)
-    np.save(out_path_all, points_mean_descs_all)
-
-def get_desc_avg_with_session_weights(features_no, exponential_decay_value, out_path):
-
-    print("-- Averaging features_no " + features_no + " and exponential_decay_rate "+ str(exponential_decay_value) +" --")
-
-    # This contains weights for all base and query images
-    session_weight_per_image = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/session_weight_per_image_" + str(exponential_decay_value) + ".npy")
-
-    db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/database.db")
-
-    # by "complete model" I mean all the frames from future sessions localised in the base model (28/03) and the base model..
-    # NOTE: I don't think is matters here (for image.bin) to use features_no as the points3D and images are the same no matter what features_no was used in COLMAP. The database.db changes though..
-    complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/images.bin"
-    complete_model_all_images = read_images_binary(complete_model_images_path)
-    complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/"+features_no+"/points3D.bin"
-    points3D = read_points3d_default(complete_model_points3D_path) # base model's 3D points (same length as complete as we do not add points when localising new points, but different image_ds for each point)
-
-    # create points id and index relationship
-    point3D_index = 0
-    points3D_indexing = {}
-    for key, value in points3D.items():
-        points3D_indexing[point3D_index] = value.id
-        point3D_index = point3D_index + 1
-
-    # get base images
-    base_images_names = []
-    with open("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/base_images.txt") as f:
-        base_images_names = f.readlines()
-    base_images_names = [x.strip() for x in base_images_names]
-
-    base_images_ids = []
-    for name in base_images_names:
-        id = image_localised(name, complete_model_all_images)
-        base_images_ids.append(id)
-
-    print("base_images_ids size " + str(len(base_images_ids)))
-
-    # get base + query images (query images are the future session images = all)
-    query_images_names = []
-    with open("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_name.txt") as f:
-        query_images_names = f.readlines()
-    query_images_names = [x.strip() for x in query_images_names]
-
-    query_images_ids = []
-    for name in query_images_names:
-        id = image_localised(name, complete_model_all_images)
-        query_images_ids.append(id) #NOTE: This will contain None values too!
-
-    print("Localised and NonLocalised query_images_ids size: " + str(len(query_images_ids)))
-
-    all_images_ids = base_images_ids + query_images_ids
-    print("All_images_ids size: " + str(len(all_images_ids)))
-
-    print("Getting the weighted descs for all (base + query) points' images")
-    points_weighted_descs = np.empty([0, 128])
-    for i in range(0,len(points3D)):
-        print("Doing point " + str(i+1) + "/" + str(len(points3D)), end="\r")
-        point_id = points3D_indexing[i]
-        points3D_descs = np.empty([0,128])
-        all_points_images_weights = []
-        # Loop through the points' image ids and check if it is seen by all_images
-        # If it is seen then get the descs for each id
-        for k in range(len(points3D[point_id].image_ids)): #unique here doesn't really matter
-            id = points3D[point_id].image_ids[k]
-            if (id in all_images_ids):
-                data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(id) + "'")
-                data = blob_to_array(data.fetchone()[0], np.uint8)
-                descs_rows = int(np.shape(data)[0] / 128)
-                descs = data.reshape([descs_rows, 128])
-                desc = descs[points3D[point_id].point2D_idxs[k]]
-                desc = desc.reshape(1, 128)
-                # collect descs for current point
                 points3D_descs = np.r_[points3D_descs, desc]
-                # collect weights
-                image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(id) + "'").fetchone()[0]
-                weight = session_weight_per_image.item()[image_name]
-                all_points_images_weights.append(weight)
+                if(do_weighted):
+                    # collect weights
+                    image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(id) + "'").fetchone()[0]
+                    weight = session_weight_per_image.item()[image_name]
+                    all_points_images_weights.append(weight)
 
-        all_points_images_weights = all_points_images_weights / np.sum(all_points_images_weights)
-        # points3D_descs and all_points_images_weights are in the same order
-        points3D_descs = np.multiply(points3D_descs, all_points_images_weights[:, np.newaxis])
+        if(do_weighted):
+            all_points_images_weights = all_points_images_weights / np.sum(all_points_images_weights)
+            # points3D_descs and all_points_images_weights are in the same order
+            points3D_descs = np.multiply(points3D_descs, all_points_images_weights[:, np.newaxis])
+
         # adding and calulating the mean here!
-        points_weighted_descs = np.r_[points_weighted_descs, points3D_descs.sum(axis=0).reshape(1,128)]
+        points_mean_descs = np.r_[points_mean_descs, points3D_descs.mean(axis=0).reshape(1,128)]
 
-    print("\n Saving data...")
-    # folder are created manually..
-    np.save(out_path, points_weighted_descs)
+    return points_mean_descs
+
+
 
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
-# exponential_decay can be any of 0.1 to 0.9
 # exponential_decay can be any of 0.1 to 0.9
 features_no = "1k"
 exponential_decay_value = 0.5
 
-print("Running vanilla get 3D descs avg...")
-out_path_base = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_base.npy"
-out_path_all = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_mean_descs_all.npy"
-get_desc_avg("1k", out_path_base, out_path_all)
+# method get_desc_avg() will take as main arguments image names and a model that has base + query images localised (complete)
+# for example if you pass base_model_images_names and the complete_model it will only average descs from base images.
+# when you use the complete model you use the one that you localised all the queries against to.
 
-out_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/points_weighted_descs_all_with_extra_data_"+str(exponential_decay_value)+".npy"
-print("Running get 3D descs avg with session weights...")
-get_desc_avg_with_session_weights("1k", 0.5, out_path)
+db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/database.db")
+
+base_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/coop_local/2020-03-28/coop_local/reconstruction/model/0/images.bin"
+complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/images.bin"
+complete_model_all_images = read_images_binary(complete_model_images_path)
+complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/points3D.bin"
+points3D = read_points3d_default(complete_model_points3D_path)  # base model's 3D points (same length as complete as we do not add points when localising new points, but different image_ids for each point)
+
+print("-- Averaging features_no " + features_no + " --")
+
+# 4 cases here:
+# non-weighted, base | all
+# weighted, base | all
+
+print("Getting non-weighted descs")
+save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_base.npy"
+base_model_images_names = get_images_names_bin(base_model_images_path)
+images_ids = get_images_ids(base_model_images_names, complete_model_all_images) #there should not be any None' values here
+avgs = get_desc_avg(save_path, images_ids, points3D,db)
+np.save(save_path, avgs)
+
+save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_all.npy"
+all_images_names = get_images_names_bin(complete_model_images_path) #all = query + base images
+avgs = get_desc_avg(save_path, images_ids, points3D,db)
+np.save(save_path, avgs)
+
+print("Getting weighted descs")
+session_weight_per_image = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/session_weight_per_image_" + str(exponential_decay_value) + ".npy")
+
+save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_base_weighted.npy"
+base_model_images_names = get_images_names_bin(base_model_images_path)
+images_ids = get_images_ids(base_model_images_names, complete_model_all_images) #there should not be any None' values here
+avgs = get_desc_avg(save_path, images_ids, points3D,db)
+np.save(save_path, avgs)
+
+save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_all_weighted.npy"
+all_images_names = get_images_names_bin(complete_model_images_path) #all = query + base images
+avgs = get_desc_avg(save_path, images_ids, points3D,db)
+np.save(save_path, avgs)
+
+
+
+

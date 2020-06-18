@@ -152,6 +152,20 @@ def get_query_image_id_new_model(name):
     id = image.id
     return id
 
+def get_images_names_bin(images_bin_path):
+    images_names = []
+    images = read_images_binary(images_bin_path)
+    for k,v in images.items():
+        images_names.append(v.name)
+    return images_names
+
+def get_images_ids(image_names, all_images):
+    image_ids = []
+    for name in image_names:
+        id = image_localised(name, all_images)
+        image_ids.append(id)
+    return image_ids
+
 def load_images_from_text_file(path):
     images = []
     with open(path) as f:

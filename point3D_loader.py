@@ -144,3 +144,11 @@ def get_points3D(id): #this is assumed to be used for the new model (localised)
     points3D = read_points3d_binary_id("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/points3D.bin", id)
     return points3D
 
+# create points id and index relationship
+def index_dict(points3D):
+    point3D_index = 0
+    points3D_indexing = {}
+    for key, value in points3D.items():
+        points3D_indexing[point3D_index] = value.id
+        point3D_index = point3D_index + 1
+    return points3D_indexing
