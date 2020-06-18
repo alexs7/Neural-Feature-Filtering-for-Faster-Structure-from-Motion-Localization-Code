@@ -50,8 +50,6 @@ def get_desc_avg(save_path, image_ids, points3D, db, exponential_decay_value=Non
 
     return points_mean_descs
 
-
-
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 # exponential_decay can be any of 0.1 to 0.9
 features_no = "1k"
@@ -59,12 +57,13 @@ exponential_decay_value = 0.5
 
 # method get_desc_avg() will take as main arguments image names and a model that has base + query images localised (complete)
 # for example if you pass base_model_images_names and the complete_model it will only average descs from base images.
-# when you use the complete model you use the one that you localised all the queries against to.
+# when you use the complete model you use the one that you localised all the queries against to, and complete_model_images_path also includes base images
 
 db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/database.db")
 
 base_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/coop_local/2020-03-28/coop_local/reconstruction/model/0/images.bin"
 complete_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/images.bin"
+
 complete_model_all_images = read_images_binary(complete_model_images_path)
 complete_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/multiple_localised_models/" + features_no + "/points3D.bin"
 points3D = read_points3d_default(complete_model_points3D_path)  # base model's 3D points (same length as complete as we do not add points when localising new points, but different image_ids for each point)
@@ -75,30 +74,30 @@ print("-- Averaging features_no " + features_no + " --")
 # non-weighted, base | all
 # weighted, base | all
 
+base_images_names = get_images_names_bin(base_model_images_path)
+all_images_names = get_images_names_bin(complete_model_images_path) #all = query + base images
+
+base_images_ids = get_images_ids(base_images_names, complete_model_all_images) #there should not be any None' values here
+all_images_ids = get_images_ids(all_images_names, complete_model_all_images) #there should not be any None' values here
+
 print("Getting non-weighted descs")
 save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_base.npy"
-base_model_images_names = get_images_names_bin(base_model_images_path)
-images_ids = get_images_ids(base_model_images_names, complete_model_all_images) #there should not be any None' values here
-avgs = get_desc_avg(save_path, images_ids, points3D,db)
+avgs = get_desc_avg(save_path, base_images_ids, points3D,db)
 np.save(save_path, avgs)
 
 save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_all.npy"
-all_images_names = get_images_names_bin(complete_model_images_path) #all = query + base images
-avgs = get_desc_avg(save_path, images_ids, points3D,db)
+avgs = get_desc_avg(save_path, all_images_ids, points3D,db)
 np.save(save_path, avgs)
 
 print("Getting weighted descs")
 session_weight_per_image = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/session_weight_per_image_" + str(exponential_decay_value) + ".npy")
 
 save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_base_weighted.npy"
-base_model_images_names = get_images_names_bin(base_model_images_path)
-images_ids = get_images_ids(base_model_images_names, complete_model_all_images) #there should not be any None' values here
-avgs = get_desc_avg(save_path, images_ids, points3D,db)
+avgs = get_desc_avg(save_path, base_images_ids, points3D,db)
 np.save(save_path, avgs)
 
 save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_all_weighted.npy"
-all_images_names = get_images_names_bin(complete_model_images_path) #all = query + base images
-avgs = get_desc_avg(save_path, images_ids, points3D,db)
+avgs = get_desc_avg(save_path, all_images_ids, points3D,db)
 np.save(save_path, avgs)
 
 
