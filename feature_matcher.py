@@ -72,7 +72,7 @@ class FeatureMatcher(object):
         #print('des1.dtype:',des1.dtype,' des2.dtype:',des2.dtype)
         matches = self.matcher.knnMatch(des1, des2, k=2)  #knnMatch(queryDescriptors,trainDescriptors)
         self.matches = matches
-        return self.goodMatches(matches, des1, des2, ratio_test)          
+        return self.goodMatches(matches, des1, des2, ratio_test)
     
     
     # input: des1 = query-descriptors, des2 = train-descriptors, kps1 = query-keypoints, kps2 = train-keypoints 
@@ -149,8 +149,9 @@ class FeatureMatcher(object):
             dist_match = defaultdict(lambda: float_inf)   
             index_match = dict()  
             for m, n in matches:
-                if m.distance > ratio_test * n.distance:
-                    continue     
+                # 19/06/2020 removes lowe's ratio test
+                # if m.distance > ratio_test * n.distance:
+                #     continue
                 dist = dist_match[m.trainIdx]
                 if dist == float_inf:
                     # trainIdx has not been matched yet
@@ -175,22 +176,25 @@ class FeatureMatcher(object):
     # output: idx1, idx2  (vectors of corresponding indexes in des1 and des2, respectively)
     # N.B.: this may return matches where a trainIdx index is associated to two (or more) queryIdx indexes
     def goodMatchesSimple(self, matches, des1, des2, ratio_test=None):
-        idx1, idx2 = [], []   
+        idx1, idx2, lowes_distances = [], [], []
         #good_matches = []            
         if ratio_test is None: 
             ratio_test = self.ratio_test            
         if matches is not None: 
             for m,n in matches:
-                if m.distance < ratio_test * n.distance:
-                    idx1.append(m.queryIdx)
-                    idx2.append(m.trainIdx)                                                         
-        return idx1, idx2 
+                # 19/06/2020 removes lowe's ratio test
+                # if m.distance < ratio_test * n.distance:
+                idx1.append(m.queryIdx)
+                idx2.append(m.trainIdx)
+                lowes_distances.append(n.distance / m.distance)
+        return idx1, idx2 , lowes_distances
 
     # input: des1 = query-descriptors, des2 = train-descriptors
     # output: idx1, idx2  (vectors of corresponding indexes in des1 and des2, respectively)
     def goodMatches(self, matches, des1, des2, ratio_test=None): 
-        #return self.goodMatchesSimple(matches, des1, des2, ratio_test)   # <= N.B.: this generates problem in SLAM since it can produce matches where a trainIdx index is associated to two (or more) queryIdx indexes
-        return self.goodMatchesOneToOne(matches, des1, des2, ratio_test)
+        return self.goodMatchesSimple(matches, des1, des2, ratio_test)   # <= N.B.: this generates problem in SLAM since it can produce matches where a trainIdx index is associated to two (or more) queryIdx indexes
+        # 19/06/2020 replaced with goodMatchesSimple()
+        # return self.goodMatchesOneToOne(matches, des1, des2, ratio_test)
 
 
 # Brute-Force Matcher 
