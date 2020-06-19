@@ -106,7 +106,6 @@ def run_ransac_modified(matches_for_image, distribution):
                 img_point_est = K.dot(Rt.dot(obj_point.transpose())[0:3])
                 img_point_est = img_point_est / img_point_est[2] #divide by last coordinate
                 dist = np.linalg.norm(img_point_gt - img_point_est[0:2])
-
                 if(dist < threshold):
                     inliers.append(matches_for_image[i])
 
@@ -126,7 +125,22 @@ def run_ransac_modified(matches_for_image, distribution):
                 return (inlers_no, outliers_no, k, best_model)
 
         k = k + 1
-    return (inlers_no, outliers_no, k, best_model)
+    return inlers_no, outliers_no, k, best_model, inliers
+
+# for findSupport()
+# from emails - with author
+# Yes, it is okay.
+# A better one is considering also errors of points. For example:
+# sum_errors = 0; num_inliers = 0
+# for pt in points:
+#    error = estimator.getError(model, pt) # e.g., estimator is PnP,
+# error function computes reprojection error
+#    if error < threshold:
+#        sum_errors += error
+#        num_inliers += 1
+# sum_errors += (len(points) - num_inliers) * threshold
+# So, you can compare models either by number of inliers (higher is
+# better) or by sum of errors (lower is better).
 
 def prosac(sorted_matches):
     # TODO: move this distCoeffs out!
@@ -147,7 +161,7 @@ def prosac(sorted_matches):
         if(Nmax == -1):
             Nmax = np.iinfo(np.int32).max
         if(not (Nmax >= 1)):
-            print("C++ Assertion failed - 1")
+            raise RuntimeError("Nmax has to be positive")
         if(epsilon <= 0):
             return 1
         logarg = - np.exp(s * np.log(1 - epsilon))
@@ -163,20 +177,6 @@ def prosac(sorted_matches):
         return  np.ceil(m + mu + sigma * np.sqrt(2.706))
 
     def findSupport(n, isInlier):
-        # from emails - with author
-        # Yes, it is okay.
-        # A better one is considering also errors of points. For example:
-        # sum_errors = 0; num_inliers = 0
-        # for pt in points:
-        #    error = estimator.getError(model, pt) # e.g., estimator is PnP,
-        # error function computes reprojection error
-        #    if error < threshold:
-        #        sum_errors += error
-        #        num_inliers += 1
-        # sum_errors += (len(points) - num_inliers) * threshold
-        # So, you can compare models either by number of inliers (higher is
-        # better) or by sum of errors (lower is better).
-
         #n is N and it is not used here
         total_inliers = isInlier.sum() # this can change to a another function (i.e kernel) as it is, it is too simple ?
         return total_inliers, isInlier
@@ -257,7 +257,7 @@ def prosac(sorted_matches):
                 I_n_test = I_N
                 for n_test in range(N, m, -1):
                     if (not (n_test >= I_n_test)):
-                        print("C++ Assertion failed - 3")
+                        raise RuntimeError("Loop invariant broken: n_test >= I_n_test")
                     if ( (I_n_test * n_best > I_n_best * n_test) and (I_n_test > epsilon_n_best * n_test + np.sqrt(n_test * epsilon_n_best * (1 - epsilon_n_best) * 2.706) )):
                         if (I_n_test < Imin(m, n_test, beta)):
                             break
@@ -268,19 +268,12 @@ def prosac(sorted_matches):
 
             if (I_n_best * n_star > I_n_star * n_best):
                 if(not (n_best >= I_n_best)):
-                    print("C++ Assertion failed - 2")
+                    raise RuntimeError("Assertion not respected: n_best >= I_n_best")
                 n_star = n_best
                 I_n_star = I_n_best
                 k_n_star = niter_RANSAC(1 - ETA0, 1 - I_n_star / n_star, m, T_N)
-
-    # print("PROSAC finished, reason:");
-    # if(t > TEST_NB_OF_DRAWS):
-    #     print("t={0} > max_t={1} (k_n_star={2}, T_N={3})".format(t, TEST_NB_OF_DRAWS, k_n_star, T_N))
-    # elif(t > T_N):
-    #     print("t={0} > T_N={1} (k_n_star={2})".format(t, T_N, k_n_star))
-    # elif(t > k_n_star):
-    #     print("t={0} > k_n_star={1} (T_N={2})".format(t ,k_n_star, T_N))
-
+    
+    # return values for readability
     inlier_no = I_N
     outliers_no = len(sorted_matches) - I_N
     iterations = t
