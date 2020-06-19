@@ -10,8 +10,9 @@ class COLMAPDatabase(sqlite3.Connection):
     def connect(database_path):
         return sqlite3.connect(database_path, factory=COLMAPDatabase)
 
-def blob_to_array(blob, dtype, shape=(-1,)):
-    if IS_PYTHON3:
-        return np.frombuffer(blob, dtype=dtype).reshape(*shape)
-    else:
-        return np.frombuffer(blob, dtype=dtype).reshape(*shape)
+    @staticmethod
+    def blob_to_array(blob, dtype, shape=(-1,)):
+        if IS_PYTHON3:
+            return np.frombuffer(blob, dtype=dtype).reshape(*shape)
+        else:
+            return np.frombuffer(blob, dtype=dtype).reshape(*shape)
