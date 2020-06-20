@@ -122,7 +122,7 @@ def run_ransac_modified(matches_for_image, distribution):
             N = int(np.floor(N))
             no_iterations = N
             if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
-                return (inlers_no, outliers_no, k, best_model)
+                return inlers_no, outliers_no, k, best_model, inliers
 
         k = k + 1
     return inlers_no, outliers_no, k, best_model, inliers
