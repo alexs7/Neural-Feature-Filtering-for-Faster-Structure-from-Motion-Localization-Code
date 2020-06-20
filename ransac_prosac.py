@@ -1,27 +1,46 @@
 # This is vanilla RANSAC Implementation and Modified one
-import random
 import numpy as np
 import cv2
-import time
-import scipy.special
 
+MAX_RANSAC_ITERS = 5000
 # intrinsics matrix
 K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt")
+
+def get_pose(img_points, obj_points):
+    distCoeffs = np.zeros((5, 1))
+    # calculate pose
+    # this is required for SOLVEPNP_P3P
+    img_points = np.ascontiguousarray(img_points[:, :2]).reshape((img_points.shape[0], 1, 2))
+    retval, rvec, tvec = cv2.solvePnP(obj_points.astype(np.float32), img_points.astype(np.float32), K, distCoeffs, flags=cv2.SOLVEPNP_P3P)
+    rotm = cv2.Rodrigues(rvec)[0]
+    Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
+    return Rt
+
+def model_fit(matches_for_image, Rt, threshold):
+    obj_point = matches_for_image[:, 2:5]
+    img_point_gt = matches_for_image[:, 0:2]
+    obj_point = np.hstack((obj_point, np.ones((obj_point.shape[0],1)))) # make homogeneous
+    img_point_est = K.dot(Rt.dot(obj_point.transpose())[0:3])
+    img_point_est = img_point_est / img_point_est[2]  # divide by last coordinate
+    img_point_est = img_point_est.transpose()
+    dist = np.linalg.norm(img_point_gt[:,0:2] - img_point_est[:,0:2], axis=-1)
+    inliers = matches_for_image[dist < threshold, :]
+    inliers_indices = inliers.nonzero()
+    return inliers, inliers_indices
 
 def ransac(matches_for_image):
     s = 4  # or minimal_sample_size
     p = 0.99 # this is a typical value
     # number of iterations (http://www.cse.psu.edu/~rtc12/CSE486/lecture15.pdf and https://youtu.be/5E5n7fhLHEM?list=PLTBdjV_4f-EKeki5ps2WHqJqyQvxls4ha&t=428)
     # also reddit post https://www.reddit.com/r/computervision/comments/gikj1s/can_somebody_help_me_understand_ransac/
-    no_iterations = 20000  # can set this to whatever you want to start with
+    no_iterations = MAX_RANSAC_ITERS  # can set this to whatever you want to start with
     k = 0
-    distCoeffs = np.zeros((5, 1))  # assume zero for now
     threshold = 8.0 # 8.0 same as opencv
     max = np.iinfo(np.int32).min
     best_model = {}
 
     while k < no_iterations:
-        inliers = []
+        k = k + 1
         # pick 4 random matches (assume they are inliers)
         random_matches = np.random.choice(len(matches_for_image), s, replace=False)
 
@@ -29,24 +48,8 @@ def ransac(matches_for_image):
         obj_points = matches_for_image[(random_matches), 2:5]
         img_points = matches_for_image[(random_matches), 0:2]
 
-        # calculate pose
-        # this is required for SOLVEPNP_P3P
-        img_points = np.ascontiguousarray(img_points[:, :2]).reshape((img_points.shape[0], 1, 2))
-        retval, rvec, tvec = cv2.solvePnP(obj_points, img_points, K, distCoeffs, flags=cv2.SOLVEPNP_P3P)
-        rotm = cv2.Rodrigues(rvec)[0]
-        Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
-
-        # run against all the other matches (except the ones you already picked)
-        for i in range(len(matches_for_image)):
-            if(i not in random_matches):
-                obj_point = matches_for_image[i, 2:5]
-                img_point_gt = matches_for_image[i, 0:2]
-                obj_point = np.r_[obj_point, 1] #make homogeneous
-                img_point_est = K.dot(Rt.dot(obj_point.transpose())[0:3])
-                img_point_est = img_point_est / img_point_est[2] #divide by last coordinate
-                dist = np.linalg.norm(img_point_gt - img_point_est[0:2])
-                if(dist < threshold):
-                    inliers.append(matches_for_image[i])
+        Rt = get_pose(img_points, obj_points)
+        inliers, _ = model_fit(matches_for_image, Rt, threshold)
 
         inlers_no = len(inliers) + s #total number of inliers
         outliers_no = len(matches_for_image) - inlers_no
@@ -60,10 +63,11 @@ def ransac(matches_for_image):
             N = np.log(1 - p) / np.log(1 - np.power((1 - e), s))
             N = int(np.floor(N))
             no_iterations = N
-            if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
+            if(k > N or k >= MAX_RANSAC_ITERS): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
                 return inlers_no, outliers_no, k, best_model, inliers
 
-        k = k + 1
+        if (k >= MAX_RANSAC_ITERS):
+            return inlers_no, outliers_no, k, best_model, inliers
     return inlers_no, outliers_no, k, best_model, inliers
 
 def run_ransac_modified(matches_for_image, distribution):
@@ -71,7 +75,7 @@ def run_ransac_modified(matches_for_image, distribution):
     p = 0.99 # this is a typical value
     # number of iterations (http://www.cse.psu.edu/~rtc12/CSE486/lecture15.pdf and https://youtu.be/5E5n7fhLHEM?list=PLTBdjV_4f-EKeki5ps2WHqJqyQvxls4ha&t=428)
     # also reddit post https://www.reddit.com/r/computervision/comments/gikj1s/can_somebody_help_me_understand_ransac/
-    no_iterations = 20000  # can set this to whatever you want to start with
+    no_iterations = MAX_RANSAC_ITERS  # can set this to whatever you want to start with
     k = 0
     distCoeffs = np.zeros((5, 1))  # assume zero for now
     threshold = 8.0 # same as opencv
@@ -79,8 +83,7 @@ def run_ransac_modified(matches_for_image, distribution):
     best_model = {}
 
     while k < no_iterations:
-        inliers = []
-
+        k = k + 1
         # pick 4 random matches (assume they are inliers)
         # p = distribution, From docs: The probabilities associated with each entry in a. If not given the sample assumes a uniform distribution over all entries in a
         random_matches = np.random.choice(len(matches_for_image), s , p = distribution, replace=False)
@@ -89,24 +92,8 @@ def run_ransac_modified(matches_for_image, distribution):
         obj_points = matches_for_image[(random_matches), 2:5]
         img_points = matches_for_image[(random_matches), 0:2]
 
-        # this is required for SOLVEPNP_P3P
-        img_points = np.ascontiguousarray(img_points[:, :2]).reshape((img_points.shape[0], 1, 2))
-        retval, rvec, tvec = cv2.solvePnP(obj_points, img_points, K, distCoeffs, flags=cv2.SOLVEPNP_P3P)
-
-        rotm = cv2.Rodrigues(rvec)[0]
-        Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
-
-        # run against all the other matches (except the ones you already picked)
-        for i in range(len(matches_for_image)):
-            if(i not in random_matches):
-                img_point_gt = matches_for_image[i, 0:2]
-                obj_point = matches_for_image[i, 2:5]
-                obj_point = np.r_[obj_point, 1] #make homogeneous
-                img_point_est = K.dot(Rt.dot(obj_point.transpose())[0:3])
-                img_point_est = img_point_est / img_point_est[2] #divide by last coordinate
-                dist = np.linalg.norm(img_point_gt - img_point_est[0:2])
-                if(dist < threshold):
-                    inliers.append(matches_for_image[i])
+        Rt = get_pose(img_points, obj_points)
+        inliers, _ = model_fit(matches_for_image, Rt, threshold)
 
         inlers_no = len(inliers) + s #total number of inliers
         outliers_no = len(matches_for_image) - inlers_no
@@ -120,10 +107,11 @@ def run_ransac_modified(matches_for_image, distribution):
             N = np.log(1 - p) / np.log(1 - np.power((1 - e), s))
             N = int(np.floor(N))
             no_iterations = N
-            if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
+            if(k > N or k >= MAX_RANSAC_ITERS): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
                 return inlers_no, outliers_no, k, best_model, inliers
 
-        k = k + 1
+        if (k >= MAX_RANSAC_ITERS):
+            return inlers_no, outliers_no, k, best_model, inliers
     return inlers_no, outliers_no, k, best_model, inliers
 
 # for findSupport()
@@ -151,7 +139,7 @@ def prosac(sorted_matches):
     SAMPLE_SIZE = 4
     MAX_OUTLIERS_PROPORTION = 0.8
     P_GOOD_SAMPLE = 0.99
-    TEST_NB_OF_DRAWS = 60000
+    TEST_NB_OF_DRAWS = MAX_RANSAC_ITERS
     TEST_INLIERS_RATIO = 0.5
     BETA = 0.01
     ETA0 = 0.05
@@ -224,25 +212,12 @@ def prosac(sorted_matches):
         obj_points = sample[:, 2:5]
         img_points = sample[:, 0:2]
 
-        img_points = np.ascontiguousarray(img_points[:, :2]).reshape((img_points.shape[0], 1, 2))  # this is required for SOLVEPNP_P3P
-        retval, rvec, tvec = cv2.solvePnP(obj_points.astype(np.float32), img_points.astype(np.float32), K, distCoeffs, flags=cv2.SOLVEPNP_P3P)
-        rotm = cv2.Rodrigues(rvec)[0]
-        Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
-        model['Rt'] = Rt
+        Rt = get_pose(img_points, obj_points)
+        inliers, inliers_indices = model_fit(sorted_matches, Rt, threshold)
+        isInlier = np.zeros([1, CORRESPONDENCES])
+        isInlier[0, inliers_indices] = 1
 
         # 4. Model verification
-        isInlier = np.zeros([1, CORRESPONDENCES])
-        for i in range(len(sorted_matches)):  # run against all the other matches (all of them doesn't matter here)
-            obj_point = sorted_matches[i, 2:5]
-            img_point_gt = sorted_matches[i, 0:2]
-            obj_point = np.r_[obj_point, 1]  # make homogeneous
-            img_point_est = K.dot(Rt.dot(obj_point.transpose())[0:3])
-            img_point_est = img_point_est / img_point_est[2]  # divide by last coordinate
-            dist = np.linalg.norm(img_point_gt - img_point_est[0:2])
-            if (dist < threshold):
-                isInlier[0,i] = 1
-                inliers.append(sorted_matches[i])
-
         I_N, isInlier = findSupport(N, isInlier)
 
         if(I_N > I_N_best):
