@@ -18,7 +18,7 @@ def run_comparison(exponential_decay_value, ransac, run_ransac_modified, prosac,
     # plus the get_sub_distribution might not make sense here as for base there are no future sessions yet.
     matches_all = np.load(matches_path)
 
-    #  this will hold inliers_no, ouliers_no, iterations, time for each image
+    #  this will hold inliers_no, outliers_no, iterations, time for each image
     ransac_data = np.empty([0, 4])
     ransac_images_poses = {}
 
@@ -34,27 +34,31 @@ def run_comparison(exponential_decay_value, ransac, run_ransac_modified, prosac,
         print("Doing image " + str(i+1) + "/" + str(len(test_images)) + ", " + image , end="\r")
 
         if(len(matches_for_image) >= 4):
-
             # vanilla RANSAC
+            print("\n Vani. RANSAC")
             start = time.time()
-            inliers_no, ouliers_no, iterations, best_model, inliers = ransac(matches_for_image)
+            inliers_no, outliers_no, iterations, best_model, inliers = ransac(matches_for_image)
             end  = time.time()
             elapsed_time = end - start
+            print("     Inliers: %d, Outliers: %d, Iters %d" % (inliers_no, outliers_no, iterations))
 
             ransac_images_poses[image] = best_model
-            ransac_data = np.r_[ransac_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1,4])]
+            ransac_data = np.r_[ransac_data, np.array([inliers_no, outliers_no, iterations, elapsed_time]).reshape([1,4])]
 
             # modified RANSAC with distribution
+            print("dist. RANSAC")
             sub_dist = get_sub_distribution(matches_for_image, points3D_avg_heatmap_vals)
             start = time.time()
-            inliers_no, ouliers_no, iterations, best_model, inliers = run_ransac_modified(matches_for_image,sub_dist)
+            inliers_no, outliers_no, iterations, best_model, inliers = run_ransac_modified(matches_for_image,sub_dist)
             end = time.time()
             elapsed_time = end - start
+            print("     Inliers: %d, Outliers: %d, Iters %d" % (inliers_no, outliers_no, iterations))
 
             ransac_dist_images_poses[image] = best_model
-            ransac_dist_data = np.r_[ransac_dist_data, np.array([inliers_no, ouliers_no, iterations, elapsed_time]).reshape([1, 4])]
+            ransac_dist_data = np.r_[ransac_dist_data, np.array([inliers_no, outliers_no, iterations, elapsed_time]).reshape([1, 4])]
 
             # PROSAC
+            print("PROSAC")
             # get sorted image matches
             # 6 is the lowes_distance_inverse, 7 is the heatmap value
             # TODO: Normalise both ?
@@ -68,12 +72,15 @@ def run_comparison(exponential_decay_value, ransac, run_ransac_modified, prosac,
             sorted_matches = matches_for_image[sorted_indices[::-1]]
 
             start = time.time()
-            inliers_no_mod, ouliers_no_mod, iterations_mod, best_model_mod, inliers = prosac(sorted_matches)
+            inliers_no, outliers_no, iterations, best_model, inliers = prosac(sorted_matches)
             end = time.time()
             elapsed_time_mod = end - start
+            print("     Inliers: %d, Outliers: %d, Iters %d" % (inliers_no, outliers_no, iterations))
 
-            prosac_images_poses[image] = best_model_mod
-            prosac_data = np.r_[prosac_data, np.array([inliers_no_mod, ouliers_no_mod, iterations_mod, elapsed_time_mod]).reshape([1, 4])]
+            prosac_images_poses[image] = best_model
+            prosac_data = np.r_[prosac_data, np.array([inliers_no, outliers_no, iterations, elapsed_time_mod]).reshape([1, 4])]
+
+            print()
         else:
             print(image + " has less than 4 matches..")
 
