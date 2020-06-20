@@ -21,7 +21,6 @@ def ransac(matches_for_image):
     best_model = {}
 
     while k < no_iterations:
-
         inliers = []
         # pick 4 random matches (assume they are inliers)
         random_matches = np.random.choice(len(matches_for_image), s, replace=False)
@@ -72,7 +71,7 @@ def run_ransac_modified(matches_for_image, distribution):
     p = 0.99 # this is a typical value
     # number of iterations (http://www.cse.psu.edu/~rtc12/CSE486/lecture15.pdf and https://youtu.be/5E5n7fhLHEM?list=PLTBdjV_4f-EKeki5ps2WHqJqyQvxls4ha&t=428)
     # also reddit post https://www.reddit.com/r/computervision/comments/gikj1s/can_somebody_help_me_understand_ransac/
-    no_iterations = 1000  # can set this to whatever you want to start with
+    no_iterations = 20000  # can set this to whatever you want to start with
     k = 0
     distCoeffs = np.zeros((5, 1))  # assume zero for now
     threshold = 8.0 # same as opencv
