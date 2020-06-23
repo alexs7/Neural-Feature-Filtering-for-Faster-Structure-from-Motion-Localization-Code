@@ -1,6 +1,6 @@
 # This will create 2 files
-# images that were localised in the model including the base images and the ones from the query images that managed to get localised
-# images that were not localised from the query images that colmap does not register anyway, so the only way to get them is to
+# 1 - images that were localised in the model including the base images and the ones from the query images that managed to get localised
+# 2 - images that were not localised from the query images that colmap does not register anyway, so the only way to get them is to
 # have manually create a text file of base_images.txt and query_name.txt and to loop through that and comapre it to COLAMP localised db images
 
 from query_image import image_localised, read_images_binary
