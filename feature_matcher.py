@@ -149,9 +149,8 @@ class FeatureMatcher(object):
             dist_match = defaultdict(lambda: float_inf)   
             index_match = dict()  
             for m, n in matches:
-                # 19/06/2020 removes lowe's ratio test
-                # if m.distance > ratio_test * n.distance:
-                #     continue
+                if m.distance > ratio_test * n.distance:
+                    continue
                 dist = dist_match[m.trainIdx]
                 if dist == float_inf:
                     # trainIdx has not been matched yet
@@ -182,19 +181,17 @@ class FeatureMatcher(object):
             ratio_test = self.ratio_test            
         if matches is not None: 
             for m,n in matches:
-                # 19/06/2020 removes lowe's ratio test
-                # if m.distance < ratio_test * n.distance:
-                idx1.append(m.queryIdx)
-                idx2.append(m.trainIdx)
-                lowes_distances.append(n.distance / m.distance)
+                if m.distance < ratio_test * n.distance:
+                    idx1.append(m.queryIdx)
+                    idx2.append(m.trainIdx)
+                    lowes_distances.append(n.distance / m.distance)
         return idx1, idx2 , lowes_distances
 
     # input: des1 = query-descriptors, des2 = train-descriptors
     # output: idx1, idx2  (vectors of corresponding indexes in des1 and des2, respectively)
     def goodMatches(self, matches, des1, des2, ratio_test=None): 
-        return self.goodMatchesSimple(matches, des1, des2, ratio_test)   # <= N.B.: this generates problem in SLAM since it can produce matches where a trainIdx index is associated to two (or more) queryIdx indexes
-        # 19/06/2020 replaced with goodMatchesSimple()
-        # return self.goodMatchesOneToOne(matches, des1, des2, ratio_test)
+        # return self.goodMatchesSimple(matches, des1, des2, ratio_test)   # <= N.B.: this generates problem in SLAM since it can produce matches where a trainIdx index is associated to two (or more) queryIdx indexes
+        return self.goodMatchesOneToOne(matches, des1, des2, ratio_test)
 
 
 # Brute-Force Matcher 
