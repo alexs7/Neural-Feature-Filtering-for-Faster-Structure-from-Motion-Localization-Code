@@ -16,7 +16,7 @@ def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, 
     # same length
     # good_matches_data[0] - 2D point indices,
     # good_matches_data[1] - 3D point indices, - this is the index you need the id to get xyz
-    # good_matches_data[2] lowe's distance inverse ratio
+    # good_matches_data[2] - lowe's distance inverse ratio
     data_size = 8
     matches = np.empty([0, data_size])
     for i in range(len(good_matches_data[1])):
