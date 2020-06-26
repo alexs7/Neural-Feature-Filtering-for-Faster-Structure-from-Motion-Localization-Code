@@ -43,12 +43,6 @@ def run_comparison(func, matches_path, test_images, points3D_avg_heatmap_vals = 
     data = np.empty([0, 4])
     images_poses = {}
 
-    ransac_dist_data = np.empty([0, 4])
-    ransac_dist_images_poses = {}
-
-    prosac_data = np.empty([0, 4])
-    prosac_images_poses = {}
-
     for i in range(len(test_images)):
         image = test_images[i]
         matches_for_image = matches_all.item()[image]
