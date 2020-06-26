@@ -9,7 +9,7 @@ def show_projected_points(image_path, points2D, color, output):
         x = int(points2D[i][0])
         y = int(points2D[i][1])
         center = (x, y)
-        cv2.circle(image, center, 4, color, -1)
+        cv2.circle(image, center, 8, color, -1)
     # image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
     cv2.imwrite("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/"+output, image)
 
