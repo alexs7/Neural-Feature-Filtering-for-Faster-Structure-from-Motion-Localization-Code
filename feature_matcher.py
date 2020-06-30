@@ -73,17 +73,17 @@ class FeatureMatcher(object):
         matches = self.matcher.knnMatch(des1, des2, k=2)  #knnMatch(queryDescriptors,trainDescriptors)
         self.matches = matches
         return self.goodMatches(matches, des1, des2, ratio_test)
-    
-    
-    # input: des1 = query-descriptors, des2 = train-descriptors, kps1 = query-keypoints, kps2 = train-keypoints 
+
+
+    # input: des1 = query-descriptors, des2 = train-descriptors, kps1 = query-keypoints, kps2 = train-keypoints
     # output: idx1, idx2  (vectors of corresponding indexes in des1 and des2, respectively)
-    # N.B.0: cross checking can be also enabled with the BruteForce Matcher below 
-    # N.B.1: after matching there is a model fitting with fundamental matrix estimation 
+    # N.B.0: cross checking can be also enabled with the BruteForce Matcher below
+    # N.B.1: after matching there is a model fitting with fundamental matrix estimation
     # N.B.2: fitting a fundamental matrix has problems in the following cases: [see Hartley/Zisserman Book]
-    # - 'geometrical degenerate correspondences', e.g. all the observed features lie on a plane (the correct model for the correspondences is an homography) or lie a ruled quadric 
+    # - 'geometrical degenerate correspondences', e.g. all the observed features lie on a plane (the correct model for the correspondences is an homography) or lie a ruled quadric
     # - degenerate motions such a pure rotation (a sufficient parallax is required) or an infinitesimal viewpoint change (where the translation is almost zero)
-    # N.B.3: as reported above, in case of pure rotation, this algorithm will compute a useless fundamental matrix which cannot be decomposed to return a correct rotation    
-    # Adapted from https://github.com/lzx551402/geodesc/blob/master/utils/opencvhelper.py 
+    # N.B.3: as reported above, in case of pure rotation, this algorithm will compute a useless fundamental matrix which cannot be decomposed to return a correct rotation
+    # Adapted from https://github.com/lzx551402/geodesc/blob/master/utils/opencvhelper.py
     def matchWithCrossCheckAndModelFit(self, des1, des2, kps1, kps2, ratio_test=None, cross_check=True, err_thld=1, info=''):
         """Compute putative and inlier matches.
         Args:
@@ -97,10 +97,10 @@ class FeatureMatcher(object):
             good_matches: Putative matches.
             mask: The mask to distinguish inliers/outliers on putative matches.
         """
-        idx1, idx2 = [], []          
-        if ratio_test is None: 
+        idx1, idx2 = [], []
+        if ratio_test is None:
             ratio_test = self.ratio_test
-            
+
         init_matches1 = self.matcher.knnMatch(des1, des2, k=2)
         init_matches2 = self.matcher.knnMatch(des2, des1, k=2)
 
@@ -133,21 +133,21 @@ class FeatureMatcher(object):
         n_inlier = np.count_nonzero(mask)
         print(info, 'n_putative', len(good_matches), 'n_inlier', n_inlier)
         return idx1, idx2, good_matches, mask
-    
-            
+
+
     # input: des1 = query-descriptors, des2 = train-descriptors
     # output: idx1, idx2  (vectors of corresponding indexes in des1 and des2, respectively)
-    # N.B.: this returns matches where each trainIdx index is associated to only one queryIdx index    
+    # N.B.: this returns matches where each trainIdx index is associated to only one queryIdx index
     def goodMatchesOneToOne(self, matches, des1, des2, ratio_test=None):
         len_des2 = len(des2)
         idx1, idx2, lowes_distances = [], [], []
-        # good_matches = []           
+        # good_matches = []
         if ratio_test is None:
             ratio_test = self.ratio_test
-        if matches is not None:         
+        if matches is not None:
             float_inf = float('inf')
-            dist_match = defaultdict(lambda: float_inf)   
-            index_match = dict()  
+            dist_match = defaultdict(lambda: float_inf)
+            index_match = dict()
             for m, n in matches:
                 if m.distance > ratio_test * n.distance:
                     continue
@@ -176,10 +176,10 @@ class FeatureMatcher(object):
     # N.B.: this may return matches where a trainIdx index is associated to two (or more) queryIdx indexes
     def goodMatchesSimple(self, matches, des1, des2, ratio_test=None):
         idx1, idx2, lowes_distances = [], [], []
-        #good_matches = []            
-        if ratio_test is None: 
-            ratio_test = self.ratio_test            
-        if matches is not None: 
+        #good_matches = []
+        if ratio_test is None:
+            ratio_test = self.ratio_test
+        if matches is not None:
             for m,n in matches:
                 if m.distance < ratio_test * n.distance:
                     idx1.append(m.queryIdx)
@@ -189,35 +189,35 @@ class FeatureMatcher(object):
 
     # input: des1 = query-descriptors, des2 = train-descriptors
     # output: idx1, idx2  (vectors of corresponding indexes in des1 and des2, respectively)
-    def goodMatches(self, matches, des1, des2, ratio_test=None): 
+    def goodMatches(self, matches, des1, des2, ratio_test=None):
         # return self.goodMatchesSimple(matches, des1, des2, ratio_test)   # <= N.B.: this generates problem in SLAM since it can produce matches where a trainIdx index is associated to two (or more) queryIdx indexes
         return self.goodMatchesOneToOne(matches, des1, des2, ratio_test)
 
 
-# Brute-Force Matcher 
-class BfFeatureMatcher(FeatureMatcher): 
+# Brute-Force Matcher
+class BfFeatureMatcher(FeatureMatcher):
     def __init__(self, norm_type=cv2.NORM_HAMMING, cross_check = False, ratio_test=kRatioTest, type = FeatureMatcherTypes.BF):
         super().__init__(norm_type=norm_type, cross_check=cross_check, ratio_test=ratio_test, type=type)
-        self.matcher = cv2.BFMatcher(norm_type, cross_check)     
-        self.matcher_name = 'BfFeatureMatcher'   
+        self.matcher = cv2.BFMatcher(norm_type, cross_check)
+        self.matcher_name = 'BfFeatureMatcher'
 
 
-# Flann Matcher 
-class FlannFeatureMatcher(FeatureMatcher): 
+# Flann Matcher
+class FlannFeatureMatcher(FeatureMatcher):
     def __init__(self, norm_type=cv2.NORM_HAMMING, cross_check = False, ratio_test=kRatioTest, type = FeatureMatcherTypes.FLANN):
         super().__init__(norm_type=norm_type, cross_check=cross_check, ratio_test=ratio_test, type=type)
         if norm_type == cv2.NORM_HAMMING:
-            # FLANN parameters for binary descriptors 
+            # FLANN parameters for binary descriptors
             FLANN_INDEX_LSH = 6
             self.index_params= dict(algorithm = FLANN_INDEX_LSH,   # Multi-Probe LSH: Efficient Indexing for High-Dimensional Similarity Search
                         table_number = 6,      # 12
                         key_size = 12,         # 20
-                        multi_probe_level = 1) # 2            
-        if norm_type == cv2.NORM_L2: 
-            # FLANN parameters for float descriptors 
+                        multi_probe_level = 1) # 2
+        if norm_type == cv2.NORM_L2:
+            # FLANN parameters for float descriptors
             FLANN_INDEX_KDTREE = 1
-            self.index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 4)  
-        self.search_params = dict(checks=32)   # or pass empty dictionary                 
-        self.matcher = cv2.FlannBasedMatcher(self.index_params, self.search_params)  
-        self.matcher_name = 'FlannFeatureMatcher'                                                
+            self.index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 4)
+        self.search_params = dict(checks=32)   # or pass empty dictionary
+        self.matcher = cv2.FlannBasedMatcher(self.index_params, self.search_params)
+        self.matcher_name = 'FlannFeatureMatcher'
 
