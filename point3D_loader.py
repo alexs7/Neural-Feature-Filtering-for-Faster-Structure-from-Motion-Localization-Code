@@ -145,6 +145,7 @@ def get_points3D(id): #this is assumed to be used for the new model (localised)
     return points3D
 
 # create points id and index relationship
+# points3D_indexing[i] = id
 def index_dict(points3D):
     point3D_index = 0
     points3D_indexing = {}
