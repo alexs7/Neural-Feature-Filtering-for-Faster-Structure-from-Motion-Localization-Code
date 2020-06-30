@@ -40,7 +40,7 @@ def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, 
     return matches
 
 # indexing is the same as points3D indexing for trainDescriptors
-def feature_matcher_wrapper(points3D_avg_heatmap_vals, db, test_images, trainDescriptors, points3D, matcher):
+def feature_matcher_wrapper(points3D_avg_heatmap_vals, db, test_images, trainDescriptors, points3D, matcher, verbose = False):
     points3D_indexing = index_dict(points3D)
 
     # create image_name <-> matches, dict - easier to work with
@@ -83,9 +83,12 @@ def feature_matcher_wrapper(points3D_avg_heatmap_vals, db, test_images, trainDes
         matches[test_image] = get_matches(good_matches, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
         matches_sum.append(len(good_matches[0]))
 
-    print()
-    matches_all_avg = np.sum(matches_sum) / len(matches_sum)
-    print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(test_images)) )
+    if(verbose == True):
+        print()
+        total_all_images = np.sum(matches_sum)
+        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(test_images)))
+        matches_all_avg = total_all_images / len(matches_sum)
+        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(test_images)) )
 
     return matches
 
