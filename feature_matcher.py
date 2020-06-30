@@ -66,13 +66,42 @@ class FeatureMatcher(object):
     # input: des1 = queryDescriptors, des2= trainDescriptors
     # output: idx1, idx2  (vectors of corresponding indexes in des1 and des2, respectively)
     def match(self, des1, des2, ratio_test=None):
-        if kVerbose:
-            print(self.matcher_name,', norm ', self.norm_type) 
-        #print('des1.shape:',des1.shape,' des2.shape:',des2.shape)    
-        #print('des1.dtype:',des1.dtype,' des2.dtype:',des2.dtype)
-        matches = self.matcher.knnMatch(des1, des2, k=2)  #knnMatch(queryDescriptors,trainDescriptors)
-        self.matches = matches
-        return self.goodMatches(matches, des1, des2, ratio_test)
+        # 30/06/2020 - added cross_check
+        if(self.cross_check == False):
+            if kVerbose:
+                print(self.matcher_name,', norm ', self.norm_type)
+            #print('des1.shape:',des1.shape,' des2.shape:',des2.shape)
+            #print('des1.dtype:',des1.dtype,' des2.dtype:',des2.dtype)
+            matches = self.matcher.knnMatch(des1, des2, k=2)  #knnMatch(queryDescriptors,trainDescriptors)
+            self.matches = matches
+            return self.goodMatches(matches, des1, des2, ratio_test)
+        else:
+            cross_checked_matches_idx1 = []
+            cross_checked_matches_idx2 = []
+            cross_checked_matches_lowes_dist = []
+            matches_q_t = self.matcher.knnMatch(des1, des2, k=2)  # knnMatch(queryDescriptors,trainDescriptors)
+            matches_t_q = self.matcher.knnMatch(des2, des1, k=2)  # knnMatch(trainDescriptors,queryDescriptors)
+            # arrays of idx1, idx2, lowes_distance -> idx1 = query, idx2 = train
+            # q -> t, indices
+            matches_q_t_good = self.goodMatches(matches_q_t, des1, des2, ratio_test)
+            # t -> q, indices
+            matches_t_q_good = self.goodMatches(matches_t_q, des1, des2, ratio_test)
+
+            for i in range(len(matches_q_t_good[0])):
+                q_idx_q_t = matches_q_t_good[0][i]
+                t_idx_q_t = matches_q_t_good[1][i]
+                lowes_dist = matches_q_t_good[2][i]
+                try:
+                    index_of_train_desc = matches_t_q_good[0].index(t_idx_q_t)
+                    q_idx_t_q = matches_t_q_good[1][index_of_train_desc]
+                    if (q_idx_q_t == q_idx_t_q):
+                        cross_checked_matches_idx1.append(q_idx_q_t)
+                        cross_checked_matches_idx2.append(t_idx_q_t)
+                        cross_checked_matches_lowes_dist.append(lowes_dist)
+                except ValueError:
+                    continue
+            return cross_checked_matches_idx1, cross_checked_matches_idx2, cross_checked_matches_lowes_dist
+
 
 
     # input: des1 = query-descriptors, des2 = train-descriptors, kps1 = query-keypoints, kps2 = train-keypoints
@@ -136,7 +165,7 @@ class FeatureMatcher(object):
 
 
     # input: des1 = query-descriptors, des2 = train-descriptors
-    # output: idx1, idx2  (vectors of corresponding indexes in des1 and des2, respectively)
+    # output: idx1, idx2, lowes_distance  (vectors of corresponding indexes in des1 and des2, and lowes_distances inverse respectively)
     # N.B.: this returns matches where each trainIdx index is associated to only one queryIdx index
     def goodMatchesOneToOne(self, matches, des1, des2, ratio_test=None):
         len_des2 = len(des2)
