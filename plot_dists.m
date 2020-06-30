@@ -1,9 +1,11 @@
 close all;
 
-dist = importdata('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/modified_results_t_1k_0.5.txt');
+dist = importdata('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/1k/heatmap_matrix_avg_points_values_0.5.txt');
 figure
-bar(dist);
+points_static_indices = dist > mean(dist);
 
-dist = importdata('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/pose_evaluator/vanillia_results_t_1k_0.5.txt');
+bar(dist(points_static_indices));
+
+dist = importdata('/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/rgb_avg.txt');
 figure
-bar(dist);
+bar(dist(points_static_indices));
