@@ -8,17 +8,16 @@ import numpy as np
 from database import COLMAPDatabase
 from parameters import Parameters
 from point3D_loader import read_points3d_default, index_dict
-from query_image import read_images_binary, get_images_names_bin, get_images_ids, get_images_names_from_sessions_numbers
-
+from query_image import read_images_binary, get_images_ids, get_images_names_from_sessions_numbers
 
 def get_desc_avg(image_ids, points3D, db, exponential_decay_value=None, session_weight_per_image = None):
     # Note: Look at this method this way: "I want to average descs of a 3D point that belong to certain images
     # (some from base or some from all, images) and not average all the 3D points descs.".
-    do_weighted = exponential_decay_value == True and session_weight_per_image != None
-    all_points_images_weights = [] # if(exponential_decay_value == True and session_weight_per_image != None)
+    do_weighted =  session_weight_per_image != None
     points_mean_descs = np.empty([0, 128])
 
     for k,v in points3D.items():
+        point_images_weights = []
         point_id = v.id
         points3D_descs = np.empty([0, 128])
         points_image_ids = points3D[point_id].image_ids
@@ -43,12 +42,12 @@ def get_desc_avg(image_ids, points3D, db, exponential_decay_value=None, session_
                     # collect weights
                     image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(id) + "'").fetchone()[0]
                     weight = session_weight_per_image.item()[image_name]
-                    all_points_images_weights.append(weight)
+                    point_images_weights.append(weight)
 
         if(do_weighted):
-            all_points_images_weights = all_points_images_weights / np.sum(all_points_images_weights)
-            # points3D_descs and all_points_images_weights are in the same order
-            points3D_descs = np.multiply(points3D_descs, all_points_images_weights[:, np.newaxis])
+            point_images_weights = point_images_weights / np.sum(point_images_weights) #normalise weights
+            # points3D_descs and point_images_weights are in the same order
+            points3D_descs = np.multiply(points3D_descs, point_images_weights[:, np.newaxis])
 
         # adding and calulating the mean here!
         points_mean_descs = np.r_[points_mean_descs, points3D_descs.mean(axis=0).reshape(1,128)]
