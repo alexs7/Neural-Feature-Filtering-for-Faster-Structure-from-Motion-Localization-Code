@@ -98,10 +98,6 @@ np.save(save_path, avgs)
 print("Getting weighted descs")
 session_weight_per_image = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/session_weight_per_image_" + str(exponential_decay_value) + ".npy")
 
-save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_base_weighted.npy"
-avgs = get_desc_avg(base_images_ids, points3D, db, exponential_decay_value, session_weight_per_image)
-np.save(save_path, avgs)
-
 save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_all_weighted.npy"
 avgs = get_desc_avg(all_images_ids, points3D, db, exponential_decay_value, session_weight_per_image)
 np.save(save_path, avgs)
