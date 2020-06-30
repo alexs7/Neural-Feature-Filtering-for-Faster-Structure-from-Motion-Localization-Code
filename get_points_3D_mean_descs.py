@@ -1,8 +1,8 @@
 # run this to get the avg of the 3D desc of a point same order as in points3D
-# be careful that you can get the base model's avg descs or the complete's model descs
+# be careful that you can get the base model's avg descs or the live's model descs - depends on the points images ids
 
-# the idea here is that a point is seen by the base model images and complete model images
-# obviously the complete model images number > base model images number for a point
+# the idea here is that a point is seen by the base model images and live model images
+# obviously the live model images number > base model images number for a point
 
 import numpy as np
 from database import COLMAPDatabase
@@ -63,7 +63,7 @@ exponential_decay_value = 0.5
 # method get_desc_avg() will take as main arguments image names and a model that has base + query images localised (complete)
 # for example if you pass base_model_images_names and the complete_model it will only average descs from base images.
 # when you use the complete model you use the one that you localised all the queries against to, and complete_model_images_path also includes base images
-db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/database.db"
+db_path = Parameters.db_path
 db = COLMAPDatabase.connect(db_path)
 
 live_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/images.bin"
