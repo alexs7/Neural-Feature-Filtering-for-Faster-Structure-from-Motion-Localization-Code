@@ -27,7 +27,7 @@ def create_vm(features_no, exponential_decay_value):
     live_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/points3D.bin"
     points3D = read_points3d_default(live_model_points3D_path)  # base model's 3D points (same length as live as we do not add points when localising new points, but different image_ds for each point)
 
-    db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/database.db"
+    db_path = Parameters.db_path
     db = COLMAPDatabase.connect(db_path)
 
     # number of images per session. This is hardcoded for now, but since images are sorted by name, i.e by time in the database,
