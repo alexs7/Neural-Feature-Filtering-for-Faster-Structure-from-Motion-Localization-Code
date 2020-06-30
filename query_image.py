@@ -152,6 +152,31 @@ def get_query_image_id_new_model(name):
     id = image.id
     return id
 
+def get_images_names_from_sessions_numbers(sessions_numbers, db, model_all_images):
+    images_names = []
+    if(len(sessions_numbers) == 1):
+        for k in range(sessions_numbers[0]):
+            id = k + 1  # to match db ids
+            image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(id) + "'")
+            image_name = str(image_name.fetchone()[0])
+            if (image_localised(image_name, model_all_images) != None):
+                images_names.append(image_name)
+        return images_names
+    else:
+        images_traversed = 0
+        for i in range(len(sessions_numbers)):
+            no_images = sessions_numbers[i]
+            start = images_traversed
+            end = start + no_images
+            for k in range(start, end):
+                id = k + 1  # to match db ids
+                image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(id) + "'")
+                image_name = str(image_name.fetchone()[0])
+                if (image_localised(image_name, model_all_images) != None):
+                    images_names.append(image_name)
+                images_traversed += 1
+        return images_names
+
 def get_images_names_bin(images_bin_path):
     images_names = []
     images = read_images_binary(images_bin_path)
