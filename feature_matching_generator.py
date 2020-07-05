@@ -7,7 +7,7 @@
 # the model you are localising against.. But you could use all images. If you do then localising base images against the
 # base model doesn't really makes sense, because at this point you are localising images the model has already seen but then again
 # you can say the same thing for localising future images against the complete model
-
+import cv2
 import numpy as np
 from point3D_loader import read_points3d_default, index_dict
 
@@ -75,7 +75,22 @@ def feature_matcher_wrapper(points3D_avg_heatmap_vals, db, test_images, trainDes
 
         # actual matching here!
         # NOTE: 09/06/2020 - match() has been changed to return lowes_distances in REVERSE! (https://willguimont.github.io/cs/2019/12/26/prosac-algorithm.html)
-        good_matches = matcher.match(queryDescriptors, trainDescriptors)
+        # good_matches = matcher.match(queryDescriptors, trainDescriptors)
+
+        # NOTE: 03/07/2020 - using matching method from OPENCV
+        bf = cv2.BFMatcher()
+        temp_matches = bf.knnMatch(queryDescriptors, trainDescriptors, k=2)
+
+        # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
+        # queryDescriptors and trainDescriptors, and lowes_distances inverse respectively)
+        idx1, idx2, lowes_distances = [], [], []
+        for m, n in temp_matches:
+            if m.distance < 0.9 * n.distance:
+                idx1.append(m.queryIdx)
+                idx2.append(m.trainIdx)
+                lowes_distances.append(n.distance / m.distance)
+                # add exponential decay ratio?
+        good_matches = [idx1, idx2, lowes_distances]
 
         # queryDescriptors and query_image_keypoints_data_xy = same order
         # points3D order and trainDescriptors_* = same order
