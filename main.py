@@ -10,7 +10,7 @@ import numpy as np
 
 from pose_evaluator import pose_evaluate
 from query_image import get_images_names_bin, read_images_binary, get_query_image_global_pose_new_model, get_images_names_from_sessions_numbers
-from ransac_comparison import run_comparison, plain_sort_matches, enhanced_sort_matches
+from ransac_comparison import run_comparison, plain_sort_matches, enhanced_sort_matches, enhanced_sort_matches_kmeans
 from ransac_prosac import ransac, ransac_dist, prosac
 
 features_no = "1k" # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
@@ -37,15 +37,15 @@ live_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipe
 points3D = read_points3d_default(live_model_points3D_path)  # base model's 3D points (same length as complete as we do not add points when localising new points, but different image_ids for each point)
 
 # define matcher
-matching_algo = FeatureMatcherTypes.FLANN  # or FeatureMatcherTypes.BF
-match_ratio_test = 0.2 #Parameters.kFeatureMatchRatioTest
+matching_algo = FeatureMatcherTypes.BF  # or FeatureMatcherTypes.FLANN
+match_ratio_test = 0.9 #Parameters.kFeatureMatchRatioTest #from graphs 0.7 seems to be the most optimal value
 norm_type = cv2.NORM_L2
 cross_check = False
 matcher = feature_matcher_factory(norm_type, cross_check, match_ratio_test, matching_algo)
 
-#distribution; row vector, same size as 3D points
-points3D_avg_heatmap_vals = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".txt")
-points3D_avg_heatmap_vals = points3D_avg_heatmap_vals.reshape([1, points3D_avg_heatmap_vals.shape[0]])
+# you can check if it is a distribution by calling, .sum() if it is 1, then it is.
+points3D_scores = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "//heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".npy")
+points3D_scores = points3D_scores.reshape([1, points3D_scores.shape[0]])
 
 # Save paths
 # Matches save locations
@@ -55,13 +55,11 @@ matches_save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/co
 # TIP: Remember we are focusing on the model (and its descs) here so the cases to test are:
 # query images , train_descriptors from live model : will match base + query images descs to live_model avg descs.
 # query images , train_descriptors from base model : will match base + query images descs images descs to base avg descs.
-matches = feature_matcher_wrapper(points3D_avg_heatmap_vals, db, all_images_names, train_descriptors, points3D, matcher, verbose = True)
+matches = feature_matcher_wrapper(points3D_scores, db, all_images_names, train_descriptors, points3D, matcher, verbose = True)
 
 print("Saving matches...")
 # # save the 2D-3D matches
 np.save(matches_save_path, matches)
-
-breakpoint()
 
 # # 2: RANSAC Comparison
 # RANSAC Comparison save locations
@@ -69,33 +67,56 @@ ransac_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/co
 ransac_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/ransac_data_" + str(exponential_decay_value) + ".npy"
 ransac_dist_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/ransac_dist_images_pose_" + str(exponential_decay_value) + ".npy"
 ransac_dist_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/ransac_dist_data_" + str(exponential_decay_value) + ".npy"
-
 prosac_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_images_pose_" + str(exponential_decay_value) + ".npy"
 prosac_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_data_" + str(exponential_decay_value) + ".npy"
 prosac_enh_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_enh_images_pose_" + str(exponential_decay_value) + ".npy"
 prosac_enh_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_enh_data_" + str(exponential_decay_value) + ".npy"
+prosac_enh_no_kmeans_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_enh_no_kmeans_images_pose_" + str(exponential_decay_value) + ".npy"
+prosac_enh_no_kmeans_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_enh_no_kmeans_data_" + str(exponential_decay_value) + ".npy"
 
+# RANSAC + dist
+print("RANSAC + dist")
+poses , data = run_comparison(ransac_dist, matches_save_path, all_images_names, points3D_scores)
+np.save(ransac_dist_path_poses, poses)
+np.save(ransac_dist_path_data, data)
 # RANSAC
-# poses , data = run_comparison(ransac, matches_path, query_images_names)
-# np.save(ransac_path_poses, poses)
-# np.save(ransac_path_data, data)
-# # # RANSAC + dist
-# poses , data = run_comparison(ransac_dist, matches_path, query_images_names, points3D_avg_heatmap_vals)
-# np.save(ransac_dist_path_poses, poses)
-# np.save(ransac_dist_path_data, data)
-# PROSAC lowe's
-# poses , data = run_comparison(prosac, matches_path, query_images_names, sort_matches_func = plain_sort_matches)
-# np.save(prosac_path_poses, poses)
-# np.save(prosac_path_data, data)
-# PROSAC lowes * heatmap value
-poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = enhanced_sort_matches)
+print("RANSAC")
+poses , data = run_comparison(ransac, matches_save_path, all_images_names)
+np.save(ransac_path_poses, poses)
+np.save(ransac_path_data, data)
+# PROSAC lowes * heatmap value (kmeans)
+print("PROSAC lowes * heatmap value (kmeans)")
+poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = enhanced_sort_matches_kmeans)
 np.save(prosac_enh_path_poses, poses)
 np.save(prosac_enh_path_data, data)
+# PROSAC lowes * heatmap value (no kmeans)
+print("PROSAC lowes * heatmap value (no kmeans)")
+poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = enhanced_sort_matches)
+np.save(prosac_enh_no_kmeans_path_poses, poses)
+np.save(prosac_enh_no_kmeans_path_data, data)
+# PROSAC just lowe's (this might be more suitable for fundamental/homographies)
+print("PROSAC ")
+poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = plain_sort_matches)
+np.save(prosac_path_poses, poses)
+np.save(prosac_path_data, data)
 
-ransac_data = np.load(ransac_path_data)
+# data format: inliers_no, outliers_no, iterations, elapsed_time
 ransac_dist_data = np.load(ransac_dist_path_data)
-prosac_data = np.load(prosac_path_data)
+ransac_data = np.load(ransac_path_data)
 prosac_enh_data = np.load(prosac_enh_path_data)
+prosac_enh_no_kmeans_data = np.load(prosac_enh_no_kmeans_path_data)
+prosac_data = np.load(prosac_path_data)
+
+np.set_printoptions(precision=2)
+np.set_printoptions(suppress=True)
+print("inliers_no | outliers_no | iterations | elapsed_time mean")
+print(ransac_data.mean(axis = 0))
+print(ransac_dist_data.mean(axis = 0))
+print(prosac_data.mean(axis = 0))
+print(prosac_enh_no_kmeans_data.mean(axis = 0))
+print(prosac_enh_data.mean(axis = 0))
+
+breakpoint()
 
 # 3: Evaluate Poses against Ground Truth
 vanilla_images_poses = np.load(vanillia_data_path_save_poses).item() # it is a dict!
