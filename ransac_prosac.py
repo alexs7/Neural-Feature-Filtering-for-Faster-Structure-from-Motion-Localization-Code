@@ -7,8 +7,8 @@ from sklearn.cluster import KMeans
 
 from show_2D_points import show_projected_points
 
-MAX_RANSAC_ITERS = 2000
-ERROR_THRESHOLD = 4.0
+MAX_RANSAC_ITERS = 1500
+ERROR_THRESHOLD = 8.0
 # intrinsics matrix
 K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt")
 
@@ -215,11 +215,9 @@ def prosac(sorted_matches, image=None):
         else:
             pts_idx = np.append(np.random.choice(n-1, m-1, replace=False), n-1) # TODO: n-1 will need to change to a function
 
-        # if(image == 'frame_1592381215740.jpg'): breakpoint()
-
         sample = sorted_matches[pts_idx]
-        obj_points = sample[:, 2:5]
         img_points = sample[:, 0:2]
+        obj_points = sample[:, 2:5]
 
         Rt = model_fit(img_points, obj_points)
         matches_without_random_matches = np.delete(sorted_matches, pts_idx, axis=0)
@@ -231,14 +229,14 @@ def prosac(sorted_matches, image=None):
         I_N = isInlier.sum() #support of the model, previously was findSupport().
 
         # print("\n", str(I_N))
-        # matches row values: [xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index, lowes_distance_inverse_ratio, heat_map_val]
-        # if(I_N==0 and t ==1):
+        # # matches row values: [xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index, lowes_distance_inverse_ratio, heat_map_val]
+        # if(I_N==0 and t==1):
         #     print("\n something wrong with image " + image)
-        # #
-        # #     print("\n I_N: " + str(I_N))
-        # #     print("t: " + str(t))
-        # #     print("less than 4 inliers")
         #
+        #     # print("\n I_N: " + str(I_N))
+        #     # print("t: " + str(t))
+        #     # print("less than 4 inliers")
+        #     #
         #     # xs = []
         #     # ys = []
         #     # sorting_vals = []
