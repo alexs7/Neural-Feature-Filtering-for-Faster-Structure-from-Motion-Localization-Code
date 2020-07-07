@@ -12,12 +12,14 @@ import numpy as np
 from point3D_loader import read_points3d_default, index_dict
 
 # creates 2d-3d matches data for ransac
-def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, points3D_avg_heatmap_vals):
+def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, scores):
     # same length
     # good_matches_data[0] - 2D point indices,
     # good_matches_data[1] - 3D point indices, - this is the index you need the id to get xyz
     # good_matches_data[2] - lowe's distance inverse ratio
-    data_size = 8
+    # good_matches_data[3] - reliability scores ratio
+    # good_matches_data[4] - reliability_scores = lowe's distance inverse * reliability scores ratio
+    data_size = 10
     matches = np.empty([0, data_size])
     for i in range(len(good_matches_data[1])):
         # get 2D point data
@@ -30,22 +32,26 @@ def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, 
 
         # get lowe's inv ratio
         lowes_distance_inverse_ratio = good_matches_data[2][i]
+        # reliability scores ratio
+        reliability_score_ratio = good_matches_data[3][i]
+        # reliability_scores
+        reliability_score = good_matches_data[4][i]
 
-        # the heatmap dist value (points3D_avg_heatmap_vals.sum() = 1)
-        heat_map_val = points3D_avg_heatmap_vals[0, points3D_index]
+        # the heatmap score value (of the 3D point of the match, the closest match, m)
+        heat_map_val = scores[0, points3D_index]
 
         # values here are self explanatory..
-        match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index, lowes_distance_inverse_ratio, heat_map_val]).reshape([1, data_size])
+        match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index,
+                          lowes_distance_inverse_ratio, heat_map_val, reliability_score_ratio, reliability_score]).reshape([1, data_size])
         matches = np.r_[matches, match]
     return matches
 
 # indexing is the same as points3D indexing for trainDescriptors
-def feature_matcher_wrapper(points3D_avg_heatmap_vals, db, test_images, trainDescriptors, points3D, matcher, verbose = False):
-    points3D_indexing = index_dict(points3D)
-
+def feature_matcher_wrapper(scores, db, test_images, trainDescriptors, points3D, matcher, verbose = False):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
+    points3D_indexing = index_dict(points3D)
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(test_images)):
@@ -83,19 +89,26 @@ def feature_matcher_wrapper(points3D_avg_heatmap_vals, db, test_images, trainDes
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
         # queryDescriptors and trainDescriptors, and lowes_distances inverse respectively)
-        idx1, idx2, lowes_distances = [], [], []
+        idx1, idx2, lowes_distances, reliability_ratios, reliability_scores  = [], [], [], [], []
+        # m the closest, n is the second closest
         for m, n in temp_matches:
-            if m.distance < 0.9 * n.distance:
+            if m.distance < matcher.ratio_test * n.distance: #TODO: change to also use reliability score ?
                 idx1.append(m.queryIdx)
                 idx2.append(m.trainIdx)
-                lowes_distances.append(n.distance / m.distance)
-                # add exponential decay ratio?
-        good_matches = [idx1, idx2, lowes_distances]
-
+                score_m = scores[0, m.trainIdx]
+                score_n = scores[0, n.trainIdx]
+                lowes_distance_inverse = n.distance / m.distance #inverse here as the higher the better for PROSAC
+                lowes_distances.append(lowes_distance_inverse)
+                reliability_score_ratio = score_m / score_n # the higher the better (first match is more "static" than the second, ratio)
+                reliability_ratios.append(reliability_score_ratio)
+                reliability_score = lowes_distance_inverse * reliability_score_ratio # self-explanatory
+                reliability_scores.append(reliability_score)
+        # at this point you store 1, 2D - 3D match.
+        good_matches = [idx1, idx2, lowes_distances, reliability_ratios, reliability_scores]
         # queryDescriptors and query_image_keypoints_data_xy = same order
         # points3D order and trainDescriptors_* = same order
         # returns extra data for each match
-        matches[test_image] = get_matches(good_matches, points3D_indexing, points3D, query_image_keypoints_data_xy, points3D_avg_heatmap_vals)
+        matches[test_image] = get_matches(good_matches, points3D_indexing, points3D, query_image_keypoints_data_xy, scores)
         matches_sum.append(len(good_matches[0]))
 
     if(verbose == True):
