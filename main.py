@@ -10,7 +10,7 @@ import numpy as np
 
 from pose_evaluator import pose_evaluate
 from query_image import get_images_names_bin, read_images_binary, get_query_image_global_pose_new_model, get_images_names_from_sessions_numbers
-from ransac_comparison import run_comparison, plain_sort_matches, enhanced_sort_matches, enhanced_sort_matches_kmeans
+from ransac_comparison import run_comparison, sort_matches
 from ransac_prosac import ransac, ransac_dist, prosac
 
 features_no = "1k" # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
@@ -24,11 +24,11 @@ no_images_per_session = Parameters.no_images_per_session
 live_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/images.bin"
 live_model_all_images = read_images_binary(live_model_images_path)
 
-base_images_names = get_images_names_from_sessions_numbers([no_images_per_session[0]], db, live_model_all_images) # need to pass array here
-#all = query + base images (contains also base images - doesn't really matter here - you can see them as query images too)
-all_images_names = get_images_names_from_sessions_numbers(no_images_per_session, db, live_model_all_images) #all = query + base images
+base_images_names = get_images_names_from_sessions_numbers([no_images_per_session[0]], db, live_model_all_images) # base = just base images
+all_images_names = get_images_names_from_sessions_numbers(no_images_per_session, db, live_model_all_images) #all = query + base images (contains also base images - doesn't really matter here - you can see them as query images too)
 
 # switch between these two: avg_descs_base.npy and avg_descs_all.npy (also try weighted)
+# train_descriptors must have the same length as the number of points3D
 train_descriptors = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_all.npy"
 train_descriptors = np.load(train_descriptors).astype(np.float32)
 
@@ -44,13 +44,11 @@ cross_check = False
 matcher = feature_matcher_factory(norm_type, cross_check, match_ratio_test, matching_algo)
 
 # you can check if it is a distribution by calling, .sum() if it is 1, then it is.
-points3D_scores = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "//heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".npy")
-points3D_scores = points3D_scores.reshape([1, points3D_scores.shape[0]])
+points3D_scores = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/reliability_scores_" + str(exponential_decay_value) + ".npy")
 
-# Save paths
-# Matches save locations
+# # Matches save locations
 matches_save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/matches.npy"
-
+#
 # 1: Feature matching
 # TIP: Remember we are focusing on the model (and its descs) here so the cases to test are:
 # query images , train_descriptors from live model : will match base + query images descs to live_model avg descs.
@@ -67,54 +65,58 @@ ransac_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/co
 ransac_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/ransac_data_" + str(exponential_decay_value) + ".npy"
 ransac_dist_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/ransac_dist_images_pose_" + str(exponential_decay_value) + ".npy"
 ransac_dist_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/ransac_dist_data_" + str(exponential_decay_value) + ".npy"
-prosac_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_images_pose_" + str(exponential_decay_value) + ".npy"
-prosac_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_data_" + str(exponential_decay_value) + ".npy"
-prosac_enh_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_enh_images_pose_" + str(exponential_decay_value) + ".npy"
-prosac_enh_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_enh_data_" + str(exponential_decay_value) + ".npy"
-prosac_enh_no_kmeans_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_enh_no_kmeans_images_pose_" + str(exponential_decay_value) + ".npy"
-prosac_enh_no_kmeans_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_enh_no_kmeans_data_" + str(exponential_decay_value) + ".npy"
+prosac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_1_images_pose_" + str(exponential_decay_value) + ".npy"
+prosac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_1_data_" + str(exponential_decay_value) + ".npy"
+prosac_2_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_2_images_pose_" + str(exponential_decay_value) + ".npy"
+prosac_2_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_2_data_" + str(exponential_decay_value) + ".npy"
+prosac_3_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_3_kmeans_images_pose_" + str(exponential_decay_value) + ".npy"
+prosac_3_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_3_kmeans_data_" + str(exponential_decay_value) + ".npy"
+prosac_4_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_4_kmeans_images_pose_" + str(exponential_decay_value) + ".npy"
+prosac_4_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/prosac_4_kmeans_data_" + str(exponential_decay_value) + ".npy"
 
-# RANSAC + dist
-print("RANSAC + dist")
-poses , data = run_comparison(ransac_dist, matches_save_path, all_images_names, points3D_scores)
-np.save(ransac_dist_path_poses, poses)
-np.save(ransac_dist_path_data, data)
-# RANSAC
-print("RANSAC")
-poses , data = run_comparison(ransac, matches_save_path, all_images_names)
-np.save(ransac_path_poses, poses)
-np.save(ransac_path_data, data)
-# PROSAC lowes * heatmap value (kmeans)
-print("PROSAC lowes * heatmap value (kmeans)")
-poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = enhanced_sort_matches_kmeans)
-np.save(prosac_enh_path_poses, poses)
-np.save(prosac_enh_path_data, data)
-# PROSAC lowes * heatmap value (no kmeans)
-print("PROSAC lowes * heatmap value (no kmeans)")
-poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = enhanced_sort_matches)
-np.save(prosac_enh_no_kmeans_path_poses, poses)
-np.save(prosac_enh_no_kmeans_path_data, data)
+# print("RANSAC + dist")
+# poses , data = run_comparison(ransac_dist, matches_save_path, all_images_names, points3D_scores)
+# np.save(ransac_dist_path_poses, poses)
+# np.save(ransac_dist_path_data, data)
+# print("RANSAC")
+# poses , data = run_comparison(ransac, matches_save_path, all_images_names)
+# np.save(ransac_path_poses, poses)
+# np.save(ransac_path_data, data)
 # PROSAC just lowe's (this might be more suitable for fundamental/homographies)
-print("PROSAC ")
-poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = plain_sort_matches)
-np.save(prosac_path_poses, poses)
-np.save(prosac_path_data, data)
+print("PROSAC only lowe's ratio")
+poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = sort_matches, val_idx=6)
+np.save(prosac_1_path_poses, poses)
+np.save(prosac_1_path_data, data)
+print("PROSAC (only heatmap value)")
+poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = sort_matches, val_idx=7)
+np.save(prosac_2_path_poses, poses)
+np.save(prosac_2_path_data, data)
+print("PROSAC reliability scores ratio (r_m/r_n) value")
+poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = sort_matches, val_idx=8)
+np.save(prosac_3_path_poses, poses)
+np.save(prosac_3_path_data, data)
+print("PROSAC lowe's ratio (d_n/d_m) / reliability scores ratio (r_m/r_n) value")
+poses , data = run_comparison(prosac, matches_save_path, all_images_names, sort_matches_func = sort_matches, val_idx=9)
+np.save(prosac_4_path_poses, poses)
+np.save(prosac_4_path_data, data)
 
 # data format: inliers_no, outliers_no, iterations, elapsed_time
-ransac_dist_data = np.load(ransac_dist_path_data)
-ransac_data = np.load(ransac_path_data)
-prosac_enh_data = np.load(prosac_enh_path_data)
-prosac_enh_no_kmeans_data = np.load(prosac_enh_no_kmeans_path_data)
-prosac_data = np.load(prosac_path_data)
+# ransac_dist_data = np.load(ransac_dist_path_data)
+# ransac_data = np.load(ransac_path_data)
+prosac_1_data = np.load(prosac_1_path_data)
+prosac_2_data = np.load(prosac_2_path_data)
+prosac_3_data = np.load(prosac_3_path_data)
+prosac_4_data = np.load(prosac_4_path_data)
 
 np.set_printoptions(precision=2)
 np.set_printoptions(suppress=True)
 print("inliers_no | outliers_no | iterations | elapsed_time mean")
-print(ransac_data.mean(axis = 0))
-print(ransac_dist_data.mean(axis = 0))
-print(prosac_data.mean(axis = 0))
-print(prosac_enh_no_kmeans_data.mean(axis = 0))
-print(prosac_enh_data.mean(axis = 0))
+# print(ransac_dist_data.mean(axis = 0))
+# print(ransac_data.mean(axis = 0))
+print(prosac_1_data.mean(axis = 0))
+print(prosac_2_data.mean(axis = 0))
+print(prosac_3_data.mean(axis = 0))
+print(prosac_4_data.mean(axis = 0))
 
 breakpoint()
 
