@@ -18,6 +18,7 @@ sorted_matches = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeli
 xs = []
 ys = []
 sorting_vals = []
+points3D_avg_color_vals = []
 for i in range(len(sorted_matches)):
     x = sorted_matches[i,0]
     y = sorted_matches[i,1]
@@ -25,10 +26,10 @@ for i in range(len(sorted_matches)):
     xs.append(x)
     ys.append(y)
     sorting_vals.append(val)
-
-    # points3D_index = sorted_matches[i, 5]
-    # point3D_id = points3D_indexing[points3D_index]
-    # current_point3D = points3D[point3D_id]
+    points3D_index = sorted_matches[i, 5]
+    point3D_id = points3D_indexing[points3D_index]
+    current_point3D = points3D[point3D_id]
+    breakpoint()
 
 
 xs = np.array(xs)
@@ -54,9 +55,9 @@ fig.suptitle('Pixel and Exponential Values in 3D: ' + str(kmeans.n_clusters), fo
 ax1=Axes3D(fig)
 ax2=Axes3D(fig)
 
-# ax1.scatter(data[:, 0], data[:, 1], data[:, 2], s=0.4)
-# ax1.set_xlabel('Exponential Decay Value (the higher the more static the point)', fontsize=9)
-# ax1.set_ylabel('Mean RGB value of 3D points', fontsize=9)
+ax1.scatter(data[:, 0], data[:, 1], data[:, 2], s=0.4)
+ax1.set_xlabel('Exponential Decay Value (the higher the more static the point)', fontsize=9)
+ax1.set_ylabel('Mean RGB value of 3D points', fontsize=9)
 
 point_closest_to_c1 = data[np.argmin(kmeans.transform(data)[:,0]),:]
 point_closest_to_c2 = data[np.argmin(kmeans.transform(data)[:,1]),:]
