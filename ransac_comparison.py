@@ -51,7 +51,7 @@ def run_comparison(func, matches_path, test_images, dist_vals = np.array([]), so
 
         if(len(matches_for_image) >= 4):
 
-            if(sort_matches_func !=None and val_idx != None):
+            if(sort_matches_func != None and val_idx != None):
                 matches_for_image = sort_matches_func(matches_for_image,val_idx)
 
             if(dist_vals.size !=0):
