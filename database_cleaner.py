@@ -1,33 +1,21 @@
 from query_image import read_images_binary
 from database import COLMAPDatabase
 
-submap_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/official_datasets/RobotCar-Seasons/3D-models/individual/colmap_reconstructions/004_aligned/images.bin"
-submap_images = read_images_binary(submap_images_path)
-submap_images_names = []
+#localised query images
+query_images_file = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/query_name.txt"
+with open(query_images_file) as f:
+    query_images = f.readlines()
+query_images = [x.strip() for x in query_images]
 
-for k, v in submap_images.items():
-    submap_images_names.append(v.name)
-
-db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/official_datasets/RobotCar-Seasons/3D-models/test.db")
+db = COLMAPDatabase.connect("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/database.db")
 image_names = db.execute("SELECT name FROM images")
 image_names = image_names.fetchall()
 
-reference_map_images = []
-
-for name in image_names:
-    reference_map_images.append(name[0])
-
-reference_map_images_to_remove = []
-
-for name in reference_map_images:
-    if name not in submap_images_names:
-        reference_map_images_to_remove.append(name)
-
 cursor = db.cursor()
-for i in range(len(reference_map_images_to_remove)):
-    print("Removing image " + str(i) + "/" + str(len(reference_map_images_to_remove)), end="\r")
+for i in range(len(query_images)):
+    print("Removing image " + str(i) + "/" + str(len(query_images)), end="\r")
 
-    image_to_remove_name = reference_map_images_to_remove[i]
+    image_to_remove_name = query_images[i]
     image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + image_to_remove_name + "'")
     image_id = str(image_id.fetchone()[0])
 
@@ -40,4 +28,4 @@ for i in range(len(reference_map_images_to_remove)):
     cursor.execute("DELETE FROM keypoints WHERE image_id = ?", (image_id,))
     db.commit()
 
-print("Done")
+print("\n Done")
