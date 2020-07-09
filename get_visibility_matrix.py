@@ -3,8 +3,8 @@
 # heatmap VM contains exponential decay applied (so there will be N=exponential_decay_values of those)
 from database import COLMAPDatabase
 from parameters import Parameters
-from point3D_loader import read_points3d_default, index_dict
-from query_image import read_images_binary, image_localised, load_images_from_text_file
+from point3D_loader import read_points3d_default, index_dict, index_dict_reverse
+from query_image import read_images_binary, image_localised
 import numpy as np
 
 def get_row(image_id, points3D, vm_positive_value):
@@ -16,10 +16,8 @@ def get_row(image_id, points3D, vm_positive_value):
         point_index += 1  # move by one point (or column)
     return points_row
 
-def get_db_sessions():
-    # number of images per session. This is hardcoded for now, but since images are sorted by name, i.e by time in the database,
-    # then you can use these numbers to get images from each session. The numbers need to be sorted by session though. First is number of base model images.
-    no_images_per_session = Parameters.no_images_per_session
+# 0 MUST be base session then 1 next session etc etc...
+def get_db_sessions(no_images_per_session):
     sessions = {}
     images_traversed = 0
     for i in range(len(no_images_per_session)):
@@ -37,53 +35,55 @@ def get_db_sessions():
 def create_vm(features_no, exponential_decay_value):
     print("Creating VM for features_no " + features_no + " and exponential_decay_value: " + str(exponential_decay_value))
     # by "live model" I mean all the frames from future sessions localised in the base model, including images from base model
-    live_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/images.bin"
+    live_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/common_bin_files/images.bin"
     live_model_all_images = read_images_binary(live_model_images_path)
 
-    live_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/points3D.bin"
-    points3D = read_points3d_default(live_model_points3D_path)  # base model's 3D points (same length as live as we do not add points when localising new points, but different image_ds for each point)
+    live_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/common_bin_files/points3D.bin"
+    points3D = read_points3d_default(live_model_points3D_path)  # live model's 3D points (same length as base as we do not add points when localising new points, but different image_ds for each point)
 
-    db_path = Parameters.db_path
+    db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/live_model/database_live.db"
     db = COLMAPDatabase.connect(db_path)
 
-    sessions_from_db = get_db_sessions() # session_index -> [images_ids]
+    sessions_from_db = get_db_sessions(Parameters.no_images_per_session)  # session_index -> [images_ids]
+
+    # first loop is to get the total number of localised images in a session
+    localised_images_no_per_session = []
+    for session_id, session_images_ids, in sessions_from_db.items():
+        image_session_idx = 0 #images local index in each session
+        for image_id, image_data in sorted(live_model_all_images.items()): #db id of localised image
+            if(image_id in session_images_ids):
+                image_session_idx +=1
+        localised_images_no_per_session.append(image_session_idx)
+
+    # second loop is to complete the metadata for sessions - can't have one loop sadly
+    images_metadata = np.zeros([len(live_model_all_images), 2])
+    matrix_idx = 0  # global matrix index
+    for session_id, session_images_ids, in sessions_from_db.items():
+        image_session_idx = 0  # images local index in each session
+        for image_id, image_data in sorted(live_model_all_images.items()): #db id of localised image
+            if (image_id in session_images_ids):
+                image_session_idx += 1
+                images_metadata[matrix_idx, 0] = image_session_idx
+                images_metadata[matrix_idx, 1] = localised_images_no_per_session[session_id]
+                matrix_idx += 1
+
+    # third loop is to build the binary VM matrix
     binary_visibility_matrix = np.empty([0, len(points3D)])
-    # This will hold information, about the binary_visibility_matrix images (rows)
-    # Each row, (image) has to hold information about its position in the session,
-    # and the total images in its session. Note that only localised images,
-    # are in sessions hence binary_visibility_matrix.rows < than images in sessions_from_db
-    # COLMAP database also holds images that are NOT localised.
-    # [matrix_index] -> (session_id_position)
-    binary_visibility_matrix_frames = {}
-    matrix_index = 0
-    for sessions_idx in range(len(sessions_from_db)):
-        image_ids = sessions_from_db[sessions_idx]
-        image_session_position = 1
-        for id in image_ids:
-            image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(id) + "'")
-            image_name = str(image_name.fetchone()[0])
-            if (image_localised(image_name, live_model_all_images) != None):
-                binary_visibility_matrix_frames[matrix_index] = (image_session_position,)
-                points_row = get_row(id, points3D, 1)
-                binary_visibility_matrix = np.r_[binary_visibility_matrix, points_row]
-                matrix_index += 1
-                image_session_position += 1
-        # add the no of total images of session to each row
-        total_session_images = image_session_position-1
-        for idx, _ in binary_visibility_matrix_frames.items():
-            binary_visibility_matrix_frames[idx] = binary_visibility_matrix_frames[idx] + (total_session_images,)
+    for image_id, _ in sorted(live_model_all_images.items()):
+        points_row = get_row(image_id, points3D, 1)
+        binary_visibility_matrix = np.r_[binary_visibility_matrix, points_row]
 
     points3D_idx = index_dict(points3D)
     binary_visibility_matrix_cols_sum = binary_visibility_matrix.sum(axis = 0)
     reliability_scores = []
+
     for idx, _ in points3D_idx.items():
         current_reliability_score = binary_visibility_matrix_cols_sum[idx]
         final_reliability_scores = 0
         for row_no in range(binary_visibility_matrix.shape[0]):
             elem = binary_visibility_matrix[row_no, idx]
-            time = binary_visibility_matrix_frames[row_no][0]
-            half_life = binary_visibility_matrix_frames[row_no][1]
-            # print(" Row no %d, time/half_life: %d/%d" % (row_no, time, half_life))
+            time = images_metadata[row_no,0]
+            half_life = images_metadata[row_no,1]
             if(elem == 1):
                 final_reliability_scores += current_reliability_score * 0.5 ** (-time/half_life)
             else:
@@ -100,11 +100,11 @@ def create_vm(features_no, exponential_decay_value):
         Nt = N0 * (exponential_decay_value) ** (t / t1_2)
         # print("t: " + str(t))
         # print("Nt: " + str(Nt))
-        for id in image_ids:
-            image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(id) + "'")
+        for image_id in image_ids:
+            image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'")
             image_name = str(image_name.fetchone()[0])
             if(image_localised(image_name, live_model_all_images) != None):
-                points_row = get_row(id, points3D, Nt)
+                points_row = get_row(image_id, points3D, Nt)
                 live_model_visibility_matrix = np.r_[live_model_visibility_matrix, points_row]
 
     print("Getting session weights for each image..")
@@ -112,8 +112,8 @@ def create_vm(features_no, exponential_decay_value):
     for sessions_no, image_ids in sessions_from_db.items():
         t = len(sessions_from_db) - (sessions_no + 1) #since zero-based
         Nt = N0 * (exponential_decay_value) ** (t / t1_2)
-        for id in image_ids:
-            image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(id) + "'")
+        for image_id in image_ids:
+            image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'")
             image_name = str(image_name.fetchone()[0])
             if(image_localised(image_name, live_model_all_images) != None):
                 session_weight_per_image[image_name] = Nt
@@ -129,6 +129,8 @@ def create_vm(features_no, exponential_decay_value):
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".npy", heatmap_matrix_summed_points_values)
     # NOTE: remember the weights there are normalised
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/session_weight_per_image_" + str(exponential_decay_value) + ".npy", session_weight_per_image)
+    # Save binary_visibility_matrix
+    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/1k/binary_visibility_matrix.npy", binary_visibility_matrix)
 
 # NOTE: The folders are created manually under, /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
