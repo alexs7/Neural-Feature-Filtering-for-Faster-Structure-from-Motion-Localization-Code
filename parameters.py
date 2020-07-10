@@ -16,7 +16,7 @@
 * You should have received a copy of the GNU General Public License
 * along with PYSLAM. If not, see <http://www.gnu.org/licenses/>.
 """
-
+import numpy as np
 
 '''
 List of shared parameters 
@@ -24,11 +24,21 @@ List of shared parameters
 class Parameters(object):
 
     # 29/06/2020 - My addition
+    live_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/common_bin_files/images.bin"
+    live_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/common_bin_files/points3D.bin"
+    base_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/original/0/images.bin"
+
     live_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/live_model/database_live.db"
     base_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/database_base.db"
+    query_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/query_images_features/query_database.db"
+
     # Parameters.no_images_per_session: Number of images per session. This is hardcoded for now, but since images are sorted by name, i.e by time in the database,
     # then you can use these numbers to get images from each session. The numbers need to be sorted by session though. First is number of base model images.
     no_images_per_session = [210, 85, 87, 79, 86, 83, 85, 90, 86, 84, 79, 95]
+    intrinsics_landscape = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_landscape.txt")
+    ratio_test_val = 0.9
+
+    # 10/07/2020 previous data - remove.
     
     # SLAM threads 
     kLocalMappingOnSeparateThread=True           # True: move local mapping on a separate thread, False: tracking and then local mapping in a single thread 
