@@ -24,8 +24,11 @@ List of shared parameters
 class Parameters(object):
 
     # 29/06/2020 - My addition
-    db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/new_model/database.db"
-    no_images_per_session = [129, 85, 87, 79, 86, 83, 85, 90, 86, 84, 79, 95]
+    live_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/live_model/database_live.db"
+    base_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/database_base.db"
+    # Parameters.no_images_per_session: Number of images per session. This is hardcoded for now, but since images are sorted by name, i.e by time in the database,
+    # then you can use these numbers to get images from each session. The numbers need to be sorted by session though. First is number of base model images.
+    no_images_per_session = [210, 85, 87, 79, 86, 83, 85, 90, 86, 84, 79, 95]
     
     # SLAM threads 
     kLocalMappingOnSeparateThread=True           # True: move local mapping on a separate thread, False: tracking and then local mapping in a single thread 
