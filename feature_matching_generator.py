@@ -61,7 +61,17 @@ def feature_matcher_wrapper(scores, db, query_images, trainDescriptors, points3D
         image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + query_image + "'")
         image_id = str(image_id.fetchone()[0])
 
-        # fetching the (x,y,descs) for that image
+        # keypoints data
+        query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
+        query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
+        query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
+        query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
+        query_image_keypoints_data = db.blob_to_array(query_image_keypoints_data, np.float32)
+        query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
+        query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows,query_image_keypoints_data_cols)
+        query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
+
+        # descriptors data
         query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
         query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
         query_image_descriptors_data = db.blob_to_array(query_image_descriptors_data, np.uint8)
@@ -83,12 +93,12 @@ def feature_matcher_wrapper(scores, db, query_images, trainDescriptors, points3D
         # queryDescriptors and trainDescriptors, and lowes_distances inverse respectively)
         idx1, idx2, lowes_distances, reliability_ratios, reliability_scores  = [], [], [], [], []
         # m the closest, n is the second closest
-        for m, n in temp_matches:
-            if m.distance < matcher.ratio_test * n.distance: #TODO: change to also use reliability score ?
+        for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
+            score_m = scores[0, m.trainIdx]
+            score_n = scores[0, n.trainIdx]
+            if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
                 idx1.append(m.queryIdx)
                 idx2.append(m.trainIdx)
-                score_m = scores[0, m.trainIdx]
-                score_n = scores[0, n.trainIdx]
                 lowes_distance_inverse = n.distance / m.distance #inverse here as the higher the better for PROSAC
                 lowes_distances.append(lowes_distance_inverse)
                 reliability_score_ratio = score_m / score_n # the higher the better (first match is more "static" than the second, ratio)
@@ -103,7 +113,7 @@ def feature_matcher_wrapper(scores, db, query_images, trainDescriptors, points3D
         matches[query_image] = get_matches(good_matches, points3D_indexing, points3D, query_image_keypoints_data_xy, scores)
         matches_sum.append(len(good_matches[0]))
 
-    if(verbose == True):
+    if(verbose):
         print()
         total_all_images = np.sum(matches_sum)
         print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
