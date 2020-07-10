@@ -10,14 +10,12 @@ from parameters import Parameters
 from point3D_loader import read_points3d_default, index_dict
 from query_image import read_images_binary, get_images_ids, get_images_names_from_sessions_numbers
 
-def get_desc_avg(image_ids, points3D, db, session_weight_per_image = None):
+def get_desc_avg(image_ids, points3D, db):
     # Note: Look at this method this way: "I want to average descs of a 3D point that belong to certain images
     # (some from base or some from all, images) and not average all the 3D points descs."
-    # do_weighted =  session_weight_per_image != None
     points_mean_descs = np.empty([0, 128])
 
     for k,v in points3D.items():
-        # point_images_weights = []
         point_id = v.id
         points3D_descs = np.empty([0, 128])
         points_image_ids = np.unique(points3D[point_id].image_ids) #This is because COLMAP adds the image twice some times.
@@ -35,16 +33,6 @@ def get_desc_avg(image_ids, points3D, db, session_weight_per_image = None):
                 desc = descs[keypoint_index] #keypoints and descs are ordered the same (so I use the point2D_idxs to index descs )
                 desc = desc.reshape(1, 128) #this is the desc of keypoint with index, keypoint_index, from image with id, id.
                 points3D_descs = np.r_[points3D_descs, desc]
-                # if(do_weighted):
-                #     # collect weights
-                #     image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(id) + "'").fetchone()[0]
-                #     weight = session_weight_per_image.item()[image_name]
-                #     point_images_weights.append(weight)
-
-        # if(do_weighted):
-        #     point_images_weights = point_images_weights / np.sum(point_images_weights) #normalise weights
-        #     # points3D_descs and point_images_weights are in the same order
-        #     points3D_descs = np.multiply(points3D_descs, point_images_weights[:, np.newaxis])
 
         # adding and calulating the mean here!
         points_mean_descs = np.r_[points_mean_descs, points3D_descs.mean(axis=0).reshape(1,128)]
@@ -93,14 +81,6 @@ np.save(save_path, avgs)
 save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_all.npy"
 avgs = get_desc_avg(all_images_ids, live_model_points3D, db_live)
 np.save(save_path, avgs)
-
-# print("Getting weighted descs")
-# session_weight_per_image = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/session_weight_per_image_" + str(exponential_decay_value) + ".npy")
-
-# save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_all_weighted.npy"
-# avgs = get_desc_avg(all_images_ids, live_model_points3D, db, session_weight_per_image)
-# np.save(save_path, avgs)
-
 
 
 

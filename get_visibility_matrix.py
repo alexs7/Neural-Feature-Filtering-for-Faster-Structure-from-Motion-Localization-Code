@@ -110,17 +110,6 @@ def create_vm(features_no, exponential_decay_value):
     # This vector will contain the points' visibility values that will be used in RANSAC dist version
     heatmap_matrix_summed_points_values = np.sum(live_model_visibility_matrix, axis=0)
 
-    # print("Getting session weights for each image..")
-    # session_weight_per_image = {}
-    # for sessions_no, image_ids in sessions_from_db.items():
-    #     t = len(sessions_from_db) - (sessions_no + 1) #since zero-based
-    #     Nt = N0 * (exponential_decay_value) ** (t / t1_2)
-    #     for image_id in image_ids:
-    #         image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'")
-    #         image_name = str(image_name.fetchone()[0])
-    #         if(image_localised(image_name, live_model_all_images) != None):
-    #             session_weight_per_image[image_name] = Nt
-
     print("Saving files...")
     # reshaping them first
     reliability_scores = reliability_scores.reshape([1, reliability_scores.shape[0]])
@@ -129,9 +118,6 @@ def create_vm(features_no, exponential_decay_value):
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".npy", heatmap_matrix_summed_points_values)
     # Save binary_visibility_matrix
     np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/1k/binary_visibility_matrix.npy", binary_visibility_matrix)
-
-    # NOTE: remember the weights there are normalised
-    # np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/session_weight_per_image_" + str(exponential_decay_value) + ".npy", session_weight_per_image)
 
 # NOTE: The folders are created manually under, /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
