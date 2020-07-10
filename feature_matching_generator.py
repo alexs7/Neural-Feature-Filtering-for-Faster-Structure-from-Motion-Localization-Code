@@ -47,29 +47,21 @@ def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, 
     return matches
 
 # indexing is the same as points3D indexing for trainDescriptors
-def feature_matcher_wrapper(scores, db, test_images, trainDescriptors, points3D, matcher, verbose = False):
+def feature_matcher_wrapper(scores, db, query_images, trainDescriptors, points3D, ratio_test_val, verbose = False):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     points3D_indexing = index_dict(points3D)
 
     #  go through all the test images and match their descs to the 3d points avg descs
-    for i in range(len(test_images)):
-        test_image = test_images[i]
-        print("Matching image " + str(i + 1) + "/" + str(len(test_images)) + ", " + test_image, end="\r")
+    for i in range(len(query_images)):
+        query_image = query_images[i]
+        if(verbose): print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image, end="\r")
 
-        image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + test_image + "'")
+        image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + query_image + "'")
         image_id = str(image_id.fetchone()[0])
 
         # fetching the (x,y,descs) for that image
-        query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-        query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
-        query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-        query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
-        query_image_keypoints_data = db.blob_to_array(query_image_keypoints_data, np.float32)
-        query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
-        query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows,query_image_keypoints_data_cols)
-        query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
         query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
         query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
         query_image_descriptors_data = db.blob_to_array(query_image_descriptors_data, np.uint8)
@@ -108,15 +100,15 @@ def feature_matcher_wrapper(scores, db, test_images, trainDescriptors, points3D,
         # queryDescriptors and query_image_keypoints_data_xy = same order
         # points3D order and trainDescriptors_* = same order
         # returns extra data for each match
-        matches[test_image] = get_matches(good_matches, points3D_indexing, points3D, query_image_keypoints_data_xy, scores)
+        matches[query_image] = get_matches(good_matches, points3D_indexing, points3D, query_image_keypoints_data_xy, scores)
         matches_sum.append(len(good_matches[0]))
 
     if(verbose == True):
         print()
         total_all_images = np.sum(matches_sum)
-        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(test_images)))
+        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
         matches_all_avg = total_all_images / len(matches_sum)
-        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(test_images)) )
+        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
 
     return matches
 
