@@ -54,9 +54,9 @@ db_live = COLMAPDatabase.connect(db_live_path)
 db_base_path = Parameters.base_db_path
 db_base = COLMAPDatabase.connect(db_base_path)
 
-live_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/common_bin_files/images.bin"
+live_model_images_path = Parameters.live_model_images_path
 live_model_images = read_images_binary(live_model_images_path)
-live_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/common_bin_files/points3D.bin"
+live_model_points3D_path = Parameters.live_model_points3D_path
 live_model_points3D = read_points3d_default(live_model_points3D_path)
 
 #  no_images_per_session[0] is base images
@@ -70,7 +70,7 @@ base_images_ids = get_images_ids(base_images_names, live_model_images) #there sh
 all_images_ids = get_images_ids(all_images_names, live_model_images) #there should not be any None' values here
 
 # You will notice that I am using live_model_points3D in both cases, fetching avg features for the base images and the live images.
-# This is because the live_model_points3D points3D images ids hold also ids of the live and base model images, since the live model is just the
+# This is because the live_model_points3D points' images_ids hold also ids of the live and base model images, since the live model is just the
 # base model with extra images localised in it. You can use the base model for the base images but you need to make sure that the base model is exactly the
 # same as the live model.
 
