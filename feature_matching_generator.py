@@ -11,19 +11,20 @@ import cv2
 import numpy as np
 from point3D_loader import read_points3d_default, index_dict
 
-# creates 2d-3d matches data for ransac
-def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, scores):
+# creates 2d-3d matches data for ransac comparison
+def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, points3D_scores):
     # same length
     # good_matches_data[0] - 2D point indices,
-    # good_matches_data[1] - 3D point indices, - this is the index you need the id to get xyz
+    # good_matches_data[1] - 3D point indices, - this is the index! you need the id to get xyz
     # good_matches_data[2] - lowe's distance inverse ratio
     # good_matches_data[3] - reliability scores ratio
     # good_matches_data[4] - reliability_scores = lowe's distance inverse * reliability scores ratio
-    data_size = 10
+    # good_matches_data[4] - score (the highest from the 2 nearest matches)
+    data_size = 11
     matches = np.empty([0, data_size])
     for i in range(len(good_matches_data[1])):
         # get 2D point data
-        xy_2D = query_image_xy[good_matches_data[0][i]]
+        xy_2D = query_image_xy[good_matches_data[0][i]] # remember these indices belong to query_image_xy
 
         # get 3D point data
         points3D_index = good_matches_data[1][i] # remember points3D_index is aligned with trainDescriptors
@@ -36,18 +37,20 @@ def get_matches(good_matches_data, points3D_indexing, points3D, query_image_xy, 
         reliability_score_ratio = good_matches_data[3][i]
         # reliability_scores
         reliability_score = good_matches_data[4][i]
+        # the highest score of the 2 nearest points
+        closest_neighbour_score = good_matches_data[5][i]
 
-        # the heatmap score value (of the 3D point of the match, the closest match, m)
-        heat_map_val = scores[0, points3D_index]
+        # the score value (of the 3D point of the match, the closest match, m)
+        points3D_score = points3D_scores[0, points3D_index]
 
         # values here are self explanatory..
         match = np.array([xy_2D[0], xy_2D[1], xyz_3D[0], xyz_3D[1], xyz_3D[2], points3D_index,
-                          lowes_distance_inverse_ratio, heat_map_val, reliability_score_ratio, reliability_score]).reshape([1, data_size])
+                          lowes_distance_inverse_ratio, points3D_score, reliability_score_ratio, reliability_score, closest_neighbour_score]).reshape([1, data_size])
         matches = np.r_[matches, match]
     return matches
 
 # indexing is the same as points3D indexing for trainDescriptors
-def feature_matcher_wrapper(scores, db, query_images, trainDescriptors, points3D, ratio_test_val, verbose = False):
+def feature_matcher_wrapper(points_scores, db_query, query_images, trainDescriptors, points3D, ratio_test_val, verbose = False):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -58,23 +61,23 @@ def feature_matcher_wrapper(scores, db, query_images, trainDescriptors, points3D
         query_image = query_images[i]
         if(verbose): print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image, end="\r")
 
-        image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + query_image + "'")
+        image_id = db_query.execute("SELECT image_id FROM images WHERE name = " + "'" + query_image + "'")
         image_id = str(image_id.fetchone()[0])
 
         # keypoints data
-        query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
+        query_image_keypoints_data = db_query.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
         query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
-        query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
+        query_image_keypoints_data_cols = db_query.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
         query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
-        query_image_keypoints_data = db.blob_to_array(query_image_keypoints_data, np.float32)
+        query_image_keypoints_data = db_query.blob_to_array(query_image_keypoints_data, np.float32)
         query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
         query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows,query_image_keypoints_data_cols)
         query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
 
         # descriptors data
-        query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
+        query_image_descriptors_data = db_query.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
         query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
-        query_image_descriptors_data = db.blob_to_array(query_image_descriptors_data, np.uint8)
+        query_image_descriptors_data = db_query.blob_to_array(query_image_descriptors_data, np.uint8)
         descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
         query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
 
@@ -91,26 +94,29 @@ def feature_matcher_wrapper(scores, db, query_images, trainDescriptors, points3D
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
         # queryDescriptors and trainDescriptors, and lowes_distances inverse respectively)
-        idx1, idx2, lowes_distances, reliability_ratios, reliability_scores  = [], [], [], [], []
+        idx1, idx2, lowes_distances, scores_ratios, custom_scores, closest_neighbour_scores  = [], [], [], [], [], []
         # m the closest, n is the second closest
         for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
-            score_m = scores[0, m.trainIdx]
-            score_n = scores[0, n.trainIdx]
+            # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
+            score_m = points_scores[0, m.trainIdx]
+            score_n = points_scores[0, n.trainIdx]
             if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
                 idx1.append(m.queryIdx)
                 idx2.append(m.trainIdx)
                 lowes_distance_inverse = n.distance / m.distance #inverse here as the higher the better for PROSAC
                 lowes_distances.append(lowes_distance_inverse)
-                reliability_score_ratio = score_m / score_n # the higher the better (first match is more "static" than the second, ratio)
-                reliability_ratios.append(reliability_score_ratio)
-                reliability_score = lowes_distance_inverse * reliability_score_ratio # self-explanatory
-                reliability_scores.append(reliability_score)
+                score_ratio = score_m / score_n # the higher the better (first match is more "static" than the second, ratio)
+                scores_ratios.append(score_ratio)
+                custom_score = lowes_distance_inverse * score_ratio # self-explanatory
+                custom_scores.append(custom_score)
+                closest_neighbour_score = score_m if score_m > score_n else score_n
+                closest_neighbour_scores.append(closest_neighbour_score)
         # at this point you store 1, 2D - 3D match.
-        good_matches = [idx1, idx2, lowes_distances, reliability_ratios, reliability_scores]
+        good_matches = [idx1, idx2, lowes_distances, scores_ratios, custom_scores, closest_neighbour_scores]
         # queryDescriptors and query_image_keypoints_data_xy = same order
         # points3D order and trainDescriptors_* = same order
         # returns extra data for each match
-        matches[query_image] = get_matches(good_matches, points3D_indexing, points3D, query_image_keypoints_data_xy, scores)
+        matches[query_image] = get_matches(good_matches, points3D_indexing, points3D, query_image_keypoints_data_xy, points_scores)
         matches_sum.append(len(good_matches[0]))
 
     if(verbose):
