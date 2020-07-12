@@ -60,7 +60,7 @@ def run_comparison(func, matches_path, test_images, dist_vals = np.array([]), so
                 matches_for_image = np.hstack((matches_for_image, sub_dist))
 
             start = time.time()
-            inliers_no, outliers_no, iterations, best_model, inliers = func(matches_for_image,image)
+            inliers_no, outliers_no, iterations, best_model, inliers = func(matches_for_image)
             end  = time.time()
             elapsed_time = end - start
 

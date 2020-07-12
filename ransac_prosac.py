@@ -5,8 +5,6 @@ import numpy as np
 import cv2
 from sklearn.cluster import KMeans
 
-from show_2D_points import show_projected_points
-
 MAX_RANSAC_ITERS = 1500
 ERROR_THRESHOLD = 8.0
 # intrinsics matrix
