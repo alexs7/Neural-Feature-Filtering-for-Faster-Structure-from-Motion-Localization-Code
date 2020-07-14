@@ -1,4 +1,5 @@
-from point3D_loader import read_points3d_default
+from parameters import Parameters
+from point3D_loader import read_points3d_default, get_points3D_xyz, index_dict, index_dict_reverse
 import numpy as np
 import cv2
 from query_image import read_images_binary
@@ -8,9 +9,22 @@ import sys
 import os
 from database import COLMAPDatabase
 
-
 def savePoints3DxyzToFile(points3D_xyz):
     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/points3D.txt", points3D_xyz)
+
+points3D_scores = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/1k/heatmap_matrix_avg_points_values_0.5.npy")
+points3D = read_points3d_default(Parameters.live_model_points3D_path)
+points3D_xyz_score = np.empty([0,4])
+points3D_indexing = index_dict_reverse(points3D)
+for k,v in points3D.items():
+    index = points3D_indexing[v.id]
+    score = points3D_scores[0,index]
+    row = np.array([v.xyz[0], v.xyz[1], v.xyz[2], score]).reshape([1,4])
+    points3D_xyz_score = np.r_[points3D_xyz_score, row]
+
+points3D_xyz_score = points3D_xyz_score[points3D_xyz_score[:,3].argsort()[::-1]]
+# sort points
+np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/points3D_sorted_descending.txt", points3D_xyz_score[:,0:3])
 
 # 28/06/2020 old code might still be useful
 
