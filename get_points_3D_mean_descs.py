@@ -78,7 +78,7 @@ save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_dat
 avgs = get_desc_avg(base_images_ids, live_model_points3D, db_base)
 np.save(save_path, avgs)
 
-save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_all.npy"
+save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_live.npy"
 avgs = get_desc_avg(all_images_ids, live_model_points3D, db_live)
 np.save(save_path, avgs)
 
