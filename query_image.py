@@ -117,10 +117,13 @@ def get_query_image_global_pose_new_model(name):
     pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
     return pose
 
-def get_query_image_global_pose_new_model(name, images):
+def get_query_image_pose_from_images(name, images):
+    image = None
     for k,v in images.items():
         if v.name == name:
             image = v
+    if(image == None):
+        return np.array([])
     pose_r = image.qvec2rotmat()
     pose_t = image.tvec
     pose = np.c_[pose_r, pose_t]
