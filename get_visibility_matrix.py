@@ -35,17 +35,13 @@ def get_db_sessions(no_images_per_session):
 def create_vm(features_no, exponential_decay_value):
     print("Creating VM for features_no " + features_no + " and exponential_decay_value: " + str(exponential_decay_value))
     # by "live model" I mean all the frames from future sessions localised in the base model, including images from base model
-    live_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/common_bin_files/images.bin"
-    live_model_all_images = read_images_binary(live_model_images_path)
-
-    live_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/common_bin_files/points3D.bin"
-    points3D = read_points3d_default(live_model_points3D_path)  # live model's 3D points (same length as base as we do not add points when localising new points, but different image_ds for each point)
-
-    db_path = Parameters.live_db_path
-    db = COLMAPDatabase.connect(db_path)
+    live_model_all_images = read_images_binary(Parameters.live_model_images_path)
+    live_model_points3D = read_points3d_default(Parameters.live_model_points3D_path)  # live model's 3D points (same length as base as we do not add points when localising new points, but different image_ds for each point)
+    db = COLMAPDatabase.connect(Parameters.live_db_path)
 
     sessions_from_db = get_db_sessions(Parameters.no_images_per_session)  # session_index -> [images_ids]
 
+    print("First Loop..")
     # first loop is to get the total number of localised images in a session
     localised_images_no_per_session = []
     for session_id, session_images_ids, in sessions_from_db.items():
@@ -55,6 +51,7 @@ def create_vm(features_no, exponential_decay_value):
                 image_session_idx +=1
         localised_images_no_per_session.append(image_session_idx)
 
+    print("Second Loop..")
     # second loop is to complete the metadata for sessions - can't have one loop sadly
     images_metadata = np.zeros([len(live_model_all_images), 2])
     matrix_idx = 0  # global matrix index
@@ -63,40 +60,41 @@ def create_vm(features_no, exponential_decay_value):
         for image_id, image_data in sorted(live_model_all_images.items()): #db id of localised image
             if (image_id in session_images_ids):
                 image_session_idx += 1
-                images_metadata[matrix_idx, 0] = image_session_idx
+                images_metadata[matrix_idx, 0] = (localised_images_no_per_session[session_id]+1) - image_session_idx #this will make sure the 1/219 is at the bottom (or on top, i.e most recent, so it will look like this, [219/219, 218/219 .. 1/219])
                 images_metadata[matrix_idx, 1] = localised_images_no_per_session[session_id]
                 matrix_idx += 1
 
+    print("Third Loop..")
     # third loop is to build the binary VM matrix
-    binary_visibility_matrix = np.empty([0, len(points3D)])
+    binary_visibility_matrix = np.empty([0, len(live_model_points3D)])
     for image_id, _ in sorted(live_model_all_images.items()):
-        points_row = get_row(image_id, points3D, 1)
+        points_row = get_row(image_id, live_model_points3D, 1)
         binary_visibility_matrix = np.r_[binary_visibility_matrix, points_row]
 
-    points3D_idx = index_dict(points3D)
+    points3D_idx = index_dict(live_model_points3D)
     binary_visibility_matrix_cols_sum = binary_visibility_matrix.sum(axis = 0)
     reliability_scores = []
 
     for idx, _ in points3D_idx.items():
         current_reliability_score = binary_visibility_matrix_cols_sum[idx]
         final_reliability_scores = 0
-        for row_no in range(binary_visibility_matrix.shape[0]):
+        for row_no in range(binary_visibility_matrix.shape[0]): #TODO: this might need to be reversed
             elem = binary_visibility_matrix[row_no, idx]
             time = images_metadata[row_no,0]
             half_life = images_metadata[row_no,1]
             if(elem == 1):
-                final_reliability_scores += current_reliability_score * 0.5 ** (-time/half_life)
+                final_reliability_scores = final_reliability_scores + current_reliability_score * 0.5 ** (-time/half_life)
             else:
-                final_reliability_scores += current_reliability_score * 0.5 ** (time/half_life)
+                final_reliability_scores = final_reliability_scores + current_reliability_score * 0.5 ** (time/half_life)
         reliability_scores.append(final_reliability_scores)
 
     reliability_scores = np.array(reliability_scores)
 
     N0 = 1  #default value, if a point is seen from an image
     t1_2 = 1  # 1 day
-    live_model_visibility_matrix = np.empty([0, len(points3D)]) #or heatmap..
+    live_model_visibility_matrix = np.empty([0, len(live_model_points3D)]) #or heatmap..
     for sessions_no, image_ids in sessions_from_db.items():
-        t = len(sessions_from_db) - (sessions_no + 1) #since zero-based
+        t = len(sessions_from_db) - (sessions_no + 1) + 1 #since zero-based (14/07/2020, need to add one so it starts from the last number and goes down..)
         Nt = N0 * (exponential_decay_value) ** (t / t1_2)
         # print("t: " + str(t))
         # print("Nt: " + str(Nt))
@@ -104,7 +102,7 @@ def create_vm(features_no, exponential_decay_value):
             image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'")
             image_name = str(image_name.fetchone()[0])
             if(image_localised(image_name, live_model_all_images) != None):
-                points_row = get_row(image_id, points3D, Nt)
+                points_row = get_row(image_id, live_model_points3D, Nt)
                 live_model_visibility_matrix = np.r_[live_model_visibility_matrix, points_row]
 
     # This vector will contain the points' visibility values that will be used in RANSAC dist version
