@@ -57,7 +57,7 @@ def my_bundle_adjustment_sparsity(no_matches):
 
     return A
 
-def pose_refinement(image_matches, image_pose):
+def pose_refinement(image_pose, image_matches):
     points_2d = image_matches[:,0:2]
     points_3d = image_matches[:,2:5]
     rot = image_pose['Rt'][0:3,0:3]
@@ -67,7 +67,8 @@ def pose_refinement(image_matches, image_pose):
     f0 = my_fun(x0, K, points_2d, points_3d)
     plt.plot(f0)
     A = my_bundle_adjustment_sparsity(image_matches.shape[0])
-    res = least_squares(my_fun, x0, verbose=2, method='lm', args=(K, points_2d, points_3d))
+    # TODO: Review maths here
+    res = least_squares(my_fun, x0, verbose=0, method='lm', args=(K, points_2d, points_3d))
     plt.plot(res.fun)
     # plt.show()
     pose_refined = res.x
@@ -76,6 +77,19 @@ def pose_refinement(image_matches, image_pose):
     Rt = np.r_[np.c_[rot_m, t], np.array([0, 0, 0, 1]).reshape(1, 4)]
     return Rt
 
+def refine_poses(images_names, poses, matches):
+    refined_poses = {}
+    poses = poses.item()
+    matches = matches.item()
+    for name in images_names:
+        image_pose = poses[name]
+        image_matches = matches[name]
+        refined_pose = pose_refinement(image_pose, image_matches)
+        refined_poses[name] = refined_pose
+    return refined_poses
+
+
+#    TODO: Review and delete
 # db_query = COLMAPDatabase.connect(Parameters.query_db_path)
 # query_images_names = get_all_images_names_from_db(db_query)
 # matches_save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/1k/matches.npy"
