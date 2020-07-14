@@ -1,14 +1,12 @@
-# This is vanilla RANSAC Implementation and Modified one
-import math
-
 import numpy as np
 import cv2
-from sklearn.cluster import KMeans
 
-MAX_RANSAC_ITERS = 3000
+from parameters import Parameters
+
+MAX_RANSAC_ITERS = 5000
 ERROR_THRESHOLD = 8.0
 # intrinsics matrix
-K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt")
+K = np.loadtxt(Parameters.query_images_camera_intrinsics)
 
 def model_fit(img_points, obj_points):
     distCoeffs = np.zeros((5, 1))

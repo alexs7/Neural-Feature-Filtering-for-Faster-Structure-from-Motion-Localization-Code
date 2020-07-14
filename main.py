@@ -2,14 +2,12 @@
 import cv2
 
 from database import COLMAPDatabase
-from feature_matcher import FeatureMatcherTypes, feature_matcher_factory
 from feature_matching_generator import feature_matcher_wrapper_live, feature_matcher_wrapper_base
 from parameters import Parameters
 from point3D_loader import read_points3d_default, get_points3D_xyz
 import numpy as np
 from pose_evaluator import pose_evaluate
-from pose_refinement import refine_poses
-from query_image import get_images_names_bin, read_images_binary, get_all_images_names_from_db, get_query_image_gt_pose
+from query_image import read_images_binary, load_images_from_text_file
 from ransac_comparison import run_comparison, sort_matches
 from ransac_prosac import ransac, ransac_dist, prosac
 
@@ -19,9 +17,10 @@ exponential_decay_value = 0.5 # exponential_decay can be any of 0.1 to 0.9
 db_train = COLMAPDatabase.connect(Parameters.live_db_path)
 model_images = read_images_binary(Parameters.live_model_images_path)
 
-db_gt = COLMAPDatabase.connect(Parameters.qt_db_path)
-query_images_names = get_all_images_names_from_db(db_gt) #includes non-localised ones
+db_gt = COLMAPDatabase.connect(Parameters.qt_db_path) #this can be used to get the query images descs and ground truth poses for later pose comparison
+query_images_names = load_images_from_text_file(Parameters.query_images_path)
 
+breakpoint()
 # by "live model" I mean all the frames from future sessions localised in the base model
 points3D = read_points3d_default(Parameters.live_model_points3D_path) # live model's 3d points have more images ids than base
 points3D_xyz = get_points3D_xyz(points3D)
@@ -40,26 +39,26 @@ points3D_scores_1 = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpip
 points3D_scores_2 = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/reliability_scores_" + str(exponential_decay_value) + ".npy")
 
 # 1: Feature matching
-# print("Feature matching...")
-#
-# # TIP: Remember we are focusing on the model (and its descs) here so the cases to test are:
-# # query images , train_descriptors from live model : will match base + query images descs to live_model avg descs -> (this can have multiple cases depending on the points3D score used)
-# # query images , train_descriptors from base model : will match base + query images descs images descs to base avg descs -> (can only be one case...)
-#
-# # Matches save locations
+print("Feature matching...")
+
+# TIP: Remember we are focusing on the model (and its descs) here so the cases to test are:
+# query images , train_descriptors from live model : will match base + query images descs to live_model avg descs -> (this can have multiple cases depending on the points3D score used)
+# query images , train_descriptors from base model : will match base + query images descs images descs to base avg descs -> (can only be one case...)
+
+# Matches save locations
 matches_1_save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/matches_1.npy"
 matches_2_save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/matches_2.npy"
 matches_3_save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/matches_3.npy"
-#
-# # query descs against base model descs
-# matches_1 = feature_matcher_wrapper_base(db_query, query_images_names, train_descriptors_base, points3D_xyz, Parameters.ratio_test_val, verbose = True)
-# np.save(matches_1_save_path, matches_1)
-# matches_2 = feature_matcher_wrapper_live(points3D_scores_1, db_query, query_images_names, train_descriptors_live, points3D_xyz, Parameters.ratio_test_val, verbose = True)
-# np.save(matches_2_save_path, matches_2)
-# matches_3 = feature_matcher_wrapper_live(points3D_scores_2, db_query, query_images_names, train_descriptors_live, points3D_xyz, Parameters.ratio_test_val, verbose = True)
-# np.save(matches_3_save_path, matches_3)
-#
-# breakpoint()
+
+# query descs against base model descs
+matches_1 = feature_matcher_wrapper_base(db_gt, query_images_names, train_descriptors_base, points3D_xyz, Parameters.ratio_test_val, verbose = True)
+np.save(matches_1_save_path, matches_1)
+matches_2 = feature_matcher_wrapper_live(points3D_scores_1, db_gt, query_images_names, train_descriptors_live, points3D_xyz, Parameters.ratio_test_val, verbose = True)
+np.save(matches_2_save_path, matches_2)
+matches_3 = feature_matcher_wrapper_live(points3D_scores_2, db_gt, query_images_names, train_descriptors_live, points3D_xyz, Parameters.ratio_test_val, verbose = True)
+np.save(matches_3_save_path, matches_3)
+
+breakpoint()
 
 # # 2: RANSAC Comparison
 

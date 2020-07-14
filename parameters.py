@@ -111,6 +111,9 @@ class Parameters(object):
     base_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/database.db"
     qt_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/ground_truth_model/database.db"
 
+    query_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/ground_truth_model/query_name.txt"
+    query_images_camera_intrinsics = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/ground_truth_model/intrinsics_query_images_camera.txt"
+
     # Parameters.no_images_per_session: Number of images per session. This is hardcoded for now, but since images are sorted by name, i.e by time in the database,
     # then you can use these numbers to get images from each session. The numbers need to be sorted by session though. First is number of base model images.
     no_images_per_session = [210, 85, 87, 79, 86, 83, 85, 90, 86, 84, 79, 95]
