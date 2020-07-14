@@ -23,107 +23,100 @@ List of shared parameters
 ''' 
 class Parameters(object):
 
-    # 29/06/2020 - My addition
-    live_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/common_bin_files/images.bin"
-    live_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/common_bin_files/points3D.bin"
-    base_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/original/0/images.bin"
+    features_no = "1k"  # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
+    exponential_decay_value = 0.5  # exponential_decay can be any of 0.1 to 0.9
 
-    live_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/live_model/database_live.db"
-    base_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/database_base.db"
-    query_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/query_images_features/query_database.db"
+    # RANSAC Comparison save locations
+    matches_1_ransac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_1_ransac_1_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_1_ransac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_1_ransac_1_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_1_prosac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_1_prosac_1_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_1_prosac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_1_prosac_1_data_" + str(
+        exponential_decay_value) + ".npy"
+
+    matches_2_ransac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_ransac_1_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_ransac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_ransac_1_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_ransac_2_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_ransac_2_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_ransac_2_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_ransac_2_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_prosac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_1_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_prosac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_1_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_prosac_2_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_2_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_prosac_2_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_2_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_prosac_3_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_3_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_prosac_3_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_3_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_prosac_4_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_4_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_prosac_4_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_4_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_prosac_5_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_5_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_2_prosac_5_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_5_data_" + str(
+        exponential_decay_value) + ".npy"
+
+    matches_3_ransac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_ransac_1_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_ransac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_ransac_1_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_ransac_2_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_ransac_2_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_ransac_2_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_ransac_2_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_prosac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_1_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_prosac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_1_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_prosac_2_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_2_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_prosac_2_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_2_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_prosac_3_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_3_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_prosac_3_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_3_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_prosac_4_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_4_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_prosac_4_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_4_data_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_prosac_5_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_5_images_pose_" + str(
+        exponential_decay_value) + ".npy"
+    matches_3_prosac_5_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_5_data_" + str(
+        exponential_decay_value) + ".npy"
+
+    # PROSAC sorting values for matches indices
+    lowes_distance_inverse_ratio_index = 6
+    points3D_score_index = 7
+    reliability_score_ratio_index = 8
+    custom_score_index = 9
+    higher_neighbour_score_index = 10
+
+    # 29/06/2020 - My addition
+    live_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/live_model/images.bin"
+    base_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/images.bin"
+    gt_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/ground_truth_model/images.bin"
+    live_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/live_model/points3D.bin"
+
+    live_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/live_model/database.db"
+    base_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/database.db"
+    qt_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/ground_truth_model/database.db"
 
     # Parameters.no_images_per_session: Number of images per session. This is hardcoded for now, but since images are sorted by name, i.e by time in the database,
     # then you can use these numbers to get images from each session. The numbers need to be sorted by session though. First is number of base model images.
     no_images_per_session = [210, 85, 87, 79, 86, 83, 85, 90, 86, 84, 79, 95]
-    intrinsics_landscape = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_landscape.txt")
     ratio_test_val = 0.9
 
-    # 10/07/2020 previous data - remove.
-    
-    # SLAM threads 
-    kLocalMappingOnSeparateThread=True           # True: move local mapping on a separate thread, False: tracking and then local mapping in a single thread 
-    kTrackingWaitForLocalMappingToGetIdle=False  
-    kTrackingWaitForLocalMappingSleepTime=0.5 # 0.5  # -1 for no sleep # [s]
-    kLocalMappingParallelKpsMatching=True
-    kLocalMappingParallelKpsMatchingNumWorkers=4
-
-    # Number of desired keypoints per frame 
-    kNumFeatures=2000
-
-    # Point triangulation 
-    kCosMaxParallaxInitializer=0.99998  # 0.99998   # max cos angle for triangulation (min parallax angle) in the Initializer
-    kCosMaxParallax=0.9999 # 0.9998                 # max cos angle for triangulation (min parallax angle)   
-
-    # Point visibility 
-    kViewingCosLimitForPoint=0.5    # must be viewing cos < kViewingCosLimitForPoint (viewing angle must be less than 60 deg)
-    kScaleConsistencyFactor=1.5
-    kMaxDistanceToleranceFactor=1.2 
-    kMinDistanceToleranceFactor=0.8   
-
-    # Feature management
-    kSigmaLevel0 = 1.0                        # default value; can be changed by selected feature        
-    kFeatureMatchRatioTest = 0.7              
-    #kFeatureMatchRatioTestInitializer        # ratio test used by Initializer 
-    #
-    kKdtNmsRadius = 3 # pixels  #3        # radius for kd-tree based Non-Maxima Suppression
-    #
-    kCheckFeaturesOrientation = True 
-
-    # Initializer 
-    kInitializerDesiredMedianDepth = 20    # when initializing, the initial median depth is computed and forced to this value (for better visualization is > 1) 
-    kMinRatioBaselineDepth = 0.01 
-    #kMinTraslation = 0.01*kInitializerDesiredMedianDepth  # not used at the present time     
-    kInitializerNumMinFeatures = 100
-    kInitializerNumMinTriangulatedPoints = 100
-    kFeatureMatchRatioTestInitializer = 0.8   # ratio test used by Initializer        
-
-    # Tracking 
-    kUseMotionModel = True                            # use or not the motion model for computing a first guess pose (that will be optimized by pose optimization)  
-    kUseSearchFrameByProjection = True                # match frames by using frame map points projection and epipolar lines; here, the current available interframe pose estimate is used for computing the fundamental mat F
-    kMinNumMatchedFeaturesSearchFrameByProjection=20  # if the number of tracked features is below this, then the search fails 
-    kUseEssentialMatrixFitting = False                # fit an essential matrix; orientation and keypoint match inliers are estimated by fitting an essential mat (5 points algorithm), 
-                                                      # WARNING: essential matrix fitting comes with some limitations (please, read the comments of the method slam.estimate_pose_ess_mat())
-    kMaxNumOfKeyframesInLocalMap = 80
-    kNumBestCovisibilityKeyFrames = 10
-
-    # Keyframe generation 
-    kNumMinPointsForNewKf = 15  # minimum number of matched map points for spawning a new KeyFrame 
-    kThNewKfRefRatio = 0.9      # for determining if a new KF must be spawned  
-
-    # Keyframe culling
-    kKeyframeCullingRedundantObsRatio = 0.9     
-
-    # Search matches by projection 
-    kMaxReprojectionDistanceFrame=7   #7   # [pixels]    o:7
-    kMaxReprojectionDistanceMap=3   #2.5 # [pixels]    o:1,(rgbd)3,(reloc)5 => mainly 2.5*th where th acts as a multiplicative factor 
-    kMaxReprojectionDistanceFuse=3  #3   # [pixels]    o:3
-    #
-    kMatchRatioTestMap=0.8
-    kMatchRatioTestEpipolarLine=0.8      # used just for test function find_matches_along_line()
-    #
-    # Reference max descriptor distance (used for initial checks and then updated and adapted)                   
-    kMaxDescriptorDistance=0 # it is updated by feature_manager.py at runtime 
-
-    # Search matches for triangulation by using epipolar lines 
-    kMinDistanceFromEpipole=10                  # [pixels] Used with search by epipolar lines 
-    #
-    kMaxDescriptorDistanceSearchEpipolar=0 # it is updated by feature_manager.py at runtime 
-
-    # Local Mapping 
-    kLocalMappingNumNeighborKeyFrames=20                   #  [# frames]   for generating new points and fusing them              
-
-    # Covisibility graph 
-    kMinNumOfCovisiblePointsForCreatingConnection=15 
-
-    # Bundle Adjustment (BA)
-    kLocalBAWindow=20                 #  [# frames]   
-    kUseLargeWindowBA=False           # True: perform BA over a large window; False: do not perform large window BA       
-    kEveryNumFramesLargeWindowBA=10   # num of frames between two large window BA  
-    kLargeBAWindow=20                 #  [# frames] 
-
-    # Pointcloud 
-    kColorPatchDelta=1  # center +- delta
-
-    # other parameters 
-    kChi2Mono = 5.991 # chi-square 2 DOFs, used for reprojection error  (Hartley Zisserman pg 119)
-
+    # FLANN parameters for float descriptors
+    FLANN_INDEX_KDTREE = 1
+    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=4)
+    search_params = dict(checks=32)  # or pass empty dictionary
