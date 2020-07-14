@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 from sklearn.cluster import KMeans
 
-MAX_RANSAC_ITERS = 1500
+MAX_RANSAC_ITERS = 3000
 ERROR_THRESHOLD = 8.0
 # intrinsics matrix
 K = np.loadtxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt")
@@ -15,6 +15,7 @@ def model_fit(img_points, obj_points):
     # calculate pose
     # this is required for SOLVEPNP_P3P
     img_points = np.ascontiguousarray(img_points[:, :2]).reshape((img_points.shape[0], 1, 2))
+    # https://answers.opencv.org/question/64315/solvepnp-object-to-camera-pose/
     retval, rvec, tvec = cv2.solvePnP(obj_points.astype(np.float32), img_points.astype(np.float32), K, distCoeffs, flags=cv2.SOLVEPNP_P3P)
     rotm = cv2.Rodrigues(rvec)[0]
     Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
@@ -59,14 +60,6 @@ def ransac(matches_for_image):
         inlers_no = len(inliers) + s #total number of inliers
         outliers_no = len(matches_for_image) - inlers_no
 
-        # if(inlers_no <= 4):
-        #     print("\n less than 4 inliers")
-        #     show_projected_points("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/current_query_image/frame_1585500886739.jpg",
-        #                           img_points,
-        #                           (0, 0, 255),
-        #                           "test.jpg")
-        #     breakpoint()
-
         # store best model so far
         if(inlers_no > max):
             best_model['Rt'] = Rt
@@ -80,6 +73,9 @@ def ransac(matches_for_image):
 
         if (k >= MAX_RANSAC_ITERS):
             return inlers_no, outliers_no, k, best_model, inliers
+
+    #re-fit here (break before)
+
     return inlers_no, outliers_no, k, best_model, inliers
 
 def ransac_dist(matches_for_image):
@@ -140,7 +136,7 @@ def ransac_dist(matches_for_image):
 # So, you can compare models either by number of inliers (higher is
 # better) or by sum of errors (lower is better).
 
-def prosac(sorted_matches, image=None):
+def prosac(sorted_matches):
     CORRESPONDENCES = sorted_matches.shape[0]
     isInlier = np.zeros([1,CORRESPONDENCES])
     SAMPLE_SIZE = 4
