@@ -36,12 +36,25 @@ var arCoreViewMatrix;
 var arCoreProjMatrix;
 var cameraPoseStringMatrix;
 var totalPointsSum = 0;
-var pointsSize = 0.5;
+var pointsSize = 0.1;
 
 window.onload = function() {
 
-    $(".load_kmeans_points").click(function(){
-        renderModelPath("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/points3D.txt", red);
+    var handle = $( "#custom-handle" );
+    $( "#slider" ).slider({
+        min: 1,
+        max: 100,
+        create: function() {
+            handle.text( $( this ).slider( "value" ) + "%");
+        },
+        slide: function( event, ui ) {
+            percentage = ui.value
+            handle.text( ui.value + "%");
+            renderModelPath("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/points3D_sorted_descending.txt", red, percentage);
+        }});
+
+    $(".load_sorted_points").click(function(){
+        renderModelPath("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/points3D_sorted_descending.txt", red);
     });
 
     $(".one").click(function(){
@@ -307,16 +320,16 @@ function clearScene(){
     }
 }
 
-function renderModelPath(file_path, colour) {
+function renderModelPath(file_path, colour, percentage=100) {
+    clearScene()
     var data = fs.readFileSync(file_path);
     data = data.toString().split('\n');
 
-    console.log(data.length-1);
-    totalPointsSum += data.length-1;
-
     var geometry = new THREE.Geometry();
 
-    for (var i = 0; i < data.length; i++) {
+    len = Math.round(data.length * percentage / 100) - 1 //remove that last new line
+
+    for (var i = 0; i <= len; i++) {
         var line = data[i].split(' ');
         var x = parseFloat(line[0]);
         var y = parseFloat(line[1]);
