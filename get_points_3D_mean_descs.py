@@ -48,16 +48,11 @@ print("-- Averaging features_no " + features_no + " --")
 # method get_desc_avg() will take as main arguments image names and a model that has base + session images localised (live)
 # for example if you pass base_model_images_names and the live model it will only average descs from base images.
 
-db_live_path = Parameters.live_db_path
-db_live = COLMAPDatabase.connect(db_live_path)
+db_live = COLMAPDatabase.connect(Parameters.live_db_path)
+db_base = COLMAPDatabase.connect(Parameters.base_db_path)
 
-db_base_path = Parameters.base_db_path
-db_base = COLMAPDatabase.connect(db_base_path)
-
-live_model_images_path = Parameters.live_model_images_path
-live_model_images = read_images_binary(live_model_images_path)
-live_model_points3D_path = Parameters.live_model_points3D_path
-live_model_points3D = read_points3d_default(live_model_points3D_path)
+live_model_images = read_images_binary(Parameters.live_model_images_path)
+live_model_points3D = read_points3d_default(Parameters.live_model_points3D_path)
 
 #  no_images_per_session[0] is base images
 no_images_per_session = Parameters.no_images_per_session
@@ -72,15 +67,13 @@ all_images_ids = get_images_ids(all_images_names, live_model_images) #there shou
 # You will notice that I am using live_model_points3D in both cases, fetching avg features for the base images and the live images.
 # This is because the live_model_points3D points' images_ids hold also ids of the live and base model images, since the live model is just the
 # base model with extra images localised in it. You can use the base model for the base images but you need to make sure that the base model is exactly the
-# same as the live model.
+# same as the live model, before you do. TODO: Maybe change to base to get it done with ?
 
-save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_base.npy"
 avgs = get_desc_avg(base_images_ids, live_model_points3D, db_base)
-np.save(save_path, avgs)
+np.save(Parameters.avg_descs_base_path, avgs)
 
-save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_live.npy"
 avgs = get_desc_avg(all_images_ids, live_model_points3D, db_live)
-np.save(save_path, avgs)
+np.save(Parameters.avg_descs_live_path, avgs)
 
 
 
