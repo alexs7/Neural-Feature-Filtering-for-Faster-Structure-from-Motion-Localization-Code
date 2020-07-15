@@ -7,7 +7,7 @@ from parameters import Parameters
 from point3D_loader import read_points3d_default, get_points3D_xyz
 import numpy as np
 from pose_evaluator import pose_evaluate
-from query_image import read_images_binary, load_images_from_text_file
+from query_image import read_images_binary, load_images_from_text_file, get_images_names_bin, get_localised_image_by_names
 from ransac_comparison import run_comparison, sort_matches
 from ransac_prosac import ransac, ransac_dist, prosac
 
@@ -18,19 +18,20 @@ db_train = COLMAPDatabase.connect(Parameters.live_db_path)
 model_images = read_images_binary(Parameters.live_model_images_path)
 
 db_gt = COLMAPDatabase.connect(Parameters.qt_db_path) #this can be used to get the query images descs and ground truth poses for later pose comparison
-query_images_names = load_images_from_text_file(Parameters.query_images_path)
+# qt_images_localised = read_images_binary(Parameters.gt_model_images_path)
+all_query_images_names = load_images_from_text_file(Parameters.query_images_path)
+localised_query_images_names = get_localised_image_by_names(all_query_images_names, Parameters.gt_model_images_path)
 
-breakpoint()
+query_images_names = localised_query_images_names[0:10]
+
 # by "live model" I mean all the frames from future sessions localised in the base model
 points3D = read_points3d_default(Parameters.live_model_points3D_path) # live model's 3d points have more images ids than base
 points3D_xyz = get_points3D_xyz(points3D)
 
 # train_descriptors_base and train_descriptors_live are self explanatory
 # train_descriptors must have the same length as the number of points3D
-train_descriptors_base = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_base.npy"
-train_descriptors_base = np.load(train_descriptors_base).astype(np.float32)
-train_descriptors_live = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/"+features_no+"/avg_descs_live.npy"
-train_descriptors_live = np.load(train_descriptors_live).astype(np.float32)
+train_descriptors_base = np.load(Parameters.avg_descs_base_path).astype(np.float32)
+train_descriptors_live = np.load(Parameters.avg_descs_live_path).astype(np.float32)
 
 # you can check if it is a distribution by calling, .sum() if it is 1, then it is.
 # This can be either heatmap_matrix_avg_points_values_0.5.npy or reliability_scores_0.5.npy
@@ -58,10 +59,7 @@ np.save(matches_2_save_path, matches_2)
 matches_3 = feature_matcher_wrapper_live(points3D_scores_2, db_gt, query_images_names, train_descriptors_live, points3D_xyz, Parameters.ratio_test_val, verbose = True)
 np.save(matches_3_save_path, matches_3)
 
-breakpoint()
-
-# # 2: RANSAC Comparison
-
+# 2: RANSAC Comparison
 # for base model matches
 matches_1 = np.load(matches_1_save_path)
 print("RANSAC")
@@ -87,7 +85,7 @@ print("PROSAC only lowe's ratio - (lowes_distance_inverse_ratio)")
 poses , data = run_comparison(prosac, matches_2, query_images_names, sort_matches_func = sort_matches, val_idx=Parameters.lowes_distance_inverse_ratio_index)
 np.save(Parameters.matches_2_prosac_1_path_poses, poses)
 np.save(Parameters.matches_2_prosac_1_path_data, data)
-print("PROSAC (only heatmap value) - (points3D_score)")
+print("PROSAC only heatmap value - (points3D_score)")
 poses , data = run_comparison(prosac, matches_2, query_images_names, sort_matches_func = sort_matches, val_idx=Parameters.points3D_score_index)
 np.save(Parameters.matches_2_prosac_2_path_poses, poses)
 np.save(Parameters.matches_2_prosac_2_path_data, data)
@@ -117,7 +115,7 @@ print("PROSAC only lowe's ratio - (lowes_distance_inverse_ratio)")
 poses , data = run_comparison(prosac, matches_3, query_images_names, sort_matches_func = sort_matches, val_idx=Parameters.lowes_distance_inverse_ratio_index)
 np.save(Parameters.matches_3_prosac_1_path_poses, poses)
 np.save(Parameters.matches_3_prosac_1_path_data, data)
-print("PROSAC (only heatmap value) - (points3D_score)")
+print("PROSAC only heatmap value - (points3D_score)")
 poses , data = run_comparison(prosac, matches_3, query_images_names, sort_matches_func = sort_matches, val_idx=Parameters.points3D_score_index)
 np.save(Parameters.matches_3_prosac_2_path_poses, poses)
 np.save(Parameters.matches_3_prosac_2_path_data, data)
