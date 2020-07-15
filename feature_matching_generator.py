@@ -10,9 +10,13 @@
 import cv2
 import numpy as np
 
+from feature_matcher import FeatureMatcherTypes, feature_matcher_factory
 from parameters import Parameters
 
 # creates 2d-3d matches data for ransac comparison
+from point3D_loader import read_points3d_default
+from query_image import read_images_binary, get_image_by_name, get_query_image_pose_from_images
+
 def get_matches_live(good_matches_data, query_image_xy, points3D_xyz,  points3D_scores):
     # same length
     # good_matches_data[0] - 2D point indices,
@@ -110,8 +114,8 @@ def feature_matcher_wrapper_live(points_scores, db_query, query_images, trainDes
         # good_matches = matcher.match(queryDescriptors, trainDescriptors)
 
         # NOTE: 03/07/2020 - using matching method from OPENCV
-        flann_matcher = cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params)
-        temp_matches = flann_matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
+        matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
+        temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
         # queryDescriptors and trainDescriptors, and lowes_distances inverse respectively)
@@ -140,6 +144,35 @@ def feature_matcher_wrapper_live(points_scores, db_query, query_images, trainDes
         # returns extra data for each match
         matches[query_image] = get_matches_live(good_matches, query_image_keypoints_data_xy, points3D_xyz, points_scores)
         matches_sum.append(len(good_matches[0]))
+
+        # import sys
+        # import numpy
+        # np.set_printoptions(precision=2)
+        # np.set_printoptions(suppress=True)
+        # numpy.set_printoptions(threshold=sys.maxsize)
+        # gt_images = read_images_binary(Parameters.gt_model_images_path)
+        # image = get_image_by_name(query_image, gt_images)
+        # camera_params = db_query.execute("SELECT params FROM cameras WHERE camera_id = " + "'" + str(3) + "'")
+        # camera_params = camera_params.fetchone()[0]
+        # camera_params = db_query.blob_to_array(camera_params, np.float64)
+        #
+        # K_old = np.loadtxt(Parameters.query_images_camera_intrinsics_old)
+        # K = np.loadtxt(Parameters.query_images_camera_intrinsics)
+        #
+        # points3D_base = read_points3d_default(Parameters.base_model_points3D_path)
+        # points3D_live = read_points3d_default(Parameters.live_model_points3D_path)
+        # points3D_gt = read_points3d_default(Parameters.gt_model_points3D_path)
+        #
+        # print()
+        # print("len(queryDescriptors) " + str(len(queryDescriptors)))
+        # print("len(temp_matches) " + str(len(temp_matches)))
+        # print("len(good_matches) " + str(len(good_matches[0])))
+        # gt_pose = get_query_image_pose_from_images(query_image, gt_images)
+        # print(gt_pose)
+        # print(image.xys[3])
+        # print(points3D_base[image.point3D_ids[3]].xyz)
+
+        # breakpoint()
 
     if(verbose):
         print()
@@ -186,11 +219,17 @@ def feature_matcher_wrapper_base(db_query, query_images, trainDescriptors, point
 
         # actual matching here!
         # NOTE: 09/06/2020 - match() has been changed to return lowes_distances in REVERSE! (https://willguimont.github.io/cs/2019/12/26/prosac-algorithm.html)
+        # define matcher
+        # matching_algo = FeatureMatcherTypes.FLANN  # or FeatureMatcherTypes.BF
+        # match_ratio_test = 0.8  # Parameters.kFeatureMatchRatioTest
+        # norm_type = cv2.NORM_L2
+        # cross_check = False
+        # matcher = feature_matcher_factory(norm_type, cross_check, match_ratio_test, matching_algo)
         # good_matches = matcher.match(queryDescriptors, trainDescriptors)
 
         # NOTE: 03/07/2020 - using matching method from OPENCV
-        flann_matcher = cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params)
-        temp_matches = flann_matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
+        matcher = cv2.BFMatcher() #cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
+        temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
         # queryDescriptors and trainDescriptors, and lowes_distances inverse respectively)
@@ -204,6 +243,7 @@ def feature_matcher_wrapper_base(db_query, query_images, trainDescriptors, point
                 lowes_distances.append(lowes_distance_inverse)
         # at this point you store 1, 2D - 3D match.
         good_matches = [idx1, idx2, lowes_distances]
+
         # queryDescriptors and query_image_keypoints_data_xy = same order
         # points3D order and trainDescriptors_* = same order
         # returns extra data for each match
