@@ -8,20 +8,20 @@ ERROR_THRESHOLD = 8.0
 # intrinsics matrix
 K = np.loadtxt(Parameters.query_images_camera_intrinsics)
 
-def model_fit(img_points, obj_points):
+def model_fit(img_points, obj_points, flag_val ):
     distCoeffs = np.zeros((5, 1))
     # calculate pose
     # this is required for SOLVEPNP_P3P
     img_points = np.ascontiguousarray(img_points[:, :2]).reshape((img_points.shape[0], 1, 2))
     # https://answers.opencv.org/question/64315/solvepnp-object-to-camera-pose/
-    retval, rvec, tvec = cv2.solvePnP(obj_points.astype(np.float32), img_points.astype(np.float32), K, distCoeffs, flags=cv2.SOLVEPNP_P3P)
+    _, rvec, tvec = cv2.solvePnP(obj_points.astype(np.float32), img_points.astype(np.float32), K, distCoeffs, flags=flag_val)
     rotm = cv2.Rodrigues(rvec)[0]
     Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
     return Rt
 
 def model_evaluate(matches_for_image, Rt, threshold):
     obj_point = matches_for_image[:, 2:5]
-    img_point_gt = matches_for_image[:, 0:2]
+    img_point_gt = matches_for_image[:, 0:2] #this is wrong
     obj_point = np.hstack((obj_point, np.ones((obj_point.shape[0],1)))) # make homogeneous
     img_point_est = K.dot(Rt.dot(obj_point.transpose())[0:3])
     img_point_est = img_point_est / img_point_est[2]  # divide by last coordinate
@@ -51,7 +51,7 @@ def ransac(matches_for_image):
         obj_points = matches_for_image[(random_matches), 2:5]
         img_points = matches_for_image[(random_matches), 0:2]
 
-        Rt = model_fit(img_points, obj_points)
+        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P)
         matches_without_random_matches = np.delete(matches_for_image, random_matches, axis=0)
         inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD)
 
@@ -60,6 +60,8 @@ def ransac(matches_for_image):
 
         # store best model so far
         if(inlers_no > max):
+            # best_model['rvec'] = rvec
+            # best_model['tvec'] = tvec
             best_model['Rt'] = Rt
             max = inlers_no
             e = outliers_no / len(matches_for_image)
@@ -67,12 +69,18 @@ def ransac(matches_for_image):
             N = int(np.floor(N))
             no_iterations = N
             if(k > N): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
-                return inlers_no, outliers_no, k, best_model, inliers
+                break #return inlers_no, outliers_no, k, best_model, inliers
 
         if (k >= MAX_RANSAC_ITERS):
-            return inlers_no, outliers_no, k, best_model, inliers
+            break #return inlers_no, outliers_no, k, best_model, inliers
 
-    #re-fit here (break before)
+    #re-fit here on last inliers set you get - 115/07/2020 - Tried it not working , giving further results than the GT pose
+    print()
+    print(k)
+    # print(best_model['Rt'])
+    # _ , _ , best_model['Rt'] = model_fit(inliers[:,0:2], inliers[:,2:5], cv2.SOLVEPNP_ITERATIVE, best_model['rvec'], best_model['tvec'], useExtrinsicGuess = True)
+    # print(best_model['Rt'])
+    # breakpoint()
 
     return inlers_no, outliers_no, k, best_model, inliers
 
@@ -97,7 +105,7 @@ def ransac_dist(matches_for_image):
         obj_points = matches_for_image[(random_matches), 2:5]
         img_points = matches_for_image[(random_matches), 0:2]
 
-        Rt = model_fit(img_points, obj_points)
+        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P)
         matches_without_random_matches = np.delete(matches_for_image, random_matches, axis=0)
         inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD)
 
@@ -113,10 +121,11 @@ def ransac_dist(matches_for_image):
             N = int(np.floor(N))
             no_iterations = N
             if(k > N ): # this is saying if the max number of iterations you should have run is N, but you already did k > N then no point continuing
-                return inlers_no, outliers_no, k, best_model, inliers
+                break
 
         if (k >= MAX_RANSAC_ITERS):
-            return inlers_no, outliers_no, k, best_model, inliers
+            break
+            
     return inlers_no, outliers_no, k, best_model, inliers
 
 # for findSupport()
@@ -211,7 +220,7 @@ def prosac(sorted_matches):
         img_points = sample[:, 0:2]
         obj_points = sample[:, 2:5]
 
-        Rt = model_fit(img_points, obj_points)
+        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P)
         matches_without_random_matches = np.delete(sorted_matches, pts_idx, axis=0)
         inliers, inliers_indices = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD)
         isInlier = np.zeros([1, CORRESPONDENCES])
@@ -306,5 +315,4 @@ def prosac(sorted_matches):
     inlier_no = I_N
     outliers_no = len(sorted_matches) - inlier_no
     iterations = t
-    # print("\n RPROSAC iterations: " + str(t))
     return inlier_no, outliers_no, iterations, best_model, inliers
