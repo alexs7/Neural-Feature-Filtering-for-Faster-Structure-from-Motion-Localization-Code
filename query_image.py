@@ -206,3 +206,21 @@ def load_images_from_text_file(path):
         images = f.readlines()
     images = [x.strip() for x in images]
     return images
+
+# This will take a list of images, check which are localised and
+# returns only those. It could be a subset of images_bin or all
+def get_localised_image_by_names(names, images_bin_path):
+    images = read_images_binary(images_bin_path)
+    localised_images = []
+    for name in names:
+        if(image_localised(name, images) != None):
+            localised_images.append(name)
+    return localised_images
+
+def get_image_by_name(name, images):
+    image = None
+    for k, v in images.items():
+        if (v.name == name):
+            image = v
+            return image
+    return image
