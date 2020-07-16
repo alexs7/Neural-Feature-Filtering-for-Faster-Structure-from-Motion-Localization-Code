@@ -23,7 +23,7 @@ all_query_images = read_images_binary(Parameters.gt_model_images_path)
 all_query_images_names = load_images_from_text_file(Parameters.query_images_path)
 localised_query_images_names = get_localised_image_by_names(all_query_images_names, Parameters.gt_model_images_path)
 
-query_images_names = localised_query_images_names[0:10]
+query_images_names = localised_query_images_names
 query_images_ground_truth_poses = get_query_images_pose_from_images(query_images_names, all_query_images)
 
 # by "live model" I mean all the frames from future sessions localised in the base model
