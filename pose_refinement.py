@@ -4,7 +4,7 @@ import bz2
 import os
 import numpy as np
 from scipy.sparse import lil_matrix
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import time
 from scipy.optimize import least_squares
 from database import COLMAPDatabase
@@ -65,11 +65,11 @@ def pose_refinement(image_pose, image_matches):
     t = image_pose[0:3,3]
     x0 = np.hstack((rot_vec, t))
     f0 = my_fun(x0, K, points_2d, points_3d)
-    plt.plot(f0)
+    # plt.plot(f0)
     A = my_bundle_adjustment_sparsity(image_matches.shape[0])
     # TODO: Review maths here
     res = least_squares(my_fun, x0, verbose=0, method='lm', args=(K, points_2d, points_3d))
-    plt.plot(res.fun)
+    # plt.plot(res.fun)
     # plt.show()
     pose_refined = res.x
     rot_m = R.from_rotvec(pose_refined[0:3]).as_dcm()
