@@ -12,7 +12,7 @@ from parameters import Parameters
 from query_image import get_all_images_names_from_db
 from scipy.spatial.transform import Rotation as R
 
-K = Parameters.intrinsics_landscape
+K = np.loadtxt(Parameters.query_images_camera_intrinsics)
 
 def my_project(K, pose, points_3d):
     rot_m = R.from_rotvec(pose[0:3]).as_dcm()
@@ -60,9 +60,9 @@ def my_bundle_adjustment_sparsity(no_matches):
 def pose_refinement(image_pose, image_matches):
     points_2d = image_matches[:,0:2]
     points_3d = image_matches[:,2:5]
-    rot = image_pose['Rt'][0:3,0:3]
+    rot = image_pose[0:3,0:3]
     rot_vec = R.from_dcm(rot).as_rotvec()
-    t = image_pose['Rt'][0:3,3]
+    t = image_pose[0:3,3]
     x0 = np.hstack((rot_vec, t))
     f0 = my_fun(x0, K, points_2d, points_3d)
     plt.plot(f0)
@@ -77,10 +77,9 @@ def pose_refinement(image_pose, image_matches):
     Rt = np.r_[np.c_[rot_m, t], np.array([0, 0, 0, 1]).reshape(1, 4)]
     return Rt
 
-def refine_poses(images_names, poses, matches):
+def refine_poses(poses, matches):
+    images_names = list(poses.keys())
     refined_poses = {}
-    poses = poses.item()
-    matches = matches.item()
     for name in images_names:
         image_pose = poses[name]
         image_matches = matches[name]

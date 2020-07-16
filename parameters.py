@@ -26,6 +26,9 @@ class Parameters(object):
     features_no = "1k"  # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
     exponential_decay_value = 0.5  # exponential_decay can be any of 0.1 to 0.9
 
+    avg_descs_base_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/1k/avg_descs_base.npy"
+    avg_descs_live_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/1k/avg_descs_live.npy"
+
     # RANSAC Comparison save locations
     matches_1_ransac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_1_ransac_1_images_pose_" + str(
         exponential_decay_value) + ".npy"
@@ -95,17 +98,21 @@ class Parameters(object):
         exponential_decay_value) + ".npy"
 
     # PROSAC sorting values for matches indices
-    lowes_distance_inverse_ratio_index = 6
-    points3D_score_index = 7
-    reliability_score_ratio_index = 8
-    custom_score_index = 9
-    higher_neighbour_score_index = 10
+    use_ransac_dist = -1
+    lowes_distance_inverse_ratio_index = 0
+    heatmap_val_index = 2
+    reliability_score_ratio_index = 3
+    custom_score_index = 4
+    higher_neighbour_score_index = 5
+    reliability_score_index = 6
 
     # 29/06/2020 - My addition
     live_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/live_model/images.bin"
     base_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/images.bin"
     gt_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/ground_truth_model/images.bin"
     live_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/live_model/points3D.bin"
+    base_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/points3D.bin"
+    gt_model_points3D_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/ground_truth_model/points3D.bin"
 
     live_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/live_model/database.db"
     base_db_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/base_model/database.db"
@@ -113,6 +120,10 @@ class Parameters(object):
 
     query_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/ground_truth_model/query_name.txt"
     query_images_camera_intrinsics = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/all_models/ground_truth_model/intrinsics_query_images_camera.txt"
+    query_images_camera_intrinsics_old = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/matrices/pixel_intrinsics_low_640_portrait.txt"
+
+    matches_base_save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/matches_base.npy"
+    matches_live_save_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/feature_matching/" + features_no + "/matches_live.npy"
 
     # Parameters.no_images_per_session: Number of images per session. This is hardcoded for now, but since images are sorted by name, i.e by time in the database,
     # then you can use these numbers to get images from each session. The numbers need to be sorted by session though. First is number of base model images.
@@ -121,5 +132,7 @@ class Parameters(object):
 
     # FLANN parameters for float descriptors
     FLANN_INDEX_KDTREE = 1
-    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=4)
+    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
     search_params = dict(checks=32)  # or pass empty dictionary
+
+    kFeatureMatchRatioTest = 0.7

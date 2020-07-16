@@ -117,6 +117,13 @@ def get_query_image_global_pose_new_model(name):
     pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
     return pose
 
+def get_query_images_pose_from_images(names, images):
+    images_name_pose = {}
+    for name in names:
+        pose = get_query_image_pose_from_images(name, images)
+        images_name_pose[name] = pose
+    return images_name_pose
+
 def get_query_image_pose_from_images(name, images):
     image = None
     for k,v in images.items():
