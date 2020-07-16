@@ -51,6 +51,9 @@ print("-- Averaging features_no " + features_no + " --")
 db_live = COLMAPDatabase.connect(Parameters.live_db_path)
 db_base = COLMAPDatabase.connect(Parameters.base_db_path)
 
+base_model_images = read_images_binary(Parameters.base_model_images_path)
+base_model_points3D = read_points3d_default(Parameters.base_model_points3D_path)
+
 live_model_images = read_images_binary(Parameters.live_model_images_path)
 live_model_points3D = read_points3d_default(Parameters.live_model_points3D_path)
 
@@ -58,10 +61,10 @@ live_model_points3D = read_points3d_default(Parameters.live_model_points3D_path)
 no_images_per_session = Parameters.no_images_per_session
 
 # 2 cases base and live images points3D descs
-base_images_names = get_images_names_from_sessions_numbers([no_images_per_session[0]], db_base, live_model_images) # need to pass array here
+base_images_names = get_images_names_from_sessions_numbers([no_images_per_session[0]], db_base, base_model_images) # need to pass array here
 all_images_names = get_images_names_from_sessions_numbers(no_images_per_session, db_live, live_model_images) #all = query + base images
 
-base_images_ids = get_images_ids(base_images_names, live_model_images) #there should not be any None' values here
+base_images_ids = get_images_ids(base_images_names, base_model_images) #there should not be any None' values here
 all_images_ids = get_images_ids(all_images_names, live_model_images) #there should not be any None' values here
 
 # You will notice that I am using live_model_points3D in both cases, fetching avg features for the base images and the live images.
@@ -69,7 +72,7 @@ all_images_ids = get_images_ids(all_images_names, live_model_images) #there shou
 # base model with extra images localised in it. You can use the base model for the base images but you need to make sure that the base model is exactly the
 # same as the live model, before you do. TODO: Maybe change to base to get it done with ?
 
-avgs = get_desc_avg(base_images_ids, live_model_points3D, db_base)
+avgs = get_desc_avg(base_images_ids, base_model_points3D, db_base)
 np.save(Parameters.avg_descs_base_path, avgs)
 
 avgs = get_desc_avg(all_images_ids, live_model_points3D, db_live)
