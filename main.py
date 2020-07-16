@@ -38,8 +38,8 @@ train_descriptors_live = np.load(Parameters.avg_descs_live_path).astype(np.float
 # you can check if it is a distribution by calling, .sum() if it is 1, then it is.
 # This can be either heatmap_matrix_avg_points_values_0.5.npy or reliability_scores_0.5.npy
 # TODO: Do I need to normalise them ?
-points3D_scores_1 = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".npy")
-points3D_scores_2 = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/reliability_scores_" + str(exponential_decay_value) + ".npy")
+points3D_scores_1 = np.load(Parameters.points3D_scores_1_path) 
+points3D_scores_2 = np.load(Parameters.points3D_scores_2_path)
 points3D_live_model_scores = [points3D_scores_1, points3D_scores_2]
 
 # 1: Feature matching

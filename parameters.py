@@ -29,73 +29,8 @@ class Parameters(object):
     avg_descs_base_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/1k/avg_descs_base.npy"
     avg_descs_live_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/1k/avg_descs_live.npy"
 
-    # RANSAC Comparison save locations
-    matches_1_ransac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_1_ransac_1_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_1_ransac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_1_ransac_1_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_1_prosac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_1_prosac_1_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_1_prosac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_1_prosac_1_data_" + str(
-        exponential_decay_value) + ".npy"
-
-    matches_2_ransac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_ransac_1_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_ransac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_ransac_1_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_ransac_2_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_ransac_2_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_ransac_2_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_ransac_2_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_prosac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_1_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_prosac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_1_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_prosac_2_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_2_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_prosac_2_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_2_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_prosac_3_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_3_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_prosac_3_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_3_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_prosac_4_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_4_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_prosac_4_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_4_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_prosac_5_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_5_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_2_prosac_5_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_2_prosac_5_data_" + str(
-        exponential_decay_value) + ".npy"
-
-    matches_3_ransac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_ransac_1_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_ransac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_ransac_1_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_ransac_2_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_ransac_2_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_ransac_2_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_ransac_2_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_prosac_1_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_1_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_prosac_1_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_1_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_prosac_2_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_2_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_prosac_2_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_2_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_prosac_3_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_3_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_prosac_3_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_3_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_prosac_4_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_4_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_prosac_4_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_4_data_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_prosac_5_path_poses = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_5_images_pose_" + str(
-        exponential_decay_value) + ".npy"
-    matches_3_prosac_5_path_data = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/" + features_no + "/matches_3_prosac_5_data_" + str(
-        exponential_decay_value) + ".npy"
+    points3D_scores_1_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".npy"
+    points3D_scores_2_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/reliability_scores_" + str(exponential_decay_value) + ".npy"
 
     # PROSAC sorting values for matches indices
     use_ransac_dist = -1
