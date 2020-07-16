@@ -31,6 +31,7 @@ class Parameters(object):
 
     points3D_scores_1_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".npy"
     points3D_scores_2_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/" + features_no + "/reliability_scores_" + str(exponential_decay_value) + ".npy"
+    binary_visibility_matrix_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/1k/binary_visibility_matrix.npy"
 
     # PROSAC sorting values for matches indices
     use_ransac_dist = -1

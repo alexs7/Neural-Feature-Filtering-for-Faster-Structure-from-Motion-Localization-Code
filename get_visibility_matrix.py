@@ -112,10 +112,11 @@ def create_vm(features_no, exponential_decay_value):
     # reshaping them first
     reliability_scores = reliability_scores.reshape([1, reliability_scores.shape[0]])
     heatmap_matrix_summed_points_values = heatmap_matrix_summed_points_values.reshape([1, heatmap_matrix_summed_points_values.shape[0]])
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/reliability_scores_" + str(exponential_decay_value) + ".npy", reliability_scores)
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/"+features_no+"/heatmap_matrix_avg_points_values_" + str(exponential_decay_value) + ".npy", heatmap_matrix_summed_points_values)
+
+    np.save(Parameters.points3D_scores_2_path, reliability_scores)
+    np.save(Parameters.points3D_scores_1_path, heatmap_matrix_summed_points_values)
     # Save binary_visibility_matrix
-    np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/1k/binary_visibility_matrix.npy", binary_visibility_matrix)
+    np.save(Parameters.binary_visibility_matrix_path, binary_visibility_matrix)
 
 # NOTE: The folders are created manually under, /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices
 # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
