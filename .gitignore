@@ -1,3 +1,5 @@
+usac_code/
+*.mat
 .DS_Store
 __pycache__
 *.avi
