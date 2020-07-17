@@ -3,7 +3,7 @@ import cv2
 
 from parameters import Parameters
 
-PNP_FLAG = cv2.SOLVEPNP_EPNP
+PNP_FLAG = cv2.SOLVEPNP_P3P
 MAX_RANSAC_ITERS = 5000
 ERROR_THRESHOLD = 8.0
 # intrinsics matrix
