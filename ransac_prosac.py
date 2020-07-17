@@ -4,7 +4,7 @@ import cv2
 from parameters import Parameters
 
 PNP_FLAG = cv2.SOLVEPNP_P3P
-MAX_RANSAC_ITERS = 5000
+MAX_RANSAC_ITERS = 1000
 ERROR_THRESHOLD = 8.0
 # intrinsics matrix
 K = np.loadtxt(Parameters.query_images_camera_intrinsics) #NOTE: use the one from the camera.bin files not the one from database.
