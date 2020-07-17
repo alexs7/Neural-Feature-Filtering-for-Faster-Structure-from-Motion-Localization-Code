@@ -110,6 +110,6 @@ for prosac_sort_val in prosac_value_indices:
     trans_errors, rot_errors = pose_evaluate(poses_refined, query_images_ground_truth_poses)
     results["procac_live_"+str(prosac_sort_val)] = [poses, data, poses_refined, trans_errors, rot_errors]
 
-np.save("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/RANSAC_results/1k/results.npy", results)
+np.save(Parameters.save_results_path, results)
 
 print("Done!")

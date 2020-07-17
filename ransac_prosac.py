@@ -58,6 +58,7 @@ def ransac(matches_for_image):
         matches_without_random_matches = np.delete(matches_for_image, random_matches, axis=0)
         inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD)
 
+        # TODO: remove this "+s" ?
         inliers_no = len(inliers) + s #total number of inliers
         outliers_no = len(matches_for_image) - inliers_no
 
