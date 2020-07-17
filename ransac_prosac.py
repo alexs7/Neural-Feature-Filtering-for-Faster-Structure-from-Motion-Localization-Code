@@ -17,6 +17,12 @@ def model_fit(img_points, obj_points, flag_val ):
     # https://answers.opencv.org/question/64315/solvepnp-object-to-camera-pose/
     # Note: there might be a bug with solvePnP on OSX - could try doing this over HTTP on Linux ?
     _, rvec, tvec = cv2.solvePnP(obj_points.astype(np.float32), img_points.astype(np.float32), K, distCoeffs, flags=flag_val)
+
+    if(rvec is None):
+        rvec = np.zeros([3,1])
+    if(tvec is None):
+        tvec = np.zeros([3,1])
+
     rotm = cv2.Rodrigues(rvec)[0]
     Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
     return Rt
