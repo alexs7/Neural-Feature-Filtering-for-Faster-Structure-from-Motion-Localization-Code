@@ -5,7 +5,7 @@
 import numpy as np
 from query_image import read_images_binary, get_query_image_global_pose_new_model, load_images_from_text_file
 
-def pose_evaluate(query_poses, gt_poses):
+def pose_evaluate(query_poses, gt_poses, verbose = False):
     trans_errors = []
     rotation_errors = []
     for image_name, _ in gt_poses.items():
@@ -29,4 +29,7 @@ def pose_evaluate(query_poses, gt_poses):
 
     trans_errors = np.array(trans_errors)
     rotation_errors = np.array(rotation_errors)
+    if(verbose):
+        print("Mean errors (trans, rots):")
+        print("[ " + str(trans_errors.mean()) + " , " + str(rotation_errors.mean()) + " ]" )
     return trans_errors, rotation_errors
