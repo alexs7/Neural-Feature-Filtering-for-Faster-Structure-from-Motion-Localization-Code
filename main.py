@@ -55,10 +55,8 @@ np.save(Parameters.matches_base_save_path, matches_base)
 matches_live = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz, Parameters.ratio_test_val, True, points3D_live_model_scores)
 np.save(Parameters.matches_live_save_path, matches_live)
 
-matches_base = np.load(Parameters.matches_base_save_path)
-matches_base = matches_base.item()
-matches_live = np.load(Parameters.matches_live_save_path)
-matches_live = matches_live.item()
+matches_base = np.load(Parameters.matches_base_save_path, allow_pickle=True).item()
+matches_live = np.load(Parameters.matches_live_save_path, allow_pickle=True).item()
 
 # Print options
 np.set_printoptions(precision=2)
