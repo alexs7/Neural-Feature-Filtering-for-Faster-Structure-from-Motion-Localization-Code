@@ -3,15 +3,34 @@ import cv2
 from cvxpnpl import pnp
 from parameters import Parameters
 
-MAX_RANSAC_ITERS = 1000
+MAX_RANSAC_ITERS = 2000
 ERROR_THRESHOLD = 8.0
 # intrinsics matrix
 K = np.loadtxt(Parameters.query_images_camera_intrinsics) #NOTE: use the one from the camera.bin files not the one from database.
 
-def model_fit(img_points, obj_points):
+def model_refit(img_points, obj_points):
     poses = pnp(pts_2d=img_points, pts_3d=obj_points, K=K)
-    R,t = poses[0]
+    R, t = poses[0]
     Rt = np.r_[(np.c_[R, t]), [np.array([0, 0, 0, 1])]]
+    return Rt
+
+def model_fit(img_points, obj_points, flag_val):
+    distCoeffs = np.zeros((5, 1))
+    # calculate pose
+    # this is required for SOLVEPNP_P3P - works with others too
+    img_points = np.ascontiguousarray(img_points[:, :2]).reshape((img_points.shape[0], 1, 2))
+    # https://answers.opencv.org/question/64315/solvepnp-object-to-camera-pose/
+    # Note: there might be a bug with solvePnP on OSX - could try doing this over HTTP on Linux ?
+    _, rvec, tvec = cv2.solvePnP(obj_points.astype(np.float32), img_points.astype(np.float32), K, distCoeffs, flags=flag_val)
+
+    # some safeguards
+    if(rvec is None):
+        rvec = np.zeros([3,1])
+    if(tvec is None):
+        tvec = np.zeros([3,1])
+
+    rotm = cv2.Rodrigues(rvec)[0]
+    Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
     return Rt
 
 def model_evaluate(matches_for_image, Rt, threshold):
@@ -47,7 +66,7 @@ def ransac(matches_for_image):
         img_points = matches_for_image[(random_matches), 0:2]
         obj_points = matches_for_image[(random_matches), 2:5]
 
-        Rt = model_fit(img_points, obj_points)
+        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P)
         matches_without_random_matches = np.delete(matches_for_image, random_matches, axis=0)
         inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD)
 
@@ -74,7 +93,7 @@ def ransac(matches_for_image):
             break #return inliers_no, outliers_no, k, best_model, inliers
 
     #re-fit here on last inliers set you get..
-    best_model['Rt'] = model_fit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5])
+    best_model['Rt'] = model_fit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5], cv2.SOLVEPNP_EPNP)
 
     return best_model
 
@@ -99,7 +118,7 @@ def ransac_dist(matches_for_image):
         img_points = matches_for_image[(random_matches), 0:2]
         obj_points = matches_for_image[(random_matches), 2:5]
 
-        Rt = model_fit(img_points, obj_points)
+        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P)
         matches_without_random_matches = np.delete(matches_for_image, random_matches, axis=0)
         inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD)
 
@@ -125,7 +144,7 @@ def ransac_dist(matches_for_image):
             break
 
     #re-fit here on last inliers set you get..
-    best_model['Rt'] = model_fit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5])
+    best_model['Rt'] = model_fit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5], cv2.SOLVEPNP_EPNP)
 
     return best_model
 
@@ -221,7 +240,7 @@ def prosac(sorted_matches):
         img_points = sample[:, 0:2]
         obj_points = sample[:, 2:5]
 
-        Rt = model_fit(img_points, obj_points)
+        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P)
         matches_without_random_matches = np.delete(sorted_matches, pts_idx, axis=0)
         inliers, inliers_indices = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD)
         isInlier = np.zeros([1, CORRESPONDENCES])
@@ -268,6 +287,6 @@ def prosac(sorted_matches):
     # iterations = t
 
     #re-fit here on last inliers set you get..
-    best_model['Rt'] = model_fit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5])
+    best_model['Rt'] = model_fit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5], cv2.SOLVEPNP_EPNP)
 
     return best_model
