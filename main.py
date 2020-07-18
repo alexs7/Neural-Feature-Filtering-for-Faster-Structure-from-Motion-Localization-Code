@@ -7,7 +7,6 @@ from parameters import Parameters
 from point3D_loader import read_points3d_default, get_points3D_xyz
 import numpy as np
 from pose_evaluator import pose_evaluate
-from pose_refinement import refine_poses
 from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images
 from ransac_comparison import run_comparison, sort_matches
 from ransac_prosac import ransac, ransac_dist, prosac
@@ -69,17 +68,13 @@ print()
 print("Base Model")
 print("RANSAC")
 poses , data = run_comparison(ransac, matches_base, query_images_names, verbose = True)
-poses_refined = refine_poses(poses, matches_base)
 trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, verbose = True)
-trans_errors, rot_errors = pose_evaluate(poses_refined, query_images_ground_truth_poses, verbose = True)
-results["ransac_base"] = [poses, data, poses_refined, trans_errors, rot_errors]
+results["ransac_base"] = [poses, data, trans_errors, rot_errors]
 
 print("PROSAC only lowe's ratio - (lowes_distance_inverse_ratio)")
 poses , data = run_comparison(prosac, matches_base, query_images_names, verbose = True, val_idx= Parameters.lowes_distance_inverse_ratio_index)
-poses_refined = refine_poses(poses, matches_base)
 trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, verbose = True)
-trans_errors, rot_errors = pose_evaluate(poses_refined, query_images_ground_truth_poses, verbose = True)
-results["prosac_base"] = [poses, data, poses_refined, trans_errors, rot_errors]
+results["prosac_base"] = [poses, data, trans_errors, rot_errors]
 
 # -----
 
@@ -87,18 +82,13 @@ print()
 print("Live Model")
 print("RANSAC") #No need to run RANSAC multiple times here as it is not using any of the points3D scores
 poses , data = run_comparison(ransac, matches_live, query_images_names, verbose = True)
-poses_refined = refine_poses(poses, matches_live)
 trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, verbose = True)
-trans_errors, rot_errors = pose_evaluate(poses_refined, query_images_ground_truth_poses, verbose = True)
-results["ransac_live"] = [poses, data, poses_refined, trans_errors, rot_errors]
+results["ransac_live"] = [poses, data, trans_errors, rot_errors]
 
 print("RANSAC + dist")
 poses, data = run_comparison(ransac_dist, matches_live, query_images_names, verbose = True, val_idx= Parameters.use_ransac_dist)
-poses_refined = refine_poses(poses, matches_live)
 trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, verbose = True)
-trans_errors, rot_errors = pose_evaluate(poses_refined, query_images_ground_truth_poses, verbose = True)
-results[Parameters.use_ransac_dist] = [poses, data, poses_refined, trans_errors, rot_errors]
-results["ransac_dist_live"] = [poses, data, poses_refined, trans_errors, rot_errors]
+results["ransac_dist_live"] = [poses, data, trans_errors, rot_errors]
 
 prosac_value_indices = [ Parameters.lowes_distance_inverse_ratio_index,
                          Parameters.heatmap_val_index,
@@ -110,10 +100,8 @@ prosac_value_indices = [ Parameters.lowes_distance_inverse_ratio_index,
 print("PROSAC versions")
 for prosac_sort_val in prosac_value_indices:
     poses, data = run_comparison(prosac, matches_live, query_images_names, verbose = True, val_idx= prosac_sort_val)
-    poses_refined = refine_poses(poses, matches_live)
     trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, verbose=True)
-    trans_errors, rot_errors = pose_evaluate(poses_refined, query_images_ground_truth_poses, verbose = True)
-    results["procac_live_"+str(prosac_sort_val)] = [poses, data, poses_refined, trans_errors, rot_errors]
+    results["procac_live_"+str(prosac_sort_val)] = [poses, data, trans_errors, rot_errors]
 
 np.save(Parameters.save_results_path, results)
 
