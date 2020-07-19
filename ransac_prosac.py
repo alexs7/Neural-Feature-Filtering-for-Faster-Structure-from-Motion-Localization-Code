@@ -95,9 +95,16 @@ def ransac(matches_for_image):
             break #return inliers_no, outliers_no, k, best_model, inliers
 
     #re-fit here on last inliers set you get..
-    # This will only run if the inlers of the best model are over or equal to 4
-    if(best_model['inliers_for_refit'].shape[0] >= 4):
-        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
+    # This will only run if the inlers of the best model are over or equal to 4 and if best model is not empty
+    if(not bool(best_model)):
+        best_model['Rt'] = np.eye(4)
+        best_model['inliers_no'] = inliers_no
+        best_model['inliers'] = np.vstack((matches_for_image[(random_matches), :], inliers))  # add the previous random 4 matches too!
+        best_model['outliers_no'] = outliers_no
+        best_model['iterations'] = k
+    else:
+        if(best_model['inliers_for_refit'].shape[0] >= 4):
+            best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
 
     return best_model
 
@@ -149,9 +156,16 @@ def ransac_dist(matches_for_image):
             break
 
     #re-fit here on last inliers set you get..
-    # This will only run if the inlers of the best model are over or equal to 4
-    if(best_model['inliers_for_refit'].shape[0] >= 4):
-        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
+    # This will only run if the inlers of the best model are over or equal to 4 and if best model is not empty
+    if(not bool(best_model)):
+        best_model['Rt'] = np.eye(4)
+        best_model['inliers_no'] = inliers_no
+        best_model['inliers'] = np.vstack((matches_for_image[(random_matches), :], inliers))  # add the previous random 4 matches too!
+        best_model['outliers_no'] = outliers_no
+        best_model['iterations'] = k
+    else:
+        if(best_model['inliers_for_refit'].shape[0] >= 4):
+            best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
 
     return best_model
 
@@ -295,8 +309,15 @@ def prosac(sorted_matches):
     # iterations = t
 
     #re-fit here on last inliers set you get..
-    # This will only run if the inlers of the best model are over or equal to 4
-    if(best_model['inliers_for_refit'].shape[0] >= 4):
-        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
+    # This will only run if the inlers of the best model are over or equal to 4 and if best model is not empty
+    if(not bool(best_model)):
+        best_model['Rt'] = np.eye(4)
+        best_model['inliers_no'] = I_N
+        best_model['inliers'] = np.vstack((sample, inliers)) #add the previous random 4 matches too!
+        best_model['outliers_no'] = CORRESPONDENCES - I_N
+        best_model['iterations'] = t
+    else:
+        if(best_model['inliers_for_refit'].shape[0] >= 4):
+            best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
 
     return best_model
