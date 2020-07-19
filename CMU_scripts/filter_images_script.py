@@ -1,16 +1,29 @@
 # This file is to be used to separate files in folders (per weather condition) from the query folder. Only to use with CMU-Seasons dataset
 # The ones in database folder are used for reconstruction
 #  Note: rm session_1/* session_2/* session_3/* session_4/* session_5/* session_6/* session_7/* session_8/* session_9/* -> removed all seperated files if needed
+# the folder has to look like this:
+# /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/official_datasets/CMU-Seasons-Extended/slice2/ (whatever number)
+# .
+# ├── database
+# │   ├── all_images
+# │   └── undistorted
+# ├── query
+# │   ├── all_images
+# │   └── undistorted
+# └── reconstruction
+
 import glob
 import os
-import subprocess
 import sys
 from datetime import datetime
+
+import cv2
+import numpy as np
 
 Sunny_No_Foliage = [] # 4 Apr 2011
 Sunny_Foliage = [] # 1 Sep 2010, 15 Sep 2010, 19 Oct 2010
 Cloudy_Foliage = [] # 1 Oct 2010
-Overcast_Mixed_Foliage = [] # 28 Oct 2010
+Overcast_Mixed_Foliage = [] # 28 Oct 2010 (or 26?!)
 Low_Sun_Mixed_Foliage = [] # 3 Nov 2010, 12 Nov 2010
 Cloudy_Mixed_Foliage = [] # 22 Nov 2010
 Low_Sun_No_Foliage_Snow = [] # 21 Dec 2010
@@ -18,53 +31,79 @@ Low_Sun_Foliage = [] # 4 Mar 2011
 Overcast_Foliage = [] # 28 Jul 2011
 
 i = 0
-# example: "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/official_datasets/CMU-Seasons-Extended/slice2/query/"
+# example: "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/official_datasets/CMU-Seasons-Extended/slice2/"
 base_dir = sys.argv[1]
-os.chdir(base_dir)
-dst_folder = "../filtered/" #has to be added manually, along with all the other folders in it
+query_images_folder = "query/all_images/"
+query_undistorted_images_folder = "query/undistorted/"
+database_images_folder = "database/all_images/"
+database_undistorted_images_folder = "database/undistorted/"
+
+def undistort(img):
+    distortion_params = np.array([-0.399431, 0.188924, 0.000153, 0.000571])
+    fx = 868.993378
+    fy = 866.063001
+    cx = 525.942323
+    cy = 420.042529
+    K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
+    undst = cv2.undistort(img, K, distortion_params, None, K)
+    return undst
+
+os.chdir(base_dir+query_images_folder)
 for file in glob.glob("*.jpg"):
     if(file.split('_')[2] == 'c0'):
         i += 1
+        timestamp = int(file.split('_')[3].split('us')[0])
+        dt = datetime.fromtimestamp(timestamp/1000000)
+        day = dt.day
+        month = dt.month
 
-        # for database images
-        subprocess.call(["cp", base_dir + file, base_dir + dst_folder])
+        if(day == 4 and month == 4):
+            img = cv2.imread(base_dir+query_images_folder+file)
+            undistorted_img = undistort(img)
+            cv2.imwrite(base_dir + query_undistorted_images_folder + "session_1/" + file, undistorted_img) # session 1 will have no images (they are the dtabase images)
+            Sunny_No_Foliage.append(file)
+        if((day == 1 and month == 9) or (day == 15 and month == 9) or (day == 19 and month == 10)):
+            img = cv2.imread(base_dir + query_images_folder + file)
+            undistorted_img = undistort(img)
+            cv2.imwrite(base_dir + query_undistorted_images_folder + "session_2/" + file, undistorted_img)
+            Sunny_Foliage.append(file)
+        if(day == 1 and month == 10):
+            img = cv2.imread(base_dir + query_images_folder + file)
+            undistorted_img = undistort(img)
+            cv2.imwrite(base_dir + query_undistorted_images_folder + "session_3/" + file, undistorted_img)
+            Cloudy_Foliage.append(file)
+        if(day == 26 and month == 10): #this should be 28/10 but I think they made a mistake it is 26/10
+            img = cv2.imread(base_dir + query_images_folder + file)
+            undistorted_img = undistort(img)
+            cv2.imwrite(base_dir + query_undistorted_images_folder + "session_4/" + file, undistorted_img)
+            Overcast_Mixed_Foliage.append(file)
+        if((day == 3 and month == 11) or (day == 12 and month == 11)):
+            img = cv2.imread(base_dir + query_images_folder + file)
+            undistorted_img = undistort(img)
+            cv2.imwrite(base_dir + query_undistorted_images_folder + "session_5/" + file, undistorted_img)
+            Low_Sun_Mixed_Foliage.append(file)
+        if(day == 22 and month == 11):
+            img = cv2.imread(base_dir + query_images_folder + file)
+            undistorted_img = undistort(img)
+            cv2.imwrite(base_dir + query_undistorted_images_folder + "session_6/" + file, undistorted_img)
+            Cloudy_Mixed_Foliage.append(file)
+        if(day == 21 and month == 12):
+            img = cv2.imread(base_dir + query_images_folder + file)
+            undistorted_img = undistort(img)
+            cv2.imwrite(base_dir + query_undistorted_images_folder + "session_7/" + file, undistorted_img)
+            Low_Sun_No_Foliage_Snow.append(file)
+        if(day == 4 and month == 3):
+            img = cv2.imread(base_dir + query_images_folder + file)
+            undistorted_img = undistort(img)
+            cv2.imwrite(base_dir + query_undistorted_images_folder + "session_8/" + file, undistorted_img)
+            Low_Sun_Foliage.append(file)
+        if (day == 28 and month == 7):
+            img = cv2.imread(base_dir + query_images_folder + file)
+            undistorted_img = undistort(img)
+            cv2.imwrite(base_dir + query_undistorted_images_folder + "session_9/" + file, undistorted_img)
+            Overcast_Foliage.append(file)
 
-        # for query images
-        # if(1):
-        #     timestamp = int(file.split('_')[3].split('us')[0])
-        #     dt = datetime.fromtimestamp(timestamp/1000000)
-        #     day = dt.day
-        #     month = dt.month
-        #
-        #     if(day == 4 and month == 4):
-        #         Sunny_No_Foliage.append(file)
-        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_1/"]) #this should be empty..
-        #     if((day == 1 and month == 9) or (day == 15 and month == 9) or (day == 19 and month == 10)):
-        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_2/"])
-        #         Sunny_Foliage.append(file)
-        #     if(day == 1 and month == 10):
-        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_3/"])
-        #         Cloudy_Foliage.append(file)
-        #     if(day == 26 and month == 10): #this should be 28/10 but I think they made a mistake it is 26/10
-        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_4/"])
-        #         Overcast_Mixed_Foliage.append(file)
-        #     if((day == 3 and month == 11) or (day == 12 and month == 11)):
-        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_5/"])
-        #         Low_Sun_Mixed_Foliage.append(file)
-        #     if(day == 22 and month == 11):
-        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_6/"])
-        #         Cloudy_Mixed_Foliage.append(file)
-        #     if(day == 21 and month == 12):
-        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_7/"])
-        #         Low_Sun_No_Foliage_Snow.append(file)
-        #     if(day == 4 and month == 3):
-        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_8/"])
-        #         Low_Sun_Foliage.append(file)
-        #     if (day == 28 and month == 7):
-        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_9/"])
-        #         Overcast_Foliage.append(file)
-
-print("Sizes:")
+print("Query Sizes:")
 print("Total: " + str(i))
 print("Sunny_No_Foliage: " +str(len(Sunny_No_Foliage)))
 print("Sunny_Foliage: " +str(len(Sunny_Foliage)))
@@ -75,3 +114,15 @@ print("Cloudy_Mixed_Foliage: " +str(len(Cloudy_Mixed_Foliage)))
 print("Low_Sun_No_Foliage_Snow: " +str(len(Low_Sun_No_Foliage_Snow)))
 print("Low_Sun_Foliage: " +str(len(Low_Sun_Foliage)))
 print("Overcast_Foliage: " +str(len(Overcast_Foliage)))
+
+i=0
+os.chdir(base_dir+database_images_folder)
+for file in glob.glob("*.jpg"):
+    if(file.split('_')[2] == 'c0'):
+        i += 1
+        img = cv2.imread(base_dir+database_images_folder+file)
+        undistorted_img = undistort(img)
+        cv2.imwrite(base_dir + database_undistorted_images_folder + file, undistorted_img)
+
+print("Database Sizes:")
+print("Total: " + str(i))
