@@ -93,7 +93,7 @@ def ransac(matches_for_image):
             break #return inliers_no, outliers_no, k, best_model, inliers
 
     #re-fit here on last inliers set you get..
-    best_model['Rt'] = model_fit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5], cv2.SOLVEPNP_EPNP)
+    best_model['Rt'] = model_refit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5])
 
     return best_model
 
@@ -144,7 +144,7 @@ def ransac_dist(matches_for_image):
             break
 
     #re-fit here on last inliers set you get..
-    best_model['Rt'] = model_fit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5], cv2.SOLVEPNP_EPNP)
+    best_model['Rt'] = model_refit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5])
 
     return best_model
 
@@ -287,6 +287,6 @@ def prosac(sorted_matches):
     # iterations = t
 
     #re-fit here on last inliers set you get..
-    best_model['Rt'] = model_fit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5], cv2.SOLVEPNP_EPNP)
+    best_model['Rt'] = model_refit(best_model['inliers'][:,0:2], best_model['inliers'][:,2:5])
 
     return best_model
