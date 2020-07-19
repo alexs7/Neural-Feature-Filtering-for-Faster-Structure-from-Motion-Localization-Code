@@ -95,6 +95,11 @@ def ransac(matches_for_image):
             break #return inliers_no, outliers_no, k, best_model, inliers
 
     #re-fit here on last inliers set you get..
+
+    # if unable to get pose then just return None
+    if(not bool(best_model)):
+        return None
+
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
         best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
@@ -149,6 +154,11 @@ def ransac_dist(matches_for_image):
             break
 
     #re-fit here on last inliers set you get..
+
+    # if unable to get pose then just return None
+    if (not bool(best_model)):
+        return None
+
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
         best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
@@ -295,6 +305,11 @@ def prosac(sorted_matches):
     # iterations = t
 
     #re-fit here on last inliers set you get..
+
+    # if unable to get pose then just return None
+    if (not bool(best_model)):
+        return None
+
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
         best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])

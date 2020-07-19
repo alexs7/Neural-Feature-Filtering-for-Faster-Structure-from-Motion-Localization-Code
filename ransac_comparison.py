@@ -85,6 +85,11 @@ def run_comparison(func, matches, test_images, verbose = True, val_idx = None):
 
         start = time.time()
         best_model = func(matches_for_image)
+
+        if(best_model == None):
+            if(verbose) : print("Unable to get pose for image " + image)
+            continue
+
         end  = time.time()
         elapsed_time = end - start
 
