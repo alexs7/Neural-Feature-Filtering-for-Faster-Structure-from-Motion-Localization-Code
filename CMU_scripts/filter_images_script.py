@@ -21,48 +21,48 @@ i = 0
 # example: "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/official_datasets/CMU-Seasons-Extended/slice2/query/"
 base_dir = sys.argv[1]
 os.chdir(base_dir)
-dst_folder = "filtered/" #has to be added manually, along with all the other folders in it
+dst_folder = "../filtered/" #has to be added manually, along with all the other folders in it
 for file in glob.glob("*.jpg"):
     if(file.split('_')[2] == 'c0'):
         i += 1
 
         # for database images
-        # subprocess.call(["cp", base_dir + file, base_dir + dst_folder])
+        subprocess.call(["cp", base_dir + file, base_dir + dst_folder])
 
         # for query images
-        if(1):
-            timestamp = int(file.split('_')[3].split('us')[0])
-            dt = datetime.fromtimestamp(timestamp/1000000)
-            day = dt.day
-            month = dt.month
-
-            if(day == 4 and month == 4):
-                Sunny_No_Foliage.append(file)
-                subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_1/"]) #this should be empty..
-            if((day == 1 and month == 9) or (day == 15 and month == 9) or (day == 19 and month == 10)):
-                subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_2/"])
-                Sunny_Foliage.append(file)
-            if(day == 1 and month == 10):
-                subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_3/"])
-                Cloudy_Foliage.append(file)
-            if(day == 26 and month == 10): #this should be 28/10 but I think they made a mistake it is 26/10
-                subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_4/"])
-                Overcast_Mixed_Foliage.append(file)
-            if((day == 3 and month == 11) or (day == 12 and month == 11)):
-                subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_5/"])
-                Low_Sun_Mixed_Foliage.append(file)
-            if(day == 22 and month == 11):
-                subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_6/"])
-                Cloudy_Mixed_Foliage.append(file)
-            if(day == 21 and month == 12):
-                subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_7/"])
-                Low_Sun_No_Foliage_Snow.append(file)
-            if(day == 4 and month == 3):
-                subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_8/"])
-                Low_Sun_Foliage.append(file)
-            if (day == 28 and month == 7):
-                subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_9/"])
-                Overcast_Foliage.append(file)
+        # if(1):
+        #     timestamp = int(file.split('_')[3].split('us')[0])
+        #     dt = datetime.fromtimestamp(timestamp/1000000)
+        #     day = dt.day
+        #     month = dt.month
+        #
+        #     if(day == 4 and month == 4):
+        #         Sunny_No_Foliage.append(file)
+        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_1/"]) #this should be empty..
+        #     if((day == 1 and month == 9) or (day == 15 and month == 9) or (day == 19 and month == 10)):
+        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_2/"])
+        #         Sunny_Foliage.append(file)
+        #     if(day == 1 and month == 10):
+        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_3/"])
+        #         Cloudy_Foliage.append(file)
+        #     if(day == 26 and month == 10): #this should be 28/10 but I think they made a mistake it is 26/10
+        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_4/"])
+        #         Overcast_Mixed_Foliage.append(file)
+        #     if((day == 3 and month == 11) or (day == 12 and month == 11)):
+        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_5/"])
+        #         Low_Sun_Mixed_Foliage.append(file)
+        #     if(day == 22 and month == 11):
+        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_6/"])
+        #         Cloudy_Mixed_Foliage.append(file)
+        #     if(day == 21 and month == 12):
+        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_7/"])
+        #         Low_Sun_No_Foliage_Snow.append(file)
+        #     if(day == 4 and month == 3):
+        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_8/"])
+        #         Low_Sun_Foliage.append(file)
+        #     if (day == 28 and month == 7):
+        #         subprocess.call(["cp", base_dir + file, base_dir + dst_folder + "session_9/"])
+        #         Overcast_Foliage.append(file)
 
 print("Sizes:")
 print("Total: " + str(i))
