@@ -3,8 +3,8 @@ import cv2
 from cvxpnpl import pnp
 from parameters import Parameters
 
-MAX_RANSAC_ITERS = 2000
-ERROR_THRESHOLD = 8.0
+MAX_RANSAC_ITERS = Parameters.ransac_prosac_iterations
+ERROR_THRESHOLD = Parameters.ransac_prosac_error_threshold
 # intrinsics matrix
 K = np.loadtxt(Parameters.query_images_camera_intrinsics) #NOTE: use the one from the camera.bin files not the one from database.
 
