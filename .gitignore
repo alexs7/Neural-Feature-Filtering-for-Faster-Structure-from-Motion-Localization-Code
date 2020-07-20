@@ -1,4 +1,4 @@
-reconstruction_colmap_scripts
+reconstruction_colmap_script/colmap_data
 usac_code/
 *.mat
 .DS_Store
