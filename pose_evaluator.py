@@ -5,7 +5,7 @@
 import numpy as np
 from query_image import read_images_binary, get_query_image_global_pose_new_model, load_images_from_text_file
 
-def pose_evaluate(query_poses, gt_poses, verbose = False):
+def pose_evaluate(query_poses, gt_poses, scale= 1, verbose = False):
     trans_errors = []
     rotation_errors = []
     for image_name, _ in gt_poses.items():
@@ -15,7 +15,8 @@ def pose_evaluate(query_poses, gt_poses, verbose = False):
         # camera center errors
         q_pose_cntr = q_pose[0:3, 0:3].transpose().dot(q_pose[0:3, 3])
         gt_pose_cntr = gt_pose[0:3, 0:3].transpose().dot(gt_pose[0:3, 3])
-        dist = np.linalg.norm(q_pose_cntr - gt_pose_cntr)
+        # multiplying by scale will return the distance in (m) in the other dataset (ARCore or CMU or ...)
+        dist = scale * np.linalg.norm(q_pose_cntr - gt_pose_cntr)
         trans_errors.append(dist)
 
         # rotations errors
