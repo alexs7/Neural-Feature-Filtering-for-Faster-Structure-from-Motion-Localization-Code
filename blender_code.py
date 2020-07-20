@@ -13,9 +13,9 @@ for ob in bpy.context.scene.objects:
     ob.select = True
     bpy.ops.object.delete()
 
-bpy.ops.import_mesh.ply(
-    filepath="/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/model/0/model.ply")
-store = bpy.context.active_object
+# bpy.ops.import_mesh.ply(
+#     filepath="/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/model/0/model.ply")
+# store = bpy.context.active_object
 
 for ob in bpy.context.selected_objects:
     ob.select = False
@@ -30,9 +30,9 @@ def get_poses_from_dir(dir):
     return poses
 
 
-ARCore_poses = get_poses_from_dir("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/ar_core_poses")
-COLMAP_poses = get_poses_from_dir("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/global_poses")
-Relative_poses = get_poses_from_dir("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/relative_poses")
+ARCore_poses = get_poses_from_dir("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/threejs_data_exported/arcore_poses")
+# COLMAP_poses = get_poses_from_dir("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/global_poses")
+# Relative_poses = get_poses_from_dir("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/relative_poses")
 
 
 def draw_poses(poses, r, g, b):
@@ -76,12 +76,12 @@ def draw_poses(poses, r, g, b):
         # cam.rotation_euler.y = euler[1]
         # cam.rotation_euler.z = euler[2]
 
-        cam.location.x = camera_center[0]
-        cam.location.y = camera_center[1]
-        cam.location.z = camera_center[2]
+        cam.location.x = tvec[0]
+        cam.location.y = tvec[1]
+        cam.location.z = tvec[2]
 
         cam.scale = (0.04, 0.04, 0.04)
 
 
-draw_poses(COLMAP_poses, 1, 0, 0)
+draw_poses(ARCore_poses, 1, 0, 0)
 # draw_poses(Relative_poses, 0, 1 ,0)
