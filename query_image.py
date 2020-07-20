@@ -99,10 +99,8 @@ def get_query_image_global_pose(name):
     pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
     return pose
 
-def get_image_camera_center(path, name):
-    poses = []
+def get_image_camera_center_by_name(name, images):
     cam_center = np.array([])
-    images = read_images_binary(path)
     for k,v in images.items():
         if(v.name == name):
             pose_r = v.qvec2rotmat()
@@ -226,6 +224,12 @@ def get_images_ids(image_names, all_images):
         id = image_localised(name, all_images)
         image_ids.append(id)
     return image_ids
+
+def get_images_names(all_images):
+    image_names = []
+    for k,v in all_images.items():
+        image_names.append(v.name)
+    return image_names
 
 def load_images_from_text_file(path):
     images = []
