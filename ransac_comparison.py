@@ -2,7 +2,8 @@ import numpy as np
 import time
 
 # Note:  match_data = [[x, y, x, y, z , m.distance, n.distance], scores]
-# where scores are k by 2 arrays, same size as many points3D scores you pass (in my case 2,heatmap_matrix_avg_points_values, reliability_scores)
+# where scores are k by 2 arrays, same size (k) as many points3D_scores you pass (in my case 2, heatmap_matrix_avg_points_values, reliability_scores)
+# Example:  match_data = [[x, y, x, y, z , m.distance, n.distance], [h_m, h_n, r_m, r_n]] -> but flatten
 # first value is of m (the closest match), second value is of n (second closest).
 from parameters import Parameters
 
@@ -17,8 +18,7 @@ def get_sub_distribution(matches_for_image):
 # some are below:
 # score_ratio = score_m / score_n  # the higher the better (first match is more "static" than the second, ratio)
 # custom_score = lowes_distance_inverse * score_ratio  # self-explanatory
-# from the 2 neighbours reliability scores, choose the higher one
-# higher_neighbour_score = score_m if score_m > score_n else score_n
+# higher_neighbour_score = score_m if score_m > score_n else score_n, (from the 2 neighbours reliability scores, choose the higher one)
 
 # lowes_distance_inverse = n.distance / m.distance  # inverse here as the higher the better for PROSAC
 def lowes_distance_inverse(matches):
@@ -32,6 +32,18 @@ def reliability_score(matches):
 
 def reliability_score_ratio(matches):
     return matches[:, 9] / matches[:, 10]
+
+def heatmap_value_ratio(matches):
+    return matches[:, 7] / matches[:, 8]
+
+def higher_neighbour_value(matches):
+    values = []
+    for match in matches:
+        value_m = match[7]
+        value_n = match[8]
+        higher_value = value_m if value_m > value_n else value_n
+        values.append(higher_value)
+    return np.array(values)
 
 def custom_score(matches):
     lowes_distance_inverse = matches[:, 6] / matches[:, 5]
@@ -52,7 +64,9 @@ functions = {Parameters.lowes_distance_inverse_ratio_index : lowes_distance_inve
              Parameters.reliability_score_index : reliability_score,
              Parameters.reliability_score_ratio_index : reliability_score_ratio,
              Parameters.custom_score_index : custom_score,
-             Parameters.higher_neighbour_score_index : higher_neighbour_score}
+             Parameters.higher_neighbour_score_index : higher_neighbour_score,
+             Parameters.heatmap_val_ratio_index: heatmap_value_ratio,
+             Parameters.higher_neighbour_val_index: higher_neighbour_value}
 
 def sort_matches(matches, idx):
     score_list = functions[idx](matches)
@@ -87,7 +101,7 @@ def run_comparison(func, matches, test_images, verbose = True, val_idx = None):
         best_model = func(matches_for_image)
 
         if(best_model == None):
-            if(verbose) : print("Unable to get pose for image " + image)
+            if(verbose) : print("\n Unable to get pose for image " + image)
             continue
 
         end  = time.time()

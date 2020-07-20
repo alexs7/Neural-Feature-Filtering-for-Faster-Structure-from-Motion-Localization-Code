@@ -37,9 +37,9 @@ train_descriptors_live = np.load(Parameters.avg_descs_live_path).astype(np.float
 # you can check if it is a distribution by calling, .sum() if it is 1, then it is.
 # This can be either heatmap_matrix_avg_points_values_0.5.npy or reliability_scores_0.5.npy
 # TODO: Do I need to normalise them ?
-points3D_scores_1 = np.load(Parameters.points3D_scores_1_path)
-points3D_scores_2 = np.load(Parameters.points3D_scores_2_path)
-points3D_live_model_scores = [points3D_scores_1, points3D_scores_2]
+points3D_heatmap_scores = np.load(Parameters.points3D_scores_1_path)
+points3D_reliability_scores = np.load(Parameters.points3D_scores_2_path)
+points3D_live_model_scores = [points3D_heatmap_scores, points3D_reliability_scores]
 
 # 1: Feature matching
 print("Feature matching...")
@@ -95,7 +95,9 @@ prosac_value_indices = [ Parameters.lowes_distance_inverse_ratio_index,
                          Parameters.reliability_score_index,
                          Parameters.reliability_score_ratio_index,
                          Parameters.custom_score_index,
-                         Parameters.higher_neighbour_score_index]
+                         Parameters.higher_neighbour_score_index,
+                         Parameters.heatmap_val_ratio_index,
+                         Parameters.higher_neighbour_val_index]
 
 print(" PROSAC versions")
 for prosac_sort_val in prosac_value_indices:

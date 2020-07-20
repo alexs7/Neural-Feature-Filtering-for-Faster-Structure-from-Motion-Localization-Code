@@ -27,9 +27,10 @@ def pose_evaluate(query_poses, gt_poses, verbose = False):
         a_deg = np.degrees(a_rad)
         rotation_errors.append(a_deg)
 
+    # Note: These might contain nan values!
     trans_errors = np.array(trans_errors)
     rotation_errors = np.array(rotation_errors)
     if(verbose):
         print("Mean errors (trans, rots):")
-        print("[ " + str(trans_errors.mean()) + " , " + str(rotation_errors.mean()) + " ]" )
+        print("[ " + str(np.nanmean(trans_errors)) + " , " + str(np.nanmean(rotation_errors)) + " ]" )
     return trans_errors, rotation_errors
