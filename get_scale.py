@@ -1,62 +1,73 @@
-import random
+# This file is just to get scales between COLMAP and ARCORE, or COLMAP and COLMAP.
+# manual work to set the directories
+import glob
 import numpy as np
-from evaluator import get_sequence_all
-from evaluator import get_ARCore_displayOrientedPose
-from query_image import get_query_image_global_pose
-from scipy.spatial import procrustes
-
-query_dir = '/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/images/data_ar'
-sequence = get_sequence_all(query_dir)
-iterations = 100
-
-def calc_scale(use_procrustes = False):
-    if(use_procrustes == False):
-        print("Calculating scale..")
-        scales = []
-        for i in range(iterations):
-            #random poses
-            start = random.choice(sequence)
-            end = random.choice(sequence)
-
-            #get 2 poses in COLMAP
-            colmap_pose_start = get_query_image_global_pose("frame_"+start+".jpg")
-            colmap_pose_end = get_query_image_global_pose("frame_"+end+".jpg")
-
-            colmap_pose_start_pos = colmap_pose_start[0:3, 3]
-            colmap_pose_end_pos = colmap_pose_end[0:3, 3]
-
-            dist_colmap = np.linalg.norm(colmap_pose_start_pos - colmap_pose_end_pos)
-
-            #get 2 poses in ARCore
-            arCore_start = np.linalg.inv(get_ARCore_displayOrientedPose(query_dir, start))
-            arCore_end = np.linalg.inv(get_ARCore_displayOrientedPose(query_dir, end))
-
-            arCore_start_pos = arCore_start[0:3, 3]
-            arCore_end_pos = arCore_end[0:3, 3]
-
-            dist_arCore = np.linalg.norm(arCore_start_pos - arCore_end_pos)
-
-            scale = dist_arCore / dist_colmap
-            scales.append(scale)
-            scales = np.array(scales)
-            return np.mean(scales)
-    else:
-        print("Generating Procrustes data for Matlab..")
-        colmap_locations = []
-        arCore_locations = []
-        for i in range(len(sequence)):
-            no = sequence[i]
-            colmap_pose = get_query_image_global_pose("frame_" + no + ".jpg")
-            arCore_pose = np.linalg.inv(get_ARCore_displayOrientedPose(query_dir, no))
-
-            colmap_trans = colmap_pose[0:3, 3]
-            arCore_trans = arCore_pose[0:3, 3]
-
-            colmap_locations.append(colmap_trans)
-            arCore_locations.append(arCore_trans)
-
-        np.savetxt('/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/colmap_locations_procrustes.txt',colmap_locations)
-        np.savetxt('/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/arcore_locations_procrustes.txt',arCore_locations)
+import random
+from query_image import read_images_binary, load_images_from_text_file, get_image_camera_center_by_name, get_images_names
 
 
+def calc_scale_COLMAP_ARCORE(arcore_poses_path, colmap_model_from_arcore_images_path):
+    model_images = read_images_binary(colmap_model_from_arcore_images_path)
+    model_images_names = get_images_names(model_images)
+    frame_cam_centers = {}
+    for file in glob.glob(arcore_poses_path+"displayOrientedPose_*.txt"):
+        pose = np.loadtxt(file)
+        pose_t = np.array(pose[0:3, 3])
+        rot = np.array(pose[0:3, 0:3])
+        cam_center = -rot.transpose().dot(pose_t)
+        frame_cam_centers["frame_"+file.split("_")[-1].split(".")[0]+".jpg"] = pose_t
+
+    scales = []
+    for i in range(1000):
+        random_images = random.sample(model_images_names, 2)
+
+        arcore_1_center = frame_cam_centers[random_images[0]]
+        arcore_2_center = frame_cam_centers[random_images[1]]
+
+        model_cntr1 = get_image_camera_center_by_name(random_images[0], model_images)
+        model_cntr2 = get_image_camera_center_by_name(random_images[1], model_images)
+
+        model_cam_dst = np.linalg.norm(model_cntr1 - model_cntr2)
+        arcore_cam_dst = np.linalg.norm(arcore_1_center - arcore_2_center)
+
+        scale = arcore_cam_dst / model_cam_dst
+
+        scales.append(scale)
+
+    return np.mean(scales)
+
+def calc_scale_COLMAP(model_images_txt_path, original_images_path, model_images_path):
+    images = load_images_from_text_file(model_images_txt_path)
+    original_images = read_images_binary(original_images_path)
+    model_images = read_images_binary(model_images_path)
+
+    scales = []
+    for i in range(1000):
+        random_images = random.sample(images,2)
+
+        model_cntr1 = get_image_camera_center_by_name(random_images[0], model_images)
+        model_cntr2 = get_image_camera_center_by_name(random_images[1], model_images)
+
+        original_cntr1 = get_image_camera_center_by_name(random_images[0], original_images)
+        original_cntr2 = get_image_camera_center_by_name(random_images[1], original_images)
+
+        model_cam_dst = np.linalg.norm(model_cntr1 - model_cntr2)
+        original_cam_dst = np.linalg.norm(original_cntr1 - original_cntr2)
+
+        scale = original_cam_dst / model_cam_dst
+        scales.append(scale)
+
+    return np.mean(scales)
+
+model_images_txt_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/official_datasets/CMU-Seasons-Extended/slice2/database/images.txt"
+original_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/official_datasets/CMU-Seasons-Extended/slice2/original_model/images.bin"
+my_model_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/official_datasets/CMU-Seasons-Extended/slice2/reconstruction/base/images.bin"
+
+# they have to correspond
+arcore_poses_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/coop_local/2020-06-17/morning/run_3/data_all/"
+colmap_model_from_arcore_images_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/coop_local/2020-06-17/morning/run_3/reconstruction/0/images.bin"
+
+print("Scale: ")
+# print(calc_scale_COLMAP(model_images_txt_path, original_images_path, my_model_images_path))
+print(calc_scale_COLMAP_ARCORE(arcore_poses_path, colmap_model_from_arcore_images_path))
 
