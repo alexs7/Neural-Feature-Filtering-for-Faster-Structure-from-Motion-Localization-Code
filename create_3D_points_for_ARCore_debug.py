@@ -1,9 +1,7 @@
-from point3D_loader import get_points3D, read_points3d_binary
+from point3D_loader import get_points3D
 from query_image import get_query_image_id_new_model
 from evaluator import get_ARCore_pose_query_image
-from evaluator import get_ARCore_pose_query_image_matrix_file
 from query_image import get_query_image_global_pose_new_model
-from get_scale import calc_scale_COLMAP
 import numpy as np
 import os
 import sys
