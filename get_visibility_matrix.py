@@ -39,7 +39,8 @@ def create_vm(features_no, exponential_decay_value):
     live_model_points3D = read_points3d_default(Parameters.live_model_points3D_path)  # live model's 3D points (same length as base as we do not add points when localising new points, but different image_ds for each point)
     db = COLMAPDatabase.connect(Parameters.live_db_path)
 
-    sessions_from_db = get_db_sessions(Parameters.no_images_per_session)  # session_index -> [images_ids]
+    sessions_numbers = np.loadtxt(Parameters.no_images_per_session_path).astype(int)
+    sessions_from_db = get_db_sessions(sessions_numbers)  # session_index -> [images_ids]
 
     print("First Loop..")
     # first loop is to get the total number of localised images in a session
