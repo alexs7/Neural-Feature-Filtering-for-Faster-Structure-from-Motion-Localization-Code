@@ -75,7 +75,7 @@ trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses,
 results["ransac_base"] = [poses, data, trans_errors, rot_errors]
 print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
-
+print()
 print(" PROSAC only lowe's ratio - (lowes_distance_inverse_ratio)")
 poses , data = run_comparison(prosac, matches_base, query_images_names, val_idx= Parameters.lowes_distance_inverse_ratio_index)
 trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
@@ -93,7 +93,7 @@ trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses,
 results["ransac_live"] = [poses, data, trans_errors, rot_errors]
 print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
-
+print()
 print(" RANSAC + dist")
 poses, data = run_comparison(ransac_dist, matches_live, query_images_names, val_idx= Parameters.use_ransac_dist)
 trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
@@ -109,7 +109,7 @@ prosac_value_indices = [ Parameters.lowes_distance_inverse_ratio_index,
                          Parameters.higher_neighbour_score_index,
                          Parameters.heatmap_val_ratio_index,
                          Parameters.higher_neighbour_val_index ]
-
+print()
 print(" PROSAC versions")
 for prosac_sort_val in prosac_value_indices:
     poses, data = run_comparison(prosac, matches_live, query_images_names, val_idx= prosac_sort_val)
