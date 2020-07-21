@@ -76,7 +76,7 @@ def sort_matches(matches, idx):
     sorted_matches = matches[sorted_indices[::-1]]
     return sorted_matches
 
-def run_comparison(func, matches, test_images, verbose = True, val_idx = None):
+def run_comparison(func, matches, test_images, val_idx = None):
 
     #  this will hold inliers_no, outliers_no, iterations, time for each image
     data = np.empty([0, 4])
@@ -101,7 +101,7 @@ def run_comparison(func, matches, test_images, verbose = True, val_idx = None):
         best_model = func(matches_for_image)
 
         if(best_model == None):
-            if(verbose) : print("\n Unable to get pose for image " + image)
+            print("\n Unable to get pose for image " + image)
             continue
 
         end  = time.time()
@@ -114,9 +114,5 @@ def run_comparison(func, matches, test_images, verbose = True, val_idx = None):
 
         images_poses[image] = pose
         data = np.r_[data, np.array([inliers_no, outliers_no, iterations, elapsed_time]).reshape([1,4])]
-
-    if(verbose):
-        print("[inliers_no, outliers_no, iterations, elapsed_time]:")
-        print(data.mean(axis=0))
 
     return images_poses, data
