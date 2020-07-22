@@ -14,9 +14,10 @@ from ransac_prosac import ransac, ransac_dist, prosac
 features_no = "1k" # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 exponential_decay_value = 0.5 # exponential_decay can be any of 0.1 to 0.9
 
-model_images = read_images_binary(Parameters.live_model_images_path)
-
 db_gt = COLMAPDatabase.connect(Parameters.gt_db_path) #this database can be used to get the query images descs and ground truth poses for later pose comparison
+# Here by "query" I mean the gt images from the gt model - a bit confusing, but think of these images as new new incoming images
+# that the user sends with his mobile device. Now the intrinsics will have to be picked up from COLMAP as COLMAP changes the focal point.. (bug..)
+# If it didn't change them I could have used just the ones extracted from ARCore in the ARCore case, and the ones provided by CMU in the CMU case.
 all_query_images = read_images_binary(Parameters.gt_model_images_path)
 all_query_images_names = load_images_from_text_file(Parameters.query_images_path)
 localised_query_images_names = get_localised_image_by_names(all_query_images_names, Parameters.gt_model_images_path)
