@@ -17,7 +17,7 @@ exponential_decay_value = 0.5 # exponential_decay can be any of 0.1 to 0.9
 db_train = COLMAPDatabase.connect(Parameters.live_db_path)
 model_images = read_images_binary(Parameters.live_model_images_path)
 
-db_gt = COLMAPDatabase.connect(Parameters.qt_db_path) #this database can be used to get the query images descs and ground truth poses for later pose comparison
+db_gt = COLMAPDatabase.connect(Parameters.gt_db_path) #this database can be used to get the query images descs and ground truth poses for later pose comparison
 all_query_images = read_images_binary(Parameters.gt_model_images_path)
 all_query_images_names = load_images_from_text_file(Parameters.query_images_path)
 localised_query_images_names = get_localised_image_by_names(all_query_images_names, Parameters.gt_model_images_path)
