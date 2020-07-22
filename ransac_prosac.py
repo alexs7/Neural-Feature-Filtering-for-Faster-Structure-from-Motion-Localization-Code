@@ -7,7 +7,13 @@ from query_image import get_intrinsics
 MAX_RANSAC_ITERS = Parameters.ransac_prosac_iterations
 ERROR_THRESHOLD = Parameters.ransac_prosac_error_threshold
 # intrinsics matrix
-K = get_intrinsics(Parameters.live_model_cameras_path, 2) #NOTE: The assumption is that the camera for the query images will always be 2
+# NOTE: The assumption is that the camera for the gt images will always be 3.
+# As colmap keeps adding cameras as you localise.
+# This is because of a COLMAP bug that breaks when I set refining focal length to false.
+# Remember that at this point I evaluate query images (gt/images) not session images.
+# So I have to pick up their intrinsics which they will be different from base and live.
+# TODO: in the future they will all be the same.
+K = get_intrinsics(Parameters.gt_model_cameras_path, 3)
 
 def model_refit(img_points, obj_points):
     # if image_points >= 4 returns 1 pose otherwise shit hits the fan
