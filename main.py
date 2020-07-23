@@ -1,6 +1,6 @@
 # Arguments
 import cv2
-
+from pathlib import Path
 from database import COLMAPDatabase
 from feature_matching_generator import feature_matcher_wrapper
 from parameters import Parameters
@@ -32,7 +32,9 @@ query_images_ground_truth_poses = get_query_images_pose_from_images(query_images
 points3D = read_points3d_default(Parameters.live_model_points3D_path) # live model's 3d points have more images ids than base
 points3D_xyz = get_points3D_xyz(points3D)
 
-scale = np.loadtxt(Parameters.CMU_scale_path).reshape(1)[0]
+scale = 1 # default value
+if(Path(Parameters.CMU_scale_path).is_file()):
+    scale = np.loadtxt(Parameters.CMU_scale_path).reshape(1)[0]
 
 # train_descriptors_base and train_descriptors_live are self explanatory
 # train_descriptors must have the same length as the number of points3D
