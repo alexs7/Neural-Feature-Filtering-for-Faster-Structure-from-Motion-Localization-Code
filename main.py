@@ -14,6 +14,8 @@ from ransac_prosac import ransac, ransac_dist, prosac
 features_no = "1k" # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
 exponential_decay_value = 0.5 # exponential_decay can be any of 0.1 to 0.9
 
+print("Doing path: " + Parameters.base_path)
+
 db_gt = COLMAPDatabase.connect(Parameters.gt_db_path) #this database can be used to get the query images descs and ground truth poses for later pose comparison
 # Here by "query" I mean the gt images from the gt model - a bit confusing, but think of these images as new new incoming images
 # that the user sends with his mobile device. Now the intrinsics will have to be picked up from COLMAP as COLMAP changes the focal point.. (bug..)
