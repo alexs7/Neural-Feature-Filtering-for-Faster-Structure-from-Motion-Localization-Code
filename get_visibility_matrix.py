@@ -78,16 +78,16 @@ def create_vm(features_no, exponential_decay_value):
 
     for idx, _ in points3D_idx.items():
         current_reliability_score = binary_visibility_matrix_cols_sum[idx]
-        final_reliability_scores = 0
-        for row_no in range(binary_visibility_matrix.shape[0]): #TODO: this might need to be reversed
+        final_reliability_score = 0
+        for row_no in range(binary_visibility_matrix.shape[0], -1, -1):
             elem = binary_visibility_matrix[row_no, idx]
             time = images_metadata[row_no,0]
             half_life = images_metadata[row_no,1]
             if(elem == 1):
-                final_reliability_scores = final_reliability_scores + current_reliability_score * 0.5 ** (-time/half_life)
+                final_reliability_score = final_reliability_score + current_reliability_score * 0.5 ** (-time/half_life)
             else:
-                final_reliability_scores = final_reliability_scores + current_reliability_score * 0.5 ** (time/half_life)
-        reliability_scores.append(final_reliability_scores)
+                final_reliability_score = final_reliability_score + current_reliability_score * 0.5 ** (time/half_life)
+        reliability_scores.append(final_reliability_score)
 
     reliability_scores = np.array(reliability_scores)
 
