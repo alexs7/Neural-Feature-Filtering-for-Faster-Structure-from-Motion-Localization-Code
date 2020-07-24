@@ -79,7 +79,6 @@ def create_vm(features_no, exponential_decay_value):
     for idx, _ in points3D_idx.items():
         current_reliability_score = binary_visibility_matrix_cols_sum[idx]
         final_reliability_score = 0
-        debug_sessions_no = 1
         for row_no in range(binary_visibility_matrix.shape[0]): #You might wonder if you reverse this you might get diff results. From local tests I did not get diff results
             elem = binary_visibility_matrix[row_no, idx]
             time = images_metadata[row_no,0]
@@ -88,10 +87,6 @@ def create_vm(features_no, exponential_decay_value):
                 final_reliability_score = final_reliability_score + current_reliability_score * 0.5 ** (-time/half_life)
             else:
                 final_reliability_score = final_reliability_score + current_reliability_score * 0.5 ** (time/half_life)
-            if(time/half_life == 1):
-                print(debug_sessions_no)
-                debug_sessions_no += 1
-                current_reliability_score = final_reliability_score
         reliability_scores.append(final_reliability_score)
 
     reliability_scores = np.array(reliability_scores)
