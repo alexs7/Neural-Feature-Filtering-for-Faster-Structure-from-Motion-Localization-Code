@@ -72,26 +72,35 @@ def create_vm(features_no, exponential_decay_value):
         points_row = get_row(image_id, live_model_points3D, 1)
         binary_visibility_matrix = np.r_[binary_visibility_matrix, points_row]
 
-    points3D_idx = index_dict(live_model_points3D)
-    binary_visibility_matrix_cols_sum = binary_visibility_matrix.sum(axis = 0)
-    reliability_scores = []
+    # old reliability score code
+    # points3D_idx = index_dict(live_model_points3D)
+    # binary_visibility_matrix_cols_sum = binary_visibility_matrix.sum(axis = 0)
+    # reliability_scores = []
 
-    for idx, _ in points3D_idx.items():
-        current_reliability_score = binary_visibility_matrix_cols_sum[idx]
-        final_reliability_score = 0
-        for row_no in range(binary_visibility_matrix.shape[0]-1, -1, -1):
-            elem = binary_visibility_matrix[row_no, idx]
-            time = images_metadata[row_no,0]
-            half_life = images_metadata[row_no,1]
-            if(elem == 1):
-                final_reliability_score = final_reliability_score + current_reliability_score * 0.5 ** (-time/half_life)
-                current_reliability_score = current_reliability_score * 0.5 ** (-time/half_life)
-            else:
-                final_reliability_score = final_reliability_score + current_reliability_score * 0.5 ** (time/half_life)
-                current_reliability_score = current_reliability_score * 0.5 ** (time/half_life)
+    # for idx, _ in points3D_idx.items():
+    #     current_reliability_score = binary_visibility_matrix_cols_sum[idx]
+    #     final_reliability_score = 0
+    #     for row_no in range(binary_visibility_matrix.shape[0]-1, -1, -1):
+    #         elem = binary_visibility_matrix[row_no, idx]
+    #         time = images_metadata[row_no,0]
+    #         half_life = images_metadata[row_no,1]
+    #         if(elem == 1):
+    #             final_reliability_score = final_reliability_score + current_reliability_score * 0.5 ** (-time/half_life)
+    #             current_reliability_score = current_reliability_score * 0.5 ** (-time/half_life)
+    #         else:
+    #             final_reliability_score = final_reliability_score + current_reliability_score * 0.5 ** (time/half_life)
+    #             current_reliability_score = current_reliability_score * 0.5 ** (time/half_life)
+    #
+    #     reliability_scores.append(final_reliability_score)
 
-        reliability_scores.append(final_reliability_score)
+    weighted_per_image_matrix = np.empty([0, len(live_model_points3D)])
+    t_index = binary_visibility_matrix.shape[0] # named t_index so no conflicts with t below
+    for row_no in range(binary_visibility_matrix.shape[0]):
+        weighted_row = binary_visibility_matrix.shape[row_no,:] * 0.5 ** (t_index / 2)
+        t_index -= 1
+        weighted_per_image_matrix = np.r_[weighted_per_image_matrix, weighted_row]
 
+    reliability_scores = weighted_per_image_matrix.sum(axis=0)
     reliability_scores = np.array(reliability_scores)
 
     N0 = 1  #default value, if a point is seen from an image
