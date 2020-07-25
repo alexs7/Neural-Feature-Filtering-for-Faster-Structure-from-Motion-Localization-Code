@@ -61,7 +61,7 @@ def create_vm(features_no, exponential_decay_value):
         for image_id, image_data in sorted(live_model_all_images.items()): #db id of localised image
             if (image_id in session_images_ids):
                 image_session_idx += 1
-                images_metadata[matrix_idx, 0] = (localised_images_no_per_session[session_id]+1) - image_session_idx #this will make sure the 1/219 is at the bottom (or on top, i.e most recent, so it will look like this, [219/219, 218/219 .. 1/219])
+                images_metadata[matrix_idx, 0] = image_session_idx
                 images_metadata[matrix_idx, 1] = localised_images_no_per_session[session_id]
                 matrix_idx += 1
 
@@ -79,14 +79,17 @@ def create_vm(features_no, exponential_decay_value):
     for idx, _ in points3D_idx.items():
         current_reliability_score = binary_visibility_matrix_cols_sum[idx]
         final_reliability_score = 0
-        for row_no in range(binary_visibility_matrix.shape[0]): #You might wonder if you reverse this you might get diff results. From local tests I did not get diff results
+        for row_no in range(binary_visibility_matrix.shape[0]-1, -1, -1):
             elem = binary_visibility_matrix[row_no, idx]
             time = images_metadata[row_no,0]
             half_life = images_metadata[row_no,1]
             if(elem == 1):
                 final_reliability_score = final_reliability_score + current_reliability_score * 0.5 ** (-time/half_life)
+                current_reliability_score = current_reliability_score * 0.5 ** (-time/half_life)
             else:
                 final_reliability_score = final_reliability_score + current_reliability_score * 0.5 ** (time/half_life)
+                current_reliability_score = current_reliability_score * 0.5 ** (time/half_life)
+
         reliability_scores.append(final_reliability_score)
 
     reliability_scores = np.array(reliability_scores)
