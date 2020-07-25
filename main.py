@@ -56,7 +56,7 @@ print("Feature matching...")
 # query images , train_descriptors from live model : will match base + query images descs to live_model avg descs -> (this can have multiple cases depending on the points3D score used)
 # query images , train_descriptors from base model : will match base + query images descs images descs to base avg descs -> (can only be one case...)
 
-# query descs against base model descs
+query descs against base model descs
 matches_base = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_base, points3D_xyz, Parameters.ratio_test_val, verbose = True)
 np.save(Parameters.matches_base_save_path, matches_base)
 matches_live = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz, Parameters.ratio_test_val, True, points3D_live_model_scores)
@@ -116,6 +116,7 @@ prosac_value_indices = [ Parameters.lowes_distance_inverse_ratio_index,
                          Parameters.higher_neighbour_val_index ]
 print()
 print(" PROSAC versions")
+np.seterr(divide='ignore', invalid='ignore', over='ignore') # this is because some matches will have a reliability_score of zero. so you might have a division by zero
 for prosac_sort_val in prosac_value_indices:
     poses, data = run_comparison(prosac, matches_live, query_images_names, val_idx= prosac_sort_val)
     trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
@@ -126,4 +127,5 @@ for prosac_sort_val in prosac_value_indices:
 
 np.save(Parameters.save_results_path, results)
 
+print()
 print("Done with path: " + Parameters.base_path)

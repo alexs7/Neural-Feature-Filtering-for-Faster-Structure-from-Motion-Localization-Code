@@ -31,7 +31,7 @@ def reliability_score(matches):
     return matches[:, 9]
 
 def reliability_score_ratio(matches):
-    return matches[:, 9] / matches[:, 10]
+    return np.nan_to_num(matches[:, 9] / matches[:, 10], nan = 0.0, neginf = 0.0, posinf = 0.0)
 
 def heatmap_value_ratio(matches):
     return matches[:, 7] / matches[:, 8]
@@ -48,6 +48,7 @@ def higher_neighbour_value(matches):
 def custom_score(matches):
     lowes_distance_inverse = matches[:, 6] / matches[:, 5]
     score_ratio = matches[:, 9] / matches[:, 10]
+    score_ratio = np.nan_to_num(score_ratio, nan = 0.0, neginf = 0.0, posinf = 0.0)
     return lowes_distance_inverse * score_ratio
 
 def higher_neighbour_score(matches):
