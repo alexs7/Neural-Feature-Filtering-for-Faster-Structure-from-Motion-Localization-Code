@@ -126,4 +126,4 @@ for prosac_sort_val in prosac_value_indices:
 
 np.save(Parameters.save_results_path, results)
 
-print("Done!")
+print("Done with path: " + Parameters.base_path)
