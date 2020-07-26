@@ -9,7 +9,7 @@ from parameters import Parameters
 
 
 def get_sub_distribution(matches_for_image):
-    vals = matches_for_image[:, 6] #TODO: this can change to heatmap value, I am using reliability score because it might give better results
+    vals = matches_for_image[:, 7]
     sub_distribution = vals / np.sum(vals)
     sub_distribution = sub_distribution.reshape([sub_distribution.shape[0], 1])
     return sub_distribution
