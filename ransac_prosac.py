@@ -265,8 +265,7 @@ def prosac(sorted_matches):
         obj_points = sample[:, 2:5]
 
         Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P)
-        matches_without_random_matches = np.delete(sorted_matches, pts_idx, axis=0)
-        inliers, inliers_indices = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD)
+        inliers, inliers_indices = model_evaluate(sorted_matches, Rt, ERROR_THRESHOLD)
         isInlier = np.zeros([1, CORRESPONDENCES])
         isInlier[0, inliers_indices] = 1
 
