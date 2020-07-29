@@ -11,27 +11,34 @@ np.set_printoptions(suppress=True)
 def create_buckets(results):
     print("high | medium | coarse")
     for k,v in results.item().items():
-        bucket_high = 0  # 0.25m, 2d
-        bucket_medium = 0  # 0.5m, 5d
-        bucket_coarse = 0  # 5m, 10d
 
-        total_images = len(v[2])
-        trans_errors = v[2]
-        rot_errors = v[3]
-        for i in range(len(trans_errors)): #can be 3 too
-            t_error = trans_errors[i]
-            r_error = rot_errors[i]
-            if(t_error < 0.25 and r_error < 2):
-                bucket_high += 1
-            if(t_error < 0.5 and r_error < 5):
-                bucket_medium += 1
-            if(t_error < 5 and r_error < 10):
-                bucket_coarse += 1
+        if(k in ["ransac_live","ransac_dist_live", "procac_live_0", "procac_live_3","procac_live_4", "procac_live_7"]):
+            bucket_high = 0  # 0.25m, 2d
+            bucket_medium = 0  # 0.5m, 5d
+            bucket_coarse = 0  # 5m, 10d
 
-        bucket_high_percentage = 100 * bucket_high / total_images
-        bucket_medium_percentage = 100 * bucket_medium / total_images
-        bucket_coarse_percentage = 100 * bucket_coarse / total_images
+            total_images = len(v[2])
+            trans_errors = v[2]
+            rot_errors = v[3]
+            for i in range(len(trans_errors)): #can be 3 too
+                t_error = trans_errors[i]
+                r_error = rot_errors[i]
+                if(t_error < 0.25 and r_error < 2):
+                    bucket_high += 1
+                if(t_error < 0.5 and r_error < 5):
+                    bucket_medium += 1
+                if(t_error < 5 and r_error < 10):
+                    bucket_coarse += 1
 
-        print(k + " %2.2f | %2.2f | %2.2f " %(bucket_high_percentage, bucket_medium_percentage ,bucket_coarse_percentage) )
+            print()
+            print(' total_images: ' + str(total_images))
+            print(' bucket_high: ' + str(bucket_high))
+            print(' bucket_medium: ' + str(bucket_medium))
+            print(' bucket_coarse: ' + str(bucket_coarse))
+            bucket_high_percentage = 100 * bucket_high / total_images
+            bucket_medium_percentage = 100 * bucket_medium / total_images
+            bucket_coarse_percentage = 100 * bucket_coarse / total_images
+
+            print(k + " %2.2f | %2.2f | %2.2f " %(bucket_high_percentage, bucket_medium_percentage ,bucket_coarse_percentage) )
 
 create_buckets(results)
