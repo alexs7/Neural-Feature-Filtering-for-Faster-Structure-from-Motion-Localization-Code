@@ -47,9 +47,15 @@ def higher_neighbour_value(matches):
 
 def custom_score(matches):
     lowes_distance_inverse = matches[:, 6] / matches[:, 5]
-    score_ratio = matches[:, 9] / matches[:, 10]
-    score_ratio = np.nan_to_num(score_ratio, nan = 0.0, neginf = 0.0, posinf = 0.0)
-    return lowes_distance_inverse * score_ratio
+    score = matches[:, 9]
+    score = np.nan_to_num(score, nan = 0.0, neginf = 0.0, posinf = 0.0)
+    return lowes_distance_inverse * score
+
+def custom_score_2(matches):
+    lowes_distance_inverse = matches[:, 6] / matches[:, 5]
+    value = matches[:, 7]
+    value = np.nan_to_num(value, nan = 0.0, neginf = 0.0, posinf = 0.0)
+    return lowes_distance_inverse * value
 
 def higher_neighbour_score(matches):
     scores = []
@@ -65,6 +71,7 @@ functions = {Parameters.lowes_distance_inverse_ratio_index : lowes_distance_inve
              Parameters.reliability_score_index : reliability_score,
              Parameters.reliability_score_ratio_index : reliability_score_ratio,
              Parameters.custom_score_index : custom_score,
+             Parameters.custom_score_index_2 : custom_score_2,
              Parameters.higher_neighbour_score_index : higher_neighbour_score,
              Parameters.heatmap_val_ratio_index: heatmap_value_ratio,
              Parameters.higher_neighbour_val_index: higher_neighbour_value}

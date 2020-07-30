@@ -103,6 +103,9 @@ def create_vm(features_no, exponential_decay_value):
     reliability_scores = reliability_scores.reshape([1, reliability_scores.shape[0]])
     heatmap_matrix_summed_points_values = heatmap_matrix_summed_points_values.reshape([1, heatmap_matrix_summed_points_values.shape[0]])
 
+    reliability_scores = reliability_scores / reliability_scores.sum()
+    heatmap_matrix_summed_points_values = heatmap_matrix_summed_points_values / heatmap_matrix_summed_points_values.sum()
+
     np.save(Parameters.points3D_scores_2_path, reliability_scores)
     np.save(Parameters.points3D_scores_1_path, heatmap_matrix_summed_points_values)
     # Save binary_visibility_matrix
