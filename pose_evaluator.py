@@ -8,7 +8,7 @@ from query_image import read_images_binary, get_query_image_global_pose_new_mode
 def pose_evaluate(query_poses, gt_poses, scale= 1):
     trans_errors = []
     rotation_errors = []
-    for image_name, _ in gt_poses.items():
+    for image_name, _ in query_poses.items():
         q_pose = query_poses[image_name]
         gt_pose = gt_poses[image_name]
 
