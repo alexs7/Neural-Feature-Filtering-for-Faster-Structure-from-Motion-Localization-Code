@@ -11,14 +11,12 @@ from point3D_loader import read_points3d_default, index_dict
 from query_image import read_images_binary, get_images_ids, get_images_names_from_sessions_numbers
 
 def get_desc_avg(points3D, db):
-    # Note: Look at this method this way: "I want to average descs of a 3D point that belong to certain images
-    # (some from base or some from all, images) and not average all the 3D points descs."
     points_mean_descs = np.empty([0, 128])
 
     for k,v in points3D.items():
         point_id = v.id
         points3D_descs = np.empty([0, 128])
-        points_image_ids = np.unique(points3D[point_id].image_ids) #This is because COLMAP adds the image twice some times.
+        points_image_ids = points3D[point_id].image_ids #COLMAP adds the image twice some times.
         # Loop through the points' image ids and check if it is seen by any image_ids
         # If it is seen then get the desc for each id.
         for k in range(len(points_image_ids)):
@@ -43,9 +41,6 @@ exponential_decay_value = 0.5
 
 print("-- Averaging features_no " + features_no + " --")
 
-# method get_desc_avg() will take as main arguments image names and a model that has base + session images localised (live)
-# for example if you pass base_model_images_names and the live model it will only average descs from base images.
-
 db_live = COLMAPDatabase.connect(Parameters.live_db_path)
 db_base = COLMAPDatabase.connect(Parameters.base_db_path)
 
@@ -66,6 +61,3 @@ np.save(Parameters.avg_descs_base_path, avgs)
 
 avgs = get_desc_avg(live_model_points3D, db_live)
 np.save(Parameters.avg_descs_live_path, avgs)
-
-
-
