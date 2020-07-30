@@ -28,6 +28,7 @@ def get_desc_avg(points3D, db):
             keypoint_index = points3D[point_id].point2D_idxs[k]
             desc = descs[keypoint_index] #keypoints and descs are ordered the same (so I use the point2D_idxs to index descs )
             desc = desc.reshape(1, 128) #this is the desc of keypoint with index, keypoint_index, from image with id, id.
+            desc = desc / desc.sum()
             points3D_descs = np.r_[points3D_descs, desc]
 
         # adding and calulating the mean here!
@@ -56,8 +57,8 @@ live_model_points3D = read_points3d_default(Parameters.live_model_points3D_path)
 # same as the live model, before you do. TODO: Maybe change to base to get it done with ?
 
 # 2 cases base and live images points3D descs
-avgs = get_desc_avg(base_model_points3D, db_base)
-np.save(Parameters.avg_descs_base_path, avgs)
+avgs_base = get_desc_avg(base_model_points3D, db_base)
+np.save(Parameters.avg_descs_base_path, avgs_base)
 
-avgs = get_desc_avg(live_model_points3D, db_live)
-np.save(Parameters.avg_descs_live_path, avgs)
+avgs_live = get_desc_avg(live_model_points3D, db_live)
+np.save(Parameters.avg_descs_live_path, avgs_live)
