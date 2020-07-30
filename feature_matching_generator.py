@@ -22,6 +22,8 @@ def get_queryDescriptors(db, image_id):
     descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
     query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
 
+    row_sums = query_image_descriptors_data.sum(axis=1)
+    query_image_descriptors_data = query_image_descriptors_data / row_sums[:, np.newaxis]
     queryDescriptors = query_image_descriptors_data.astype(np.float32)
     return queryDescriptors
 
