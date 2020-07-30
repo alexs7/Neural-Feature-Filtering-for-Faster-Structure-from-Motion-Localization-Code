@@ -72,9 +72,11 @@ def create_vm(features_no, exponential_decay_value):
         points_row = get_row(image_id, live_model_points3D, 1)
         binary_visibility_matrix = np.r_[binary_visibility_matrix, points_row]
 
+    total_sessions = len(sessions_from_db.keys())
+    t1_2_custom =  int(binary_visibility_matrix.shape[0] / total_sessions)
     weighted_per_image_matrix = np.empty([0, len(live_model_points3D)])
     t_index = np.arange(binary_visibility_matrix.shape[0]-1, -1, -1)
-    t_index = 0.5 ** (t_index + 1 / 1) #ad plus one here because points in the database are already decayed
+    t_index = 0.5 ** ((t_index + 1) / t1_2_custom) #add plus one here because points in the database are already decayed
     weighted_per_image_matrix = binary_visibility_matrix * t_index[:, np.newaxis]
 
     reliability_scores = weighted_per_image_matrix.sum(axis=0)
