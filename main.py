@@ -107,8 +107,8 @@ print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (d
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
 
 prosac_value_indices = [ Parameters.lowes_distance_inverse_ratio_index,
-                         Parameters.heatmap_val_index,
-                         Parameters.reliability_score_index,
+                         Parameters.higher_neighbour_val_index,
+                         Parameters.higher_neighbour_score_index,
                          Parameters.custom_score_index,
                          Parameters.custom_score_index_2]
 print()

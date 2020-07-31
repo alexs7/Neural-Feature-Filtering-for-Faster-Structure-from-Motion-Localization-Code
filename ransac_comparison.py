@@ -46,16 +46,24 @@ def higher_neighbour_value(matches):
     return np.array(values)
 
 def custom_score(matches):
-    lowes_distance_inverse = matches[:, 6] / matches[:, 5]
-    score = matches[:, 9]
-    score = np.nan_to_num(score, nan = 0.0, neginf = 0.0, posinf = 0.0)
-    return lowes_distance_inverse * score
+    scores = []
+    for match in matches:
+        lowes_distance_inverse = match[6] / match[5]
+        score_m = match[9]
+        score_n = match[10]
+        final_score = lowes_distance_inverse * score_m / score_n
+        scores.append(final_score)
+    return np.array(scores)
 
 def custom_score_2(matches):
-    lowes_distance_inverse = matches[:, 6] / matches[:, 5]
-    value = matches[:, 7]
-    value = np.nan_to_num(value, nan = 0.0, neginf = 0.0, posinf = 0.0)
-    return lowes_distance_inverse * value
+    scores = []
+    for match in matches:
+        lowes_distance_inverse = match[6] / match[5]
+        val_m = match[7]
+        val_n = match[8]
+        final_score = lowes_distance_inverse * val_m / val_n
+        scores.append(final_score)
+    return np.array(scores)
 
 def higher_neighbour_score(matches):
     scores = []
