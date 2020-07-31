@@ -16,11 +16,11 @@ def get_desc_avg(points3D, db):
     for k,v in points3D.items():
         point_id = v.id
         points3D_descs = np.empty([0, 128])
-        points_image_ids = points3D[point_id].image_ids #COLMAP adds the image twice some times.
+        points_image_ids = np.unique(points3D[point_id].image_ids) #COLMAP adds the image twice some times.
         # Loop through the points' image ids and check if it is seen by any image_ids
         # If it is seen then get the desc for each id.
         for k in range(len(points_image_ids)):
-            id = points3D[point_id].image_ids[k]
+            id = points_image_ids[k]
             data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(id) + "'")
             data = COLMAPDatabase.blob_to_array(data.fetchone()[0], np.uint8)
             descs_rows = int(np.shape(data)[0] / 128)
