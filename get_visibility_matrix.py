@@ -81,7 +81,6 @@ def create_vm(parameters):
     weighted_per_image_matrix = binary_visibility_matrix * t_index[:, np.newaxis]
 
     reliability_scores = weighted_per_image_matrix.sum(axis=0)
-    reliability_scores = np.array(reliability_scores)
 
     N0 = 1  #default value, if a point is seen from an image
     t1_2 = 1  # 1 day
@@ -89,8 +88,6 @@ def create_vm(parameters):
     for sessions_no, image_ids in sessions_from_db.items(): #ordered
         t = len(sessions_from_db) - (sessions_no + 1) + 1 #since zero-based (14/07/2020, need to add one so it starts from the last number and goes down..)
         Nt = N0 * (0.5) ** (t / t1_2)
-        # print("t: " + str(t))
-        # print("Nt: " + str(Nt))
         for image_id in image_ids:
             image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'")
             image_name = str(image_name.fetchone()[0])
@@ -101,18 +98,22 @@ def create_vm(parameters):
     # This vector will contain the points' visibility values that will be used in RANSAC dist version
     heatmap_matrix_summed_points_values = np.sum(live_model_visibility_matrix, axis=0)
 
+    # At this point do visibility matrix too
+    binary_visibility_values = np.sum(binary_visibility_matrix, axis = 0)
+
     print("Saving files...")
     # reshaping them first
     reliability_scores = reliability_scores.reshape([1, reliability_scores.shape[0]])
     heatmap_matrix_summed_points_values = heatmap_matrix_summed_points_values.reshape([1, heatmap_matrix_summed_points_values.shape[0]])
+    binary_visibility_values = binary_visibility_values.reshape([1, binary_visibility_values.shape[0]])
 
     reliability_scores = reliability_scores / reliability_scores.sum()
     heatmap_matrix_summed_points_values = heatmap_matrix_summed_points_values / heatmap_matrix_summed_points_values.sum()
+    binary_visibility_values = binary_visibility_values / binary_visibility_values.sum()
 
     np.save(parameters.points3D_scores_2_path, reliability_scores)
     np.save(parameters.points3D_scores_1_path, heatmap_matrix_summed_points_values)
-    # Save binary_visibility_matrix
-    np.save(parameters.binary_visibility_matrix_path, binary_visibility_matrix)
+    np.save(parameters.binary_visibility_values_path, binary_visibility_values)
 
 # NOTE: The folders are created manually under, /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices
 base_path = sys.argv[1] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice2/" #trailing "/"
