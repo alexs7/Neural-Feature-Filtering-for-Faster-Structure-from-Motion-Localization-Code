@@ -111,6 +111,35 @@ def get_image_camera_center_by_name(name, images):
             cam_center = -rot.transpose().dot(pose_t)
     return cam_center
 
+def get_images_camera_quats(images):
+    quats = {}
+    for k,v in images.items():
+        quat = v.qvec
+        quats[v.name] = quat
+    return quats
+
+def get_images_camera_centers(images):
+    cam_centers = {}
+    for k,v in images.items():
+        pose_r = v.qvec2rotmat()
+        pose_t = v.tvec
+        pose = np.c_[pose_r, pose_t]
+        pose = np.r_[pose, [np.array([0, 0, 0, 1])]]
+        rot = np.array(pose[0:3, 0:3])
+        cam_center = -rot.transpose().dot(pose_t)
+        cam_centers[v.name] = cam_center
+    return cam_centers
+
+def get_images_camera_principal_axis_vectors(images, K):
+    principal_axis_vectors = {}
+    for k,v in images.items():
+        pose_r = v.qvec2rotmat()
+        M = K @ pose_r
+        m3 = M[2,:]
+        principal_axis_vector = np.linalg.det(M) * m3
+        principal_axis_vectors[v.name] = principal_axis_vector
+    return principal_axis_vectors
+
 def image_localised(name, images):
     image_id = None
     for k, v in images.items():
