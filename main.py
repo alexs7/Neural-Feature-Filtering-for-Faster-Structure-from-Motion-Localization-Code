@@ -10,43 +10,44 @@ from pose_evaluator import pose_evaluate
 from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images
 from ransac_comparison import run_comparison, sort_matches
 from ransac_prosac import ransac, ransac_dist, prosac
+import sys
 
-features_no = "1k" # colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
-exponential_decay_value = 0.5 # exponential_decay can be any of 0.1 to 0.9
+base_path = sys.argv[1] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice2/" #trailing "/"
+parameters = Parameters(base_path)
 
-print("Doing path: " + Parameters.base_path)
+print("Doing path: " + parameters.base_path)
 print()
 
-db_gt = COLMAPDatabase.connect(Parameters.gt_db_path) #this database can be used to get the query images descs and ground truth poses for later pose comparison
+db_gt = COLMAPDatabase.connect(parameters.gt_db_path) #this database can be used to get the query images descs and ground truth poses for later pose comparison
 # Here by "query" I mean the gt images from the gt model - a bit confusing, but think of these images as new new incoming images
 # that the user sends with his mobile device. Now the intrinsics will have to be picked up from COLMAP as COLMAP changes the focal point.. (bug..)
 # If it didn't change them I could have used just the ones extracted from ARCore in the ARCore case, and the ones provided by CMU in the CMU case.
-all_query_images = read_images_binary(Parameters.gt_model_images_path)
-all_query_images_names = load_images_from_text_file(Parameters.query_images_path)
-localised_query_images_names = get_localised_image_by_names(all_query_images_names, Parameters.gt_model_images_path)
+all_query_images = read_images_binary(parameters.gt_model_images_path)
+all_query_images_names = load_images_from_text_file(parameters.query_images_path)
+localised_query_images_names = get_localised_image_by_names(all_query_images_names, parameters.gt_model_images_path)
 
 # Note these are the ground truth query images (not session images) that managed to localise against the LIVE model. Might be a low number.
 query_images_names = localised_query_images_names
 query_images_ground_truth_poses = get_query_images_pose_from_images(query_images_names, all_query_images)
 
 # by "live model" I mean all the frames from future sessions localised in the base model
-points3D = read_points3d_default(Parameters.live_model_points3D_path) # live model's 3d points have more images ids than base
+points3D = read_points3d_default(parameters.live_model_points3D_path) # live model's 3d points have more images ids than base
 points3D_xyz = get_points3D_xyz(points3D)
 
 scale = 1 # default value
-if(Path(Parameters.CMU_scale_path).is_file()):
-    scale = np.loadtxt(Parameters.CMU_scale_path).reshape(1)[0]
+if(Path(parameters.CMU_scale_path).is_file()):
+    scale = np.loadtxt(parameters.CMU_scale_path).reshape(1)[0]
 
 # train_descriptors_base and train_descriptors_live are self explanatory
 # train_descriptors must have the same length as the number of points3D
-train_descriptors_base = np.load(Parameters.avg_descs_base_path).astype(np.float32)
-train_descriptors_live = np.load(Parameters.avg_descs_live_path).astype(np.float32)
+train_descriptors_base = np.load(parameters.avg_descs_base_path).astype(np.float32)
+train_descriptors_live = np.load(parameters.avg_descs_live_path).astype(np.float32)
 
 # you can check if it is a distribution by calling, .sum() if it is 1, then it is.
 # This can be either heatmap_matrix_avg_points_values_0.5.npy or reliability_scores_0.5.npy
 # Already Normalised
-points3D_heatmap_scores = np.load(Parameters.points3D_scores_1_path)
-points3D_reliability_scores = np.load(Parameters.points3D_scores_2_path)
+points3D_heatmap_scores = np.load(parameters.points3D_scores_1_path)
+points3D_reliability_scores = np.load(parameters.points3D_scores_2_path)
 points3D_live_model_scores = [points3D_heatmap_scores, points3D_reliability_scores] #the order matters!
 
 # 1: Feature matching
@@ -57,13 +58,13 @@ print("Feature matching...")
 # query images , train_descriptors from base model : will match base + query images descs images descs to base avg descs -> (can only be one case...)
 
 #query descs against base model descs
-matches_base = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_base, points3D_xyz, Parameters.ratio_test_val, verbose = True)
-np.save(Parameters.matches_base_save_path, matches_base)
-matches_live = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz, Parameters.ratio_test_val, True, points3D_live_model_scores)
-np.save(Parameters.matches_live_save_path, matches_live)
+matches_base = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_base, points3D_xyz, parameters.ratio_test_val, verbose = True)
+np.save(parameters.matches_base_save_path, matches_base)
+matches_live = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz, parameters.ratio_test_val, True, points3D_live_model_scores)
+np.save(parameters.matches_live_save_path, matches_live)
 
-matches_base = np.load(Parameters.matches_base_save_path, allow_pickle=True).item()
-matches_live = np.load(Parameters.matches_live_save_path, allow_pickle=True).item()
+matches_base = np.load(parameters.matches_base_save_path, allow_pickle=True).item()
+matches_live = np.load(parameters.matches_live_save_path, allow_pickle=True).item()
 
 # Print options
 np.set_printoptions(precision=2)
@@ -106,11 +107,11 @@ results["ransac_dist_live"] = [poses, data, trans_errors, rot_errors]
 print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
 
-prosac_value_indices = [ Parameters.lowes_distance_inverse_ratio_index,
-                         Parameters.higher_neighbour_val_index,
-                         Parameters.higher_neighbour_score_index,
-                         Parameters.custom_score_index,
-                         Parameters.custom_score_index_2]
+prosac_value_indices = [ parameters.lowes_distance_inverse_ratio_index,
+                         parameters.higher_neighbour_val_index,
+                         parameters.higher_neighbour_score_index,
+                         parameters.custom_score_index,
+                         parameters.custom_score_index_2]
 print()
 print(" PROSAC versions")
 np.seterr(divide='ignore', invalid='ignore', over='ignore') # this is because some matches will have a reliability_score of zero. so you might have a division by zero
@@ -118,11 +119,11 @@ for prosac_sort_val in prosac_value_indices:
     poses, data = run_comparison(prosac, matches_live, query_images_names, val_idx= prosac_sort_val)
     trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
     results["prosac_live_"+str(prosac_sort_val)] = [poses, data, trans_errors, rot_errors]
-    print(Parameters.prosac_value_titles[prosac_sort_val])
+    print(parameters.prosac_value_titles[prosac_sort_val])
     print("  Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
     print("  Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
 
-np.save(Parameters.save_results_path, results)
+np.save(parameters.save_results_path, results)
 
 print()
 print("Done with path: " + Parameters.base_path)

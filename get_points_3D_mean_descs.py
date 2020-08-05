@@ -3,6 +3,7 @@
 
 # the idea here is that a point is seen by the base model images and live model images
 # obviously the live model images number > base model images number for a point
+import sys
 
 import numpy as np
 from database import COLMAPDatabase
@@ -35,21 +36,17 @@ def get_desc_avg(points3D, db):
         points_mean_descs = np.r_[points_mean_descs, points3D_descs.mean(axis=0).reshape(1,128)]
     return points_mean_descs
 
-# colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
-# exponential_decay can be any of 0.1 to 0.9
-features_no = "1k"
-exponential_decay_value = 0.5
+base_path = sys.argv[1] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice2/" #trailing "/"
+parameters = Parameters(base_path)
 
-print("-- Averaging features_no " + features_no + " --")
+db_live = COLMAPDatabase.connect(parameters.live_db_path)
+db_base = COLMAPDatabase.connect(parameters.base_db_path)
 
-db_live = COLMAPDatabase.connect(Parameters.live_db_path)
-db_base = COLMAPDatabase.connect(Parameters.base_db_path)
+base_model_images = read_images_binary(parameters.base_model_images_path)
+base_model_points3D = read_points3d_default(parameters.base_model_points3D_path)
 
-base_model_images = read_images_binary(Parameters.base_model_images_path)
-base_model_points3D = read_points3d_default(Parameters.base_model_points3D_path)
-
-live_model_images = read_images_binary(Parameters.live_model_images_path)
-live_model_points3D = read_points3d_default(Parameters.live_model_points3D_path)
+live_model_images = read_images_binary(parameters.live_model_images_path)
+live_model_points3D = read_points3d_default(parameters.live_model_points3D_path)
 
 # You will notice that I am using live_model_points3D in both cases, fetching avg features for the base images and the live images.
 # This is because the live_model_points3D points' images_ids hold also ids of the live and base model images, since the live model is just the
@@ -58,7 +55,7 @@ live_model_points3D = read_points3d_default(Parameters.live_model_points3D_path)
 
 # 2 cases base and live images points3D descs
 avgs_base = get_desc_avg(base_model_points3D, db_base)
-np.save(Parameters.avg_descs_base_path, avgs_base)
+np.save(parameters.avg_descs_base_path, avgs_base)
 
 avgs_live = get_desc_avg(live_model_points3D, db_live)
-np.save(Parameters.avg_descs_live_path, avgs_live)
+np.save(parameters.avg_descs_live_path, avgs_live)

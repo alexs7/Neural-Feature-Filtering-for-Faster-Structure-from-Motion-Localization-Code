@@ -1,6 +1,8 @@
 # applies the exponential decay on images - not 3D points as it was before!
 # and also generates and saves the base VM and complete VM
 # heatmap VM contains exponential decay applied (so there will be N=exponential_decay_values of those)
+import sys
+
 from database import COLMAPDatabase
 from parameters import Parameters
 from point3D_loader import read_points3d_default, index_dict, index_dict_reverse
@@ -32,14 +34,13 @@ def get_db_sessions(no_images_per_session):
         sessions[i] = image_ids
     return sessions
 
-def create_vm(features_no, exponential_decay_value):
-    print("Creating VM for features_no " + features_no + " and exponential_decay_value: " + str(exponential_decay_value))
+def create_vm(parameters):
     # by "live model" I mean all the frames from future sessions localised in the base model, including images from base model
-    live_model_all_images = read_images_binary(Parameters.live_model_images_path)
-    live_model_points3D = read_points3d_default(Parameters.live_model_points3D_path)  # live model's 3D points (same length as base as we do not add points when localising new points, but different image_ds for each point)
-    db = COLMAPDatabase.connect(Parameters.live_db_path)
+    live_model_all_images = read_images_binary(parameters.live_model_images_path)
+    live_model_points3D = read_points3d_default(parameters.live_model_points3D_path)  # live model's 3D points (same length as base as we do not add points when localising new points, but different image_ds for each point)
+    db = COLMAPDatabase.connect(parameters.live_db_path)
 
-    sessions_numbers = np.loadtxt(Parameters.no_images_per_session_path).astype(int)
+    sessions_numbers = np.loadtxt(parameters.no_images_per_session_path).astype(int)
     sessions_from_db = get_db_sessions(sessions_numbers)  # session_index -> [images_ids]
 
     print("First Loop..")
@@ -87,7 +88,7 @@ def create_vm(features_no, exponential_decay_value):
     live_model_visibility_matrix = np.empty([0, len(live_model_points3D)]) #or heatmap..
     for sessions_no, image_ids in sessions_from_db.items(): #ordered
         t = len(sessions_from_db) - (sessions_no + 1) + 1 #since zero-based (14/07/2020, need to add one so it starts from the last number and goes down..)
-        Nt = N0 * (exponential_decay_value) ** (t / t1_2)
+        Nt = N0 * (0.5) ** (t / t1_2)
         # print("t: " + str(t))
         # print("Nt: " + str(Nt))
         for image_id in image_ids:
@@ -108,12 +109,12 @@ def create_vm(features_no, exponential_decay_value):
     reliability_scores = reliability_scores / reliability_scores.sum()
     heatmap_matrix_summed_points_values = heatmap_matrix_summed_points_values / heatmap_matrix_summed_points_values.sum()
 
-    np.save(Parameters.points3D_scores_2_path, reliability_scores)
-    np.save(Parameters.points3D_scores_1_path, heatmap_matrix_summed_points_values)
+    np.save(parameters.points3D_scores_2_path, reliability_scores)
+    np.save(parameters.points3D_scores_1_path, heatmap_matrix_summed_points_values)
     # Save binary_visibility_matrix
-    np.save(Parameters.binary_visibility_matrix_path, binary_visibility_matrix)
+    np.save(parameters.binary_visibility_matrix_path, binary_visibility_matrix)
 
 # NOTE: The folders are created manually under, /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices
-# colmap_features_no can be "2k", "1k", "0.5k", "0.25k"
-# exponential_decay can be any of 0.1 to 0.9
-create_vm("1k", 0.5)
+base_path = sys.argv[1] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice2/" #trailing "/"
+parameters = Parameters(base_path)
+create_vm(parameters)
