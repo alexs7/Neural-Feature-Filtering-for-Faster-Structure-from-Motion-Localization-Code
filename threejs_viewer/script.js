@@ -36,12 +36,13 @@ var arCoreViewMatrix;
 var arCoreProjMatrix;
 var cameraPoseStringMatrix;
 var totalPointsSum = 0;
-var pointsSize = 0.1;
+var pointsSize = 0.08;
 
 window.onload = function() {
 
     var handle = $( "#custom-handle" );
     $( "#slider" ).slider({
+        value: 100,
         min: 1,
         max: 100,
         create: function() {
@@ -57,221 +58,93 @@ window.onload = function() {
         renderModelPath("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/points3D_sorted_descending.txt", red);
     });
 
-    $(".one").click(function(){
-        renderModel(1, red);
-    });
-
-    $(".two").click(function(){
-        renderModel(2, blue);
-    });
-
-    $(".three").click(function(){
-        renderModel(3, yellow);
-    });
-
-    $(".four").click(function(){
-        renderModel(4, green);
-    });
-
-    $(".five").click(function(){
-        renderModel(5, yellow);
-    });
-
-    $(".six").click(function(){
-        renderModel(6, pink);
-    });
-
-    $(".seven").click(function(){
-        renderModel(7, orange);
-    });
-
-    $(".eight").click(function(){
-        renderModel(8, white);
-    });
-
     $(".reset").click(function(){
         totalPointsSum = 0;
         clearScene();
     });
 
-    $(".loadCompleteModel").click(function(){
-
-        clearScene();
-
-        const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/all_xyz_points3D.txt';
-
+    $(".loadBaseModel").click(function(){
+        const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/tmp/base/points3D.txt';
         var data = fs.readFileSync(file_path);
         data = data.toString().split('\n');
-        data.pop() // remove the last element ""
-
-        console.log("loadCompleteModel " + data.length);
 
         var geometry = new THREE.Geometry();
 
-        for (var i = 0; i < data.length; i++) {
-            var line = data[i].split(' ');
-            var x = parseFloat(line[1]);
-            var y = parseFloat(line[2]);
-            var z = parseFloat(line[3]);
+        for (var i = 3; i < data.length; i++) {
+
+            var data_line = data[i].split(" ")
+
+            var x = parseFloat(data_line[1])
+            var y = parseFloat(data_line[2])
+            var z = parseFloat(data_line[3])
+
             geometry.vertices.push(
-                new THREE.Vector3(x, y, z)
+                new THREE.Vector3( x, y, z )
+            );
+
+            var r = parseInt(data_line[4])
+            var g = parseInt(data_line[5])
+            var b = parseInt(data_line[6])
+
+            geometry.colors.push(
+                new THREE.Color( "rgb("+r+","+g+","+b+")" )
             );
         }
 
-        var material =  new THREE.PointsMaterial( { color: red, size: pointsSize } );
+        var material = new THREE.PointsMaterial( { size: pointsSize, vertexColors: THREE.VertexColors } );
         var points = new THREE.Points( geometry, material );
-        // points.scale.set(0.1,0.1,0.1);
-        scene.add(points);
+        scene.add( points );
     });
 
-    $(".loadCompressedModel_VMM").click(function(){
+    $(".loadBasePoses").click(function(){
+        var pose_data = fs.readFileSync("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/tmp/base/camera_centers.txt").toString().split('\n');
 
-        clearScene();
+        for (var i = 0; i < pose_data.length; i++) {
+            var data = pose_data[i].split(" ")
 
-        const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/col_sum_points_camera_and_sum_mean.txt';
+            var tx = parseFloat(data[0]);
+            var ty = parseFloat(data[1]);
+            var tz = parseFloat(data[2]);
 
-        var data = fs.readFileSync(file_path);
-        data = data.toString().split('\n');
-        data.pop() // remove the last element ""
+            var qx = parseFloat(data[3]);
+            var qy = parseFloat(data[4]);
+            var qz = parseFloat(data[5]);
+            var qw = parseFloat(data[6]);
 
-        console.log("loadCompressedModel_VMM " + data.length);
+            //principal vector axis
+            var pva_x = parseFloat(data[7]);
+            var pva_y = parseFloat(data[8]);
+            var pva_z = parseFloat(data[9]);
 
-        var geometry = new THREE.Geometry();
-
-        for (var i = 0; i < data.length; i++) {
-            var line = data[i].split(' ');
-            var x = parseFloat(line[0]);
-            var y = parseFloat(line[1]);
-            var z = parseFloat(line[2]);
-            geometry.vertices.push(
-                new THREE.Vector3(x, y, z)
-            );
-        }
-
-        var material =  new THREE.PointsMaterial( { color: green, size: pointsSize } );
-        var points = new THREE.Points( geometry, material );
-        scene.add(points);
-    });
-
-    $(".loadCompressedModel_CM").click(function(){
-
-        clearScene();
-        
-        const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/all_xyz_points3D_obvs_mean.txt';
-
-        var data = fs.readFileSync(file_path);
-        data = data.toString().split('\n');
-        data.pop() // remove the last element ""
-
-        console.log("loadCompressedModel_CM " + data.length);
-
-        var geometry = new THREE.Geometry();
-
-        for (var i = 0; i < data.length; i++) {
-            var line = data[i].split(' ');
-            var x = parseFloat(line[1]);
-            var y = parseFloat(line[2]);
-            var z = parseFloat(line[3]);
-            geometry.vertices.push(
-                new THREE.Vector3(x, y, z)
-            );
-        }
-
-        var material =  new THREE.PointsMaterial( { color: yellow, size: pointsSize } );
-        var points = new THREE.Points( geometry, material );
-        scene.add(points);
-    });
-
-    $(".loadQueryColmapPose").click(function(){
-
-        var colmapPose = fs.readFileSync("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/query_pose.txt");
-        colmapPose = colmapPose.toString().split('\n');
-
-        var tx = parseFloat(colmapPose[4]);
-        var ty = parseFloat(colmapPose[5]);
-        var tz = parseFloat(colmapPose[6]);
-
-        var qx = parseFloat(colmapPose[1]);
-        var qy = parseFloat(colmapPose[2]);
-        var qz = parseFloat(colmapPose[3]);
-        var qw = parseFloat(colmapPose[0]);
-
-        var pose_geometry = new THREE.ConeGeometry( 0.5, 0.75, 4 );
-        var material = new THREE.MeshPhongMaterial( {color: yellow} );
-        var pose_cam = new THREE.Mesh( pose_geometry, material );
-        pose_cam.rotation.y = Math.PI/4 ;
-        pose_cam.rotation.x = -Math.PI/2 ;
-        scene.add( pose_cam );
-
-        pose_cam.position.x = tx;
-        pose_cam.position.y = ty;
-        pose_cam.position.z = tz;
-
-        var quaternion = new THREE.Quaternion();
-        quaternion.fromArray([qx, qy, qz, qw]);
-        quaternion.normalize(); // ?
-        pose_cam.setRotationFromQuaternion(quaternion);
-
-    });
-
-    $(".loadColmapPoses").click(function(){
-
-        var images_no = fs.readFileSync("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/images_no.txt");
-        images_no = parseFloat(images_no.toString());
-
-        for (var colmapPoseIndex = 1; colmapPoseIndex <= images_no; colmapPoseIndex++) {
-
-            colmapPose = fs.readFileSync("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/pose_"+colmapPoseIndex+".txt");
-            colmapPose = colmapPose.toString().split('\n');
-
-            var tx = parseFloat(colmapPose[4]);
-            var ty = parseFloat(colmapPose[5]);
-            var tz = parseFloat(colmapPose[6]);
-
-            var qx = parseFloat(colmapPose[1]);
-            var qy = parseFloat(colmapPose[2]);
-            var qz = parseFloat(colmapPose[3]);
-            var qw = parseFloat(colmapPose[0]);
-
-            var pose_geometry = new THREE.ConeGeometry( 0.5, 0.75, 4 );
-            var material = new THREE.MeshPhongMaterial( {color: yellow} );
+            var pose_geometry = new THREE.SphereGeometry(  0.5, 8, 8  );
+            var material = new THREE.MeshPhongMaterial( {color: red} );
             var pose_cam = new THREE.Mesh( pose_geometry, material );
-            pose_cam.rotation.y = Math.PI/4 ;
-            pose_cam.rotation.x = -Math.PI/2 ;
+
             scene.add( pose_cam );
+
+            //principal vector axes
+            var line_points = [];
+            var temp_scale = 120000;
+            line_points.push( new THREE.Vector3( tx, ty, tz ) );
+            line_points.push( new THREE.Vector3( tx + pva_x / temp_scale, ty + pva_y / temp_scale, tz + pva_z / temp_scale ) );
+
+            var line_material = new THREE.LineBasicMaterial( { color: white } );
+            var line_geometry = new THREE.BufferGeometry().setFromPoints( line_points );
+            var line = new THREE.Line( line_geometry, line_material );
+
+            scene.add( line );
+
+            var quaternion = new THREE.Quaternion();
+            quaternion.fromArray([qx, qy, qz, qw]);
+            pose_cam.setRotationFromQuaternion(quaternion);
 
             pose_cam.position.x = tx;
             pose_cam.position.y = ty;
             pose_cam.position.z = tz;
 
-            var quaternion = new THREE.Quaternion();
-            quaternion.fromArray([qx, qy, qz, qw]);
-            quaternion.normalize(); // ?
-            pose_cam.setRotationFromQuaternion(quaternion);
-            pose_cam.rotation.x = Math.PI;
-
-            // const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/points3D_'+colmapPoseIndex+'.txt';
-            //
-            // var data = fs.readFileSync(file_path);
-            // data = data.toString().split('\n');
-            //
-            // var geometry = new THREE.Geometry();
-            //
-            // for (var i = 0; i < data.length; i++) {
-            //     var line = data[i].split(' ');
-            //     var x = parseFloat(line[0]);
-            //     var y = parseFloat(line[1]);
-            //     var z = parseFloat(line[2]);
-            //     geometry.vertices.push(
-            //         new THREE.Vector3(x, y, z)
-            //     );
-            // }
-            //
-            // var material =  new THREE.PointsMaterial( { color: green, size: pointsSize } );
-            // var points = new THREE.Points( geometry, material );
-            // // points.scale.set(0.1,0.1,0.1);
-            // scene.add(points);
+            pose_cam.scale.set(0.2,0.2,0.2);
         }
+
     });
 
     scene = new THREE.Scene();
@@ -287,19 +160,19 @@ window.onload = function() {
     // var gridHelper = new THREE.GridHelper( size, divisions );
     // scene.add( gridHelper );
     //
-    // var axesHelper = new THREE.AxesHelper( 5 );
-    // scene.add( axesHelper );
+    var axesHelper = new THREE.AxesHelper( 5 );
+    scene.add( axesHelper );
 
     // lights
     var light = new THREE.DirectionalLight( white );
     var ambientLight = new THREE.AmbientLight( pink );
-    light.position.set( 50, 50, 50 );
+    light.position.set( 5, 5, 5 );
     scene.add( light );
     scene.add(ambientLight);
 
     controls = new THREE.TrackballControls(camera, renderer.domElement);
 
-    camera.position.set( 1.927033026880825, 3.5235899349786655, -8.911491856699465);
+    camera.position.set( 25, 25, 25);
     camera.lookAt(scene.position);
 
     controls.update(); //must be called after any manual changes to the camera's transform
@@ -334,31 +207,6 @@ function renderModelPath(file_path, colour, percentage=100) {
         var x = parseFloat(line[0]);
         var y = parseFloat(line[1]);
         var z = parseFloat(line[2]);
-        geometry.vertices.push(
-            new THREE.Vector3(x, y, z)
-        );
-    }
-
-    var material =  new THREE.PointsMaterial( { color: colour, size: pointsSize } );
-    var points = new THREE.Points( geometry, material );
-    scene.add(points);
-}
-
-function renderModel(i, colour) {
-    var file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/'+i+'/all_xyz_points3D.txt';
-    var data = fs.readFileSync(file_path);
-    data = data.toString().split('\n');
-
-    console.log(data.length-1);
-    totalPointsSum += data.length-1;
-
-    var geometry = new THREE.Geometry();
-
-    for (var i = 0; i < data.length; i++) {
-        var line = data[i].split(' ');
-        var x = parseFloat(line[1]);
-        var y = parseFloat(line[2]);
-        var z = parseFloat(line[3]);
         geometry.vertices.push(
             new THREE.Vector3(x, y, z)
         );
