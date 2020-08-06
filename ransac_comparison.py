@@ -1,12 +1,11 @@
 import numpy as np
 import time
+from RANSACParameters import RANSACParameters
 
 # Note:  match_data = [[x, y, x, y, z , m.distance, n.distance], scores]
 # where scores are k by 2 arrays, same size (k) as many points3D_scores you pass (in my case 2, heatmap_matrix_avg_points_values, reliability_scores)
 # Example:  match_data = [[x, y, x, y, z , m.distance, n.distance], [h_m, h_n, r_m, r_n]] -> but flatten
 # first value is of m (the closest match), second value is of n (second closest).
-from parameters import Parameters
-
 
 def get_sub_distribution(matches_for_image):
     vals = matches_for_image[:, 7]
@@ -74,15 +73,15 @@ def higher_neighbour_score(matches):
         scores.append(higher_score)
     return np.array(scores)
 
-functions = {Parameters.lowes_distance_inverse_ratio_index : lowes_distance_inverse,
-             Parameters.heatmap_val_index : heatmap_val,
-             Parameters.reliability_score_index : reliability_score,
-             Parameters.reliability_score_ratio_index : reliability_score_ratio,
-             Parameters.custom_score_index : custom_score,
-             Parameters.custom_score_index_2 : custom_score_2,
-             Parameters.higher_neighbour_score_index : higher_neighbour_score,
-             Parameters.heatmap_val_ratio_index: heatmap_value_ratio,
-             Parameters.higher_neighbour_val_index: higher_neighbour_value}
+functions = {RANSACParameters.lowes_distance_inverse_ratio_index : lowes_distance_inverse,
+             RANSACParameters.heatmap_val_index : heatmap_val,
+             RANSACParameters.reliability_score_index : reliability_score,
+             RANSACParameters.reliability_score_ratio_index : reliability_score_ratio,
+             RANSACParameters.custom_score_index : custom_score,
+             RANSACParameters.custom_score_index_2 : custom_score_2,
+             RANSACParameters.higher_neighbour_score_index : higher_neighbour_score,
+             RANSACParameters.heatmap_val_ratio_index: heatmap_value_ratio,
+             RANSACParameters.higher_neighbour_val_index: higher_neighbour_value}
 
 def sort_matches(matches, idx):
     score_list = functions[idx](matches)
