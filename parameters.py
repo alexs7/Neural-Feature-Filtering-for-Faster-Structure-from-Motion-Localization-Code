@@ -39,10 +39,7 @@ class Parameters(object):
 
         self.ratio_test_val = 0.9
 
-        self.ransac_prosac_iterations = 4000 # I used 1000 for dev
-        self.ransac_prosac_error_threshold = 5.0 #8.0 default, 5 from the Benchamrking 6DoF long term localization
-
         # This is the scale you will have to multiply your COLMAP model's acquired camera centers distance with.
         # Pass this in pose evaluator, and it will be multiplied with the distance of the gt camera center and your estimated camera center
-        # from your COLMAP model. The reference model from CMU slice_* folders is in meters, yours is not.
-        self.CMU_scale_path = base_path+"scale.txt"
+        # from your COLMAP model. This is valid for ARCORE only
+        self.ARCORE_scale_path = base_path+"scale.txt"

@@ -20,3 +20,6 @@ class RANSACParameters(object):
                            higher_neighbour_score_index: "Reliability Higher Neighbour Score",
                            heatmap_val_ratio_index: "Heatmap Value Ratio",
                            higher_neighbour_val_index: "Reliability Higher Neighbour Heatmap Value"}
+
+    ransac_prosac_iterations = 1000  # I used 1000 for dev
+    ransac_prosac_error_threshold = 5.0  # 8.0 default, 5 from the Benchamrking 6DoF long term localization
