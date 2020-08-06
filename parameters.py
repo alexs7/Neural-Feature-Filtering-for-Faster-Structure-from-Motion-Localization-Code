@@ -39,16 +39,6 @@ class Parameters(object):
 
         self.ratio_test_val = 0.9
 
-        self.prosac_value_titles = { self.lowes_distance_inverse_ratio_index : "Inverse Lowe's Ratio",
-                                     self.heatmap_val_index : "Heatmap Value",
-                                     self.reliability_score_index : "Reliability Score",
-                                     self.reliability_score_ratio_index : "Reliability Score Ratio",
-                                     self.custom_score_index : "Lowes by reliability score ratio",
-                                     self.custom_score_index_2: "Lowes by heatmap value ratio",
-                                     self.higher_neighbour_score_index : "Reliability Higher Neighbour Score",
-                                     self.heatmap_val_ratio_index : "Heatmap Value Ratio",
-                                     self.higher_neighbour_val_index : "Reliability Higher Neighbour Heatmap Value" }
-
         self.ransac_prosac_iterations = 4000 # I used 1000 for dev
         self.ransac_prosac_error_threshold = 5.0 #8.0 default, 5 from the Benchamrking 6DoF long term localization
 
