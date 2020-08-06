@@ -91,7 +91,7 @@ def sort_matches(matches, idx):
     sorted_matches = matches[sorted_indices[::-1]]
     return sorted_matches
 
-def run_comparison(func, matches, test_images, val_idx = None):
+def run_comparison(func, matches, test_images, intrinsics, val_idx = None):
 
     #  this will hold inliers_no, outliers_no, iterations, time for each image
     data = np.empty([0, 4])
@@ -113,7 +113,7 @@ def run_comparison(func, matches, test_images, val_idx = None):
                 matches_for_image = np.hstack((matches_for_image, sub_dist))
 
         start = time.time()
-        best_model = func(matches_for_image)
+        best_model = func(matches_for_image, intrinsics)
 
         if(best_model == None):
             print("\n Unable to get pose for image " + image)

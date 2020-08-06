@@ -1,11 +1,13 @@
 import numpy as np
 import cv2
 from cvxpnpl import pnp
+
+from RANSACParameters import RANSACParameters
 from parameters import Parameters
 from query_image import get_intrinsics
 
-MAX_RANSAC_ITERS = Parameters.ransac_prosac_iterations
-ERROR_THRESHOLD = Parameters.ransac_prosac_error_threshold
+MAX_RANSAC_ITERS = RANSACParameters.ransac_prosac_iterations
+ERROR_THRESHOLD = RANSACParameters.ransac_prosac_error_threshold
 # intrinsics matrix
 # NOTE: The assumption is that the camera for the gt images will always be 3.
 # As colmap keeps adding cameras as you localise.
@@ -13,16 +15,15 @@ ERROR_THRESHOLD = Parameters.ransac_prosac_error_threshold
 # Remember that at this point I evaluate query images (gt/images) not session images.
 # So I have to pick up their intrinsics which they will be different from base and live.
 # TODO: in the future they will all be the same.
-K = get_intrinsics(Parameters.gt_model_cameras_path, 3)
 
-def model_refit(img_points, obj_points):
+def model_refit(img_points, obj_points, K):
     # if image_points >= 4 returns 1 pose otherwise shit hits the fan
     poses = pnp(pts_2d=img_points, pts_3d=obj_points, K=K)
     R, t = poses[0]
     Rt = np.r_[(np.c_[R, t]), [np.array([0, 0, 0, 1])]]
     return Rt
 
-def model_fit(img_points, obj_points, flag_val):
+def model_fit(img_points, obj_points, flag_val, K):
     distCoeffs = np.zeros((5, 1))
     # calculate pose
     # this is required for SOLVEPNP_P3P - works with others too
@@ -41,7 +42,7 @@ def model_fit(img_points, obj_points, flag_val):
     Rt = np.r_[(np.c_[rotm, tvec]), [np.array([0, 0, 0, 1])]]
     return Rt
 
-def model_evaluate(matches_for_image, Rt, threshold):
+def model_evaluate(matches_for_image, Rt, threshold, K):
     # NOTE: can also do this: points2D, _ = cv2.projectPoints(obj_point[:,0:3].transpose(), rvec, tvec, K, np.zeros((5, 1)))
     obj_point = matches_for_image[:, 2:5]
     img_point_gt = matches_for_image[:, 0:2] #this is wrong
@@ -54,7 +55,7 @@ def model_evaluate(matches_for_image, Rt, threshold):
     inliers = matches_for_image[indices, :]
     return inliers, indices
 
-def ransac(matches_for_image):
+def ransac(matches_for_image, intrinsics):
     s = 4  # or minimal_sample_size
     p = 0.99 # this is a typical value
     # number of iterations (http://www.cse.psu.edu/~rtc12/CSE486/lecture15.pdf and https://youtu.be/5E5n7fhLHEM?list=PLTBdjV_4f-EKeki5ps2WHqJqyQvxls4ha&t=428)
@@ -74,9 +75,9 @@ def ransac(matches_for_image):
         img_points = matches_for_image[(random_matches), 0:2]
         obj_points = matches_for_image[(random_matches), 2:5]
 
-        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P)
+        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P, intrinsics)
         matches_without_random_matches = np.delete(matches_for_image, random_matches, axis=0)
-        inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD)
+        inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD, intrinsics)
 
         # TODO: remove this "+s" ?
         inliers_no = len(inliers) + s #total number of inliers
@@ -109,11 +110,11 @@ def ransac(matches_for_image):
 
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
-        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
+        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5], intrinsics)
 
     return best_model
 
-def ransac_dist(matches_for_image):
+def ransac_dist(matches_for_image, intrinsics):
     s = 4  # or minimal_sample_size
     p = 0.99 # this is a typical value
     # number of iterations (http://www.cse.psu.edu/~rtc12/CSE486/lecture15.pdf and https://youtu.be/5E5n7fhLHEM?list=PLTBdjV_4f-EKeki5ps2WHqJqyQvxls4ha&t=428)
@@ -134,9 +135,9 @@ def ransac_dist(matches_for_image):
         img_points = matches_for_image[(random_matches), 0:2]
         obj_points = matches_for_image[(random_matches), 2:5]
 
-        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P)
+        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P, intrinsics)
         matches_without_random_matches = np.delete(matches_for_image, random_matches, axis=0)
-        inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD)
+        inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD, intrinsics)
 
         inliers_no = len(inliers) + s #total number of inliers
         outliers_no = len(matches_for_image) - inliers_no
@@ -168,7 +169,7 @@ def ransac_dist(matches_for_image):
 
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
-        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
+        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5], intrinsics)
 
     return best_model
 
@@ -187,7 +188,7 @@ def ransac_dist(matches_for_image):
 # So, you can compare models either by number of inliers (higher is
 # better) or by sum of errors (lower is better).
 
-def prosac(sorted_matches):
+def prosac(sorted_matches, intrinsics):
     CORRESPONDENCES = sorted_matches.shape[0]
     isInlier = np.zeros([1,CORRESPONDENCES])
     SAMPLE_SIZE = 4
@@ -264,8 +265,8 @@ def prosac(sorted_matches):
         img_points = sample[:, 0:2]
         obj_points = sample[:, 2:5]
 
-        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P)
-        inliers, inliers_indices = model_evaluate(sorted_matches, Rt, ERROR_THRESHOLD)
+        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P, intrinsics)
+        inliers, inliers_indices = model_evaluate(sorted_matches, Rt, ERROR_THRESHOLD, intrinsics)
         isInlier = np.zeros([1, CORRESPONDENCES])
         isInlier[0, inliers_indices] = 1
 
@@ -318,6 +319,6 @@ def prosac(sorted_matches):
 
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
-        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5])
+        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5], intrinsics)
 
     return best_model
