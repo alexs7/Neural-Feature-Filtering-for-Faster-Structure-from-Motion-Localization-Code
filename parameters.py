@@ -4,9 +4,9 @@ class Parameters(object):
         self.avg_descs_base_path = base_path+"avg_descs_base.npy"
         self.avg_descs_live_path = base_path+"avg_descs_live.npy"
 
-        self.points3D_scores_1_path = base_path+"heatmap_matrix_avg_points_values.npy"
-        self.points3D_scores_2_path = base_path+"reliability_scores.npy"
-        self.binary_visibility_values_path = base_path + "binary_visibility_values.npy"
+        self.per_image_decay_matrix_path = base_path+"heatmap_matrix_avg_points_values.npy"
+        self.per_session_decay_matrix_path = base_path+"reliability_scores.npy"
+        self.binary_visibility_matrix_path = base_path + "binary_visibility_values.npy"
 
         self.matches_base_save_path = base_path+"matches_base.npy"
         self.matches_live_save_path = base_path+"matches_live.npy"
@@ -35,7 +35,7 @@ class Parameters(object):
         # then you can use these numbers to get images from each session. The numbers need to be sorted by session though. First is number of base model images.
         self.no_images_per_session_path = base_path+"live/session_lengths.txt"
 
-        self.ratio_test_val = 0.9
+        self.ratio_test_val = 1
 
         # This is the scale you will have to multiply your COLMAP model's acquired camera centers distance with.
         # Pass this in pose evaluator, and it will be multiplied with the distance of the gt camera center and your estimated camera center

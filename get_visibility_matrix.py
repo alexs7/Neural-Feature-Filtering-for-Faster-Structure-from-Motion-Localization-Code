@@ -37,7 +37,7 @@ def get_db_sessions(no_images_per_session):
 def create_vm(parameters):
     # by "live model" I mean all the frames from future sessions localised in the base model, including images from base model
     live_model_all_images = read_images_binary(parameters.live_model_images_path)
-    live_model_points3D = read_points3d_default(parameters.live_model_points3D_path)  # live model's 3D points (same length as base as we do not add points when localising new points, but different image_ds for each point)
+    live_model_points3D = read_points3d_default(parameters.live_model_points3D_path)  # live model's 3D points (same length as base (but different order!) as we do not add points when localising new points, but different image_ds for each point)
     db = COLMAPDatabase.connect(parameters.live_db_path)
 
     sessions_numbers = np.loadtxt(parameters.no_images_per_session_path).astype(int)
@@ -80,11 +80,9 @@ def create_vm(parameters):
     t_index = 0.5 ** ((t_index + 1) / t1_2_custom) #add plus one here because points in the database are already decayed
     weighted_per_image_matrix = binary_visibility_matrix * t_index[:, np.newaxis]
 
-    reliability_scores = weighted_per_image_matrix.sum(axis=0)
-
     N0 = 1  #default value, if a point is seen from an image
     t1_2 = 1  # 1 day
-    live_model_visibility_matrix = np.empty([0, len(live_model_points3D)]) #or heatmap..
+    weighted_per_session_matrix = np.empty([0, len(live_model_points3D)]) #or heatmap..
     for sessions_no, image_ids in sessions_from_db.items(): #ordered
         t = len(sessions_from_db) - (sessions_no + 1) + 1 #since zero-based (14/07/2020, need to add one so it starts from the last number and goes down..)
         Nt = N0 * (0.5) ** (t / t1_2)
@@ -93,27 +91,13 @@ def create_vm(parameters):
             image_name = str(image_name.fetchone()[0])
             if(image_localised(image_name, live_model_all_images) != None):
                 points_row = get_row(image_id, live_model_points3D, Nt)
-                live_model_visibility_matrix = np.r_[live_model_visibility_matrix, points_row]
-
-    # This vector will contain the points' visibility values that will be used in RANSAC dist version
-    heatmap_matrix_summed_points_values = np.sum(live_model_visibility_matrix, axis=0)
-
-    # At this point do visibility matrix too
-    binary_visibility_values = np.sum(binary_visibility_matrix, axis = 0)
+                weighted_per_session_matrix = np.r_[weighted_per_session_matrix, points_row]
 
     print("Saving files...")
-    # reshaping them first
-    reliability_scores = reliability_scores.reshape([1, reliability_scores.shape[0]])
-    heatmap_matrix_summed_points_values = heatmap_matrix_summed_points_values.reshape([1, heatmap_matrix_summed_points_values.shape[0]])
-    binary_visibility_values = binary_visibility_values.reshape([1, binary_visibility_values.shape[0]])
 
-    reliability_scores = reliability_scores / reliability_scores.sum()
-    heatmap_matrix_summed_points_values = heatmap_matrix_summed_points_values / heatmap_matrix_summed_points_values.sum()
-    binary_visibility_values = binary_visibility_values / binary_visibility_values.sum()
-
-    np.save(parameters.points3D_scores_2_path, reliability_scores)
-    np.save(parameters.points3D_scores_1_path, heatmap_matrix_summed_points_values)
-    np.save(parameters.binary_visibility_values_path, binary_visibility_values)
+    np.save(parameters.per_image_decay_matrix_path, weighted_per_image_matrix)
+    np.save(parameters.per_session_decay_matrix_path, weighted_per_session_matrix)
+    np.save(parameters.binary_visibility_matrix_path, binary_visibility_matrix)
 
 # NOTE: The folders are created manually under, /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices
 base_path = sys.argv[1] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice2/" #trailing "/"
