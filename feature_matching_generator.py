@@ -55,6 +55,7 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ra
         # m the closest, n is the second closest
         good_matches = []
         for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
+            assert(m.distance <  n.distance)
             # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
             if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
                 if(m.queryIdx >= keypoints_xy.shape[0]): #keypoints_xy.shape[0] always same as queryDescriptors.shape[0]
