@@ -131,11 +131,14 @@ results["ransac_dist_live"] = [poses, data, trans_errors, rot_errors]
 print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
 
-prosac_value_indices = [ RANSACParameters.lowes_distance_inverse_ratio_index,
-                         RANSACParameters.higher_neighbour_val_index,
-                         RANSACParameters.higher_neighbour_score_index,
-                         RANSACParameters.custom_score_index,
-                         RANSACParameters.custom_score_index_2]
+prosac_value_indices = [RANSACParameters.lowes_distance_inverse_ratio_index,
+                        RANSACParameters.higher_neighbour_val_index,
+                        RANSACParameters.higher_neighbour_score_index,
+                        RANSACParameters.higher_visibility_score_index,
+                        RANSACParameters.lowes_ratio_reliability_score_val_ratio_index,
+                        RANSACParameters.lowes_ratio_heatmap_val_ratio_index,
+                        RANSACParameters.lowes_ratio_by_higher_reliability_score_index,
+                        RANSACParameters.lowes_ratio_by_higher_heatmap_val_index]
 
 print()
 print(" PROSAC versions")
@@ -143,7 +146,7 @@ np.seterr(divide='ignore', invalid='ignore', over='ignore') # this is because so
 for prosac_sort_val in prosac_value_indices:
     poses, data = run_comparison(prosac, matches_live, query_images_names, K, val_idx= prosac_sort_val)
     trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
-    results["prosac_live_"+str(prosac_sort_val)] = [poses, data, trans_errors, rot_errors]
+    results[RANSACParameters.prosac_value_titles[prosac_sort_val]] = [poses, data, trans_errors, rot_errors]
     print(RANSACParameters.prosac_value_titles[prosac_sort_val])
     print("  Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
     print("  Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
