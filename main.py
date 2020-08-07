@@ -3,6 +3,7 @@ import cv2
 from pathlib import Path
 
 from RANSACParameters import RANSACParameters
+from benchmark import benchmark
 from database import COLMAPDatabase
 from feature_matching_generator import feature_matcher_wrapper
 from parameters import Parameters
@@ -98,38 +99,38 @@ results = {}
 print()
 print("Base Model")
 print(" RANSAC")
-poses , data = run_comparison(ransac, matches_base, query_images_names, K)
-trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
-results["ransac_base"] = [poses, data, trans_errors, rot_errors]
-print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
-print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
+    benchmark(parameters.benchmarks_iters, ransac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale)
+print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+results["ransac_base"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
 print()
 print(" PROSAC only lowe's ratio - (lowes_distance_inverse_ratio)")
-poses , data = run_comparison(prosac, matches_base, query_images_names, K, val_idx= RANSACParameters.lowes_distance_inverse_ratio_index)
-trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
-results["prosac_base"] = [poses, data, trans_errors, rot_errors]
-print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
-print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
+    benchmark(parameters.benchmarks_iters, prosac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale, val_idx= RANSACParameters.lowes_distance_inverse_ratio_index)
+print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+results["prosac_base"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
 # -----
 
 print()
 print("Live Model")
 print(" RANSAC") #No need to run RANSAC multiple times here as it is not using any of the points3D scores
-poses , data = run_comparison(ransac, matches_live, query_images_names, K)
-trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
-results["ransac_live"] = [poses, data, trans_errors, rot_errors]
-print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
-print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
+    benchmark(parameters.benchmarks_iters, ransac, matches_live, query_images_names, K, query_images_ground_truth_poses, scale)
+print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+results["ransac_live"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
 print()
 print(" RANSAC + dist")
-poses, data = run_comparison(ransac_dist, matches_live, query_images_names, K, val_idx = RANSACParameters.use_ransac_dist)
-trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
-results["ransac_dist_live"] = [poses, data, trans_errors, rot_errors]
-print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
-print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
+    benchmark(parameters.benchmarks_iters, ransac_dist, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx = RANSACParameters.use_ransac_dist)
+print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+results["ransac_dist_live"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
 prosac_value_indices = [RANSACParameters.lowes_distance_inverse_ratio_index,
                         RANSACParameters.higher_neighbour_val_index,
@@ -144,12 +145,14 @@ print()
 print(" PROSAC versions")
 np.seterr(divide='ignore', invalid='ignore', over='ignore') # this is because some matches will have a reliability_score of zero. so you might have a division by zero
 for prosac_sort_val in prosac_value_indices:
-    poses, data = run_comparison(prosac, matches_live, query_images_names, K, val_idx= prosac_sort_val)
-    trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
-    results[RANSACParameters.prosac_value_titles[prosac_sort_val]] = [poses, data, trans_errors, rot_errors]
-    print(RANSACParameters.prosac_value_titles[prosac_sort_val])
-    print("  Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
-    print("  Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
+    print()
+    prosav_type = RANSACParameters.prosac_value_titles[prosac_sort_val]
+    print(prosav_type)
+    inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
+        benchmark(parameters.benchmarks_iters, prosac, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx=prosac_sort_val)
+    print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+    print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+    results[prosav_type] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
 np.save(parameters.save_results_path, results)
 
