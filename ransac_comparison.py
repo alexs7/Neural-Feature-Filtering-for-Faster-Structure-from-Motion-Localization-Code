@@ -2,22 +2,17 @@ import numpy as np
 import time
 from RANSACParameters import RANSACParameters
 
-# Note:  match_data = [[x, y, x, y, z , m.distance, n.distance], scores]
-# where scores are k by 2 arrays, same size (k) as many points3D_scores you pass (in my case 2, heatmap_matrix_avg_points_values, reliability_scores)
-# Example:  match_data = [[x, y, x, y, z , m.distance, n.distance], [h_m, h_n, r_m, r_n]] -> but flatten
+# Example:  match_data = [[x, y, x, y, z , m.distance, n.distance], [h_m, h_n, r_m, r_n, v_m, v_n]] -> but flatten
 # first value is of m (the closest match), second value is of n (second closest).
+# h = heatmap
+# r = reliability
+# v = visibility
 
 def get_sub_distribution(matches_for_image):
     vals = matches_for_image[:, 7]
     sub_distribution = vals / np.sum(vals)
     sub_distribution = sub_distribution.reshape([sub_distribution.shape[0], 1])
     return sub_distribution
-
-# prosac different scores to sort by - can try more
-# some are below:
-# score_ratio = score_m / score_n  # the higher the better (first match is more "static" than the second, ratio)
-# custom_score = lowes_distance_inverse * score_ratio  # self-explanatory
-# higher_neighbour_score = score_m if score_m > score_n else score_n, (from the 2 neighbours reliability scores, choose the higher one)
 
 # lowes_distance_inverse = n.distance / m.distance  # inverse here as the higher the better for PROSAC
 def lowes_distance_inverse(matches):
