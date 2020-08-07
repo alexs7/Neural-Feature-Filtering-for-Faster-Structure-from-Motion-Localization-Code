@@ -1,13 +1,16 @@
 # Arguments
 import cv2
 from pathlib import Path
+
+from RANSACParameters import RANSACParameters
 from database import COLMAPDatabase
 from feature_matching_generator import feature_matcher_wrapper
 from parameters import Parameters
 from point3D_loader import read_points3d_default, get_points3D_xyz
 import numpy as np
 from pose_evaluator import pose_evaluate
-from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images
+from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, \
+    get_query_images_pose_from_images, get_intrinsics
 from ransac_comparison import run_comparison, sort_matches
 from ransac_prosac import ransac, ransac_dist, prosac
 import sys
@@ -35,8 +38,10 @@ points3D = read_points3d_default(parameters.live_model_points3D_path) # live mod
 points3D_xyz = get_points3D_xyz(points3D)
 
 scale = 1 # default value
-if(Path(parameters.CMU_scale_path).is_file()):
-    scale = np.loadtxt(parameters.CMU_scale_path).reshape(1)[0]
+if(Path(parameters.ARCORE_scale_path).is_file()):
+    scale = np.loadtxt(parameters.ARCORE_scale_path).reshape(1)[0]
+
+K = get_intrinsics(parameters.gt_model_cameras_path, 3)
 
 # train_descriptors_base and train_descriptors_live are self explanatory
 # train_descriptors must have the same length as the number of points3D
@@ -60,7 +65,7 @@ print("Feature matching...")
 #query descs against base model descs
 matches_base = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_base, points3D_xyz, parameters.ratio_test_val, verbose = True)
 np.save(parameters.matches_base_save_path, matches_base)
-matches_live = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz, parameters.ratio_test_val, True, points3D_live_model_scores)
+matches_live = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz, parameters.ratio_test_val, verbose = True, points_scores_array = points3D_live_model_scores)
 np.save(parameters.matches_live_save_path, matches_live)
 
 matches_base = np.load(parameters.matches_base_save_path, allow_pickle=True).item()
@@ -83,7 +88,7 @@ print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (d
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
 print()
 print(" PROSAC only lowe's ratio - (lowes_distance_inverse_ratio)")
-poses , data = run_comparison(prosac, matches_base, query_images_names, val_idx= Parameters.lowes_distance_inverse_ratio_index)
+poses , data = run_comparison(prosac, matches_base, query_images_names, val_idx= RANSACParameters.lowes_distance_inverse_ratio_index)
 trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
 results["prosac_base"] = [poses, data, trans_errors, rot_errors]
 print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
@@ -101,7 +106,7 @@ print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (d
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (np.nanmean(trans_errors), np.nanmean(rot_errors)))
 print()
 print(" RANSAC + dist")
-poses, data = run_comparison(ransac_dist, matches_live, query_images_names, val_idx= Parameters.use_ransac_dist)
+poses, data = run_comparison(ransac_dist, matches_live, query_images_names, val_idx= RANSACParameters.lowes_distance_inverse_ratio_index)
 trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
 results["ransac_dist_live"] = [poses, data, trans_errors, rot_errors]
 print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (data.mean(axis=0)[0], data.mean(axis=0)[1], data.mean(axis=0)[2], data.mean(axis=0)[3]))
