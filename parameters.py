@@ -1,7 +1,5 @@
 class Parameters(object):
 
-    base_path = "/home/alex/fullpipeline/colmap_data/CMU_data/slice2/" #trailing "/"
-
     def __init__(self, base_path):
         self.avg_descs_base_path = base_path+"avg_descs_base.npy"
         self.avg_descs_live_path = base_path+"avg_descs_live.npy"
