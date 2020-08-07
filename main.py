@@ -51,12 +51,25 @@ K = get_intrinsics(parameters.gt_model_cameras_path, 3)
 train_descriptors_base = np.load(parameters.avg_descs_base_path).astype(np.float32)
 train_descriptors_live = np.load(parameters.avg_descs_live_path).astype(np.float32)
 
-# you can check if it is a distribution by calling, .sum() if it is 1, then it is.
-# This can be either heatmap_matrix_avg_points_values_0.5.npy or reliability_scores_0.5.npy
-# Already Normalised
-points3D_heatmap_scores = np.load(parameters.points3D_scores_1_path)
-points3D_reliability_scores = np.load(parameters.points3D_scores_2_path)
-points3D_live_model_scores = [points3D_heatmap_scores, points3D_reliability_scores] #the order matters!
+# Getting the scores
+points3D_reliability_scores_matrix= np.load(parameters.per_image_decay_matrix_path)
+points3D_heatmap_vals_matrix = np.load(parameters.per_session_decay_matrix_path)
+points3D_visibility_matrix = np.load(parameters.binary_visibility_matrix_path)
+
+points3D_reliability_scores = points3D_reliability_scores_matrix.sum(axis=0)
+points3D_heatmap_vals = points3D_heatmap_vals_matrix.sum(axis=0)
+points3D_visibility_vals = points3D_visibility_matrix.sum(axis=0)
+
+points3D_reliability_scores = points3D_reliability_scores.reshape([1, points3D_reliability_scores.shape[0]])
+points3D_heatmap_vals = points3D_heatmap_vals.reshape([1, points3D_heatmap_vals.shape[0]])
+points3D_visibility_vals = points3D_visibility_vals.reshape([1, points3D_visibility_vals.shape[0]])
+
+points3D_reliability_scores = points3D_reliability_scores / points3D_reliability_scores.sum()
+points3D_heatmap_vals = points3D_heatmap_vals / points3D_heatmap_vals.sum()
+points3D_visibility_vals = points3D_visibility_vals / points3D_visibility_vals.sum()
+
+points3D_live_model_scores = [points3D_heatmap_vals, points3D_reliability_scores, points3D_visibility_vals] #the order matters - (for later on PROSAC etc, look at ransac_comparison.py)!
+# Done getting the scores
 
 # 1: Feature matching
 print("Feature matching...")
