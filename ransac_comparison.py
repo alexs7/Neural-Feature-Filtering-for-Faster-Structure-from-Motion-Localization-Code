@@ -3,6 +3,7 @@ import time
 from RANSACParameters import RANSACParameters
 
 # Example:  match_data = [[x, y, x, y, z , m.distance, n.distance], [h_m, h_n, r_m, r_n, v_m, v_n]] -> but flatten
+# [[x (0), y (1), x (2), y (3), z (4), m.distance (5), n.distance (6)], [h_m (7), h_n (8), r_m (9), r_n (10), v_m (11), v_n (12)]]
 # first value is of m (the closest match), second value is of n (second closest).
 # h = heatmap
 # r = reliability
@@ -30,32 +31,43 @@ def reliability_score_ratio(matches):
 def heatmap_value_ratio(matches):
     return matches[:, 7] / matches[:, 8]
 
-def higher_neighbour_value(matches):
-    values = []
-    for match in matches:
-        value_m = match[7]
-        value_n = match[8]
-        higher_value = value_m if value_m > value_n else value_n
-        values.append(higher_value)
-    return np.array(values)
-
-def custom_score(matches):
+def lowes_ratio_by_higher_reliability_score(matches):
     scores = []
     for match in matches:
         lowes_distance_inverse = match[6] / match[5]
         score_m = match[9]
         score_n = match[10]
-        final_score = lowes_distance_inverse * score_m / score_n
+        higher_score = score_m if score_m > score_n else score_n
+        final_score = lowes_distance_inverse * higher_score
         scores.append(final_score)
     return np.array(scores)
 
-def custom_score_2(matches):
-    scores = []
+def lowes_ratio_by_higher_heatmap_val(matches):
+    values = []
     for match in matches:
         lowes_distance_inverse = match[6] / match[5]
         val_m = match[7]
         val_n = match[8]
-        final_score = lowes_distance_inverse * val_m / val_n
+        higher_val = val_m if val_m > val_n else val_n
+        final_score = lowes_distance_inverse * higher_val
+        values.append(final_score)
+    return np.array(values)
+
+def lowes_ratio_reliability_score_ratio(matches):
+    scores = []
+    for match in matches:
+        lowes_distance_inverse = match[6] / match[5]
+        reliability_score_ratio = match[9] / match[10]
+        final_score = lowes_distance_inverse * reliability_score_ratio
+        scores.append(final_score)
+    return np.array(scores)
+
+def lowes_ratio_heatmap_val_ratio(matches):
+    scores = []
+    for match in matches:
+        lowes_distance_inverse = match[6] / match[5]
+        heatmap_val_ratio =  match[7] /  match[8]
+        final_score = lowes_distance_inverse * heatmap_val_ratio
         scores.append(final_score)
     return np.array(scores)
 
@@ -68,15 +80,36 @@ def higher_neighbour_score(matches):
         scores.append(higher_score)
     return np.array(scores)
 
+def higher_neighbour_value(matches):
+    values = []
+    for match in matches:
+        value_m = match[7]
+        value_n = match[8]
+        higher_value = value_m if value_m > value_n else value_n
+        values.append(higher_value)
+    return np.array(values)
+
+def higher_neighbour_visibility_score(matches):
+    scores = []
+    for match in matches:
+        score_m = match[11]
+        score_n = match[12]
+        higher_score = score_m if score_m > score_n else score_n
+        scores.append(higher_score)
+    return np.array(scores)
+
 functions = {RANSACParameters.lowes_distance_inverse_ratio_index : lowes_distance_inverse,
              RANSACParameters.heatmap_val_index : heatmap_val,
              RANSACParameters.reliability_score_index : reliability_score,
              RANSACParameters.reliability_score_ratio_index : reliability_score_ratio,
-             RANSACParameters.custom_score_index : custom_score,
-             RANSACParameters.custom_score_index_2 : custom_score_2,
+             RANSACParameters.lowes_ratio_reliability_score_val_ratio_index : lowes_ratio_reliability_score_ratio,
+             RANSACParameters.lowes_ratio_heatmap_val_ratio_index : lowes_ratio_heatmap_val_ratio,
              RANSACParameters.higher_neighbour_score_index : higher_neighbour_score,
              RANSACParameters.heatmap_val_ratio_index: heatmap_value_ratio,
-             RANSACParameters.higher_neighbour_val_index: higher_neighbour_value}
+             RANSACParameters.higher_neighbour_val_index: higher_neighbour_value,
+             RANSACParameters.higher_visibility_score_index: higher_neighbour_visibility_score,
+             RANSACParameters.lowes_ratio_by_higher_reliability_score_index: lowes_ratio_by_higher_reliability_score,
+             RANSACParameters.lowes_ratio_by_higher_heatmap_val_index: lowes_ratio_by_higher_heatmap_val}
 
 def sort_matches(matches, idx):
     score_list = functions[idx](matches)
