@@ -3,7 +3,6 @@ import numpy as np
 import struct
 import collections
 
-
 CameraModel = collections.namedtuple(
     "CameraModel", ["model_id", "model_name", "num_params"])
 Camera = collections.namedtuple(
@@ -309,7 +308,7 @@ def read_cameras_binary(path_to_model_file):
         assert len(cameras) == num_cameras
     return cameras
 
-def get_intrinsics(cameras_path, id):
+def get_intrinsics_from_camera_bin(cameras_path, id):
     cameras = read_cameras_binary(cameras_path)
     camera_params = cameras[id].params
     K = None

@@ -11,7 +11,7 @@ from point3D_loader import read_points3d_default, get_points3D_xyz
 import numpy as np
 from pose_evaluator import pose_evaluate
 from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, \
-    get_query_images_pose_from_images, get_intrinsics
+    get_query_images_pose_from_images, get_intrinsics_from_camera_bin
 from ransac_comparison import run_comparison, sort_matches
 from ransac_prosac import ransac, ransac_dist, prosac
 import sys
@@ -45,7 +45,8 @@ scale = 1 # default value
 if(Path(parameters.ARCORE_scale_path).is_file()):
     scale = np.loadtxt(parameters.ARCORE_scale_path).reshape(1)[0]
 
-K = get_intrinsics(parameters.gt_model_cameras_path, 3)
+# 3 is because camera 3 is created when query images are added
+K = get_intrinsics_from_camera_bin(parameters.gt_model_cameras_path, 3)
 
 # train_descriptors_base and train_descriptors_live are self explanatory
 # train_descriptors must have the same length as the number of points3D
@@ -100,7 +101,7 @@ print()
 print("Base Model")
 print(" RANSAC")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
-    benchmark(parameters.benchmarks_iters, ransac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale)
+    benchmark(parameters.benchmarks_iters, ransac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale, verbose = True)
 print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 results["ransac_base"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
@@ -108,7 +109,7 @@ results["ransac_base"] = [inlers_no, outliers, iterations, time, trans_errors_ov
 print()
 print(" PROSAC only lowe's ratio - (lowes_distance_inverse_ratio)")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
-    benchmark(parameters.benchmarks_iters, prosac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale, val_idx= RANSACParameters.lowes_distance_inverse_ratio_index)
+    benchmark(parameters.benchmarks_iters, prosac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale, val_idx= RANSACParameters.lowes_distance_inverse_ratio_index, verbose = True)
 print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 results["prosac_base"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
@@ -119,7 +120,7 @@ print()
 print("Live Model")
 print(" RANSAC") #No need to run RANSAC multiple times here as it is not using any of the points3D scores
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
-    benchmark(parameters.benchmarks_iters, ransac, matches_live, query_images_names, K, query_images_ground_truth_poses, scale)
+    benchmark(parameters.benchmarks_iters, ransac, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, verbose = True)
 print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 results["ransac_live"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
@@ -127,7 +128,7 @@ results["ransac_live"] = [inlers_no, outliers, iterations, time, trans_errors_ov
 print()
 print(" RANSAC + dist")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
-    benchmark(parameters.benchmarks_iters, ransac_dist, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx = RANSACParameters.use_ransac_dist)
+    benchmark(parameters.benchmarks_iters, ransac_dist, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx = RANSACParameters.use_ransac_dist, verbose = True)
 print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 results["ransac_dist_live"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
@@ -149,7 +150,7 @@ for prosac_sort_val in prosac_value_indices:
     prosav_type = RANSACParameters.prosac_value_titles[prosac_sort_val]
     print(prosav_type)
     inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
-        benchmark(parameters.benchmarks_iters, prosac, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx=prosac_sort_val)
+        benchmark(parameters.benchmarks_iters, prosac, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx=prosac_sort_val, verbose = True)
     print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
     print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
     results[prosav_type] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]

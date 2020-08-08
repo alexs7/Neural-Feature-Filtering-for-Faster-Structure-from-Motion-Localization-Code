@@ -1,5 +1,5 @@
 import sys
-from query_image import read_images_binary, get_images_camera_centers, get_images_names_bin, get_images_camera_quats, get_intrinsics, \
+from query_image import read_images_binary, get_images_camera_centers, get_images_names_bin, get_images_camera_quats, get_intrinsics_from_camera_bin, \
     get_images_camera_principal_axis_vectors
 
 images_path = sys.argv[1]
@@ -8,7 +8,7 @@ path_to_text_file = sys.argv[3]
 
 names = get_images_names_bin(images_path)
 images = read_images_binary(images_path)
-K = get_intrinsics(cameras_path,1)
+K = get_intrinsics_from_camera_bin(cameras_path, 1)
 centers = get_images_camera_centers(images)
 quats = get_images_camera_quats(images)
 principal_axis_vectors = get_images_camera_principal_axis_vectors(images,K)
