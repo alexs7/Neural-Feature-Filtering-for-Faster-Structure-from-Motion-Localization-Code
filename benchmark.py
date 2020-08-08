@@ -2,7 +2,7 @@ import numpy as np
 from pose_evaluator import pose_evaluate
 from ransac_comparison import run_comparison
 
-def benchmark(benchmarks_iters, ransac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None):
+def benchmark(benchmarks_iters, ransac_func, matches, query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=False):
     trans_errors_overall = []
     rot_errors_overall = []
     inlers_no = []
@@ -11,7 +11,8 @@ def benchmark(benchmarks_iters, ransac, matches_base, query_images_names, K, que
     time = []
 
     for i in range(benchmarks_iters):
-        poses , data = run_comparison(ransac, matches_base, query_images_names, K, val_idx=val_idx)
+        if(verbose): print(" Benchmark Iters: " + str(i + 1) + "/" + str(benchmarks_iters), end="\r")
+        poses , data = run_comparison(ransac_func, matches, query_images_names, K, val_idx=val_idx)
         trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
 
         inlers_no.append(data.mean(axis=0)[0])
@@ -28,5 +29,6 @@ def benchmark(benchmarks_iters, ransac, matches_base, query_images_names, K, que
     trans_errors_overall = np.array(trans_errors_overall).mean()
     rot_errors_overall = np.array(rot_errors_overall).mean()
 
+    if (verbose): print()
     return inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall
 
