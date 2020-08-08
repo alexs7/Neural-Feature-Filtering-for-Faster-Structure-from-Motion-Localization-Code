@@ -36,7 +36,13 @@ var arCoreViewMatrix;
 var arCoreProjMatrix;
 var cameraPoseStringMatrix;
 var totalPointsSum = 0;
-var pointsSize = 0.08;
+var pointsSize = 0.1;
+var pose_scale = 0.3
+var base_model_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/tmp/points3D.txt"
+var cameras_data_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/tmp/camera_centers.txt"
+var CMU_gt_session = "session_2"
+var gt_poses_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/tmp/gt_query_data.txt"
+var gt_images_names = []
 
 window.onload = function() {
 
@@ -59,14 +65,32 @@ window.onload = function() {
     });
 
     $(".reset").click(function(){
-        totalPointsSum = 0;
         clearScene();
     });
 
     $(".loadBaseModel").click(function(){
-        const file_path = '/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/tmp/base/points3D.txt';
+        const file_path = base_model_path;
         var data = fs.readFileSync(file_path);
         data = data.toString().split('\n');
+        data.pop() //get last "" out
+
+        // so model is centered
+        var sum_x = 0
+        var sum_y = 0
+        var sum_z = 0
+        for (var i = 3; i < data.length; i++) {
+            var data_line = data[i].split(" ")
+            var x = parseFloat(data_line[1]);
+            var y = parseFloat(data_line[2]);
+            var z = parseFloat(data_line[3]);
+
+            sum_x += x;
+            sum_y += y;
+            sum_z += z;
+        }
+        var mean_x = sum_x / data.length;
+        var mean_y = sum_y / data.length;
+        var mean_z = sum_z / data.length;
 
         var geometry = new THREE.Geometry();
 
@@ -74,9 +98,9 @@ window.onload = function() {
 
             var data_line = data[i].split(" ")
 
-            var x = parseFloat(data_line[1])
-            var y = parseFloat(data_line[2])
-            var z = parseFloat(data_line[3])
+            var x = parseFloat(data_line[1]) - mean_x;
+            var y = parseFloat(data_line[2]) - mean_y;
+            var z = parseFloat(data_line[3]) - mean_z;
 
             geometry.vertices.push(
                 new THREE.Vector3( x, y, z )
@@ -94,17 +118,44 @@ window.onload = function() {
         var material = new THREE.PointsMaterial( { size: pointsSize, vertexColors: THREE.VertexColors } );
         var points = new THREE.Points( geometry, material );
         scene.add( points );
+        console.log("Done")
     });
 
     $(".loadBasePoses").click(function(){
-        var pose_data = fs.readFileSync("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/tmp/base/camera_centers.txt").toString().split('\n');
+        //before this run python3 get_camera_centers_from_images_to_file.py
+        var pose_data = fs.readFileSync(cameras_data_path).toString().split('\n');
+        pose_data.pop() //get last "" out
+
+        // so poses are centered like the model (have to use the model here)
+        const file_path = base_model_path;
+        var data = fs.readFileSync(file_path);
+        data = data.toString().split('\n');
+        data.pop() //get last "" out
+
+        // so model is centered
+        var sum_x = 0
+        var sum_y = 0
+        var sum_z = 0
+        for (var i = 3; i < data.length; i++) {
+            var data_line = data[i].split(" ")
+            var x = parseFloat(data_line[1]);
+            var y = parseFloat(data_line[2]);
+            var z = parseFloat(data_line[3]);
+
+            sum_x += x;
+            sum_y += y;
+            sum_z += z;
+        }
+        var mean_x = sum_x / data.length;
+        var mean_y = sum_y / data.length;
+        var mean_z = sum_z / data.length;
 
         for (var i = 0; i < pose_data.length; i++) {
             var data = pose_data[i].split(" ")
 
-            var tx = parseFloat(data[0]);
-            var ty = parseFloat(data[1]);
-            var tz = parseFloat(data[2]);
+            var tx = parseFloat(data[0]) - mean_x;
+            var ty = parseFloat(data[1]) - mean_y;
+            var tz = parseFloat(data[2]) - mean_z;
 
             var qx = parseFloat(data[3]);
             var qy = parseFloat(data[4]);
@@ -116,15 +167,35 @@ window.onload = function() {
             var pva_y = parseFloat(data[8]);
             var pva_z = parseFloat(data[9]);
 
+            var color = blue;
+            var session = data[10].split("/")[0];
+
+            console.log(session);
+
+            if (session == CMU_gt_session) {
+                gt_images_names.push(data[10].split("/")[1])
+                color = green;
+            }
+            else{
+                continue
+            }
+
+            if(session.startsWith("img")){
+                color = red;
+            }
+            // if (session == "session_10") {
+            //     color = blue
+            // }
+
             var pose_geometry = new THREE.SphereGeometry(  0.5, 8, 8  );
-            var material = new THREE.MeshPhongMaterial( {color: red} );
+            var material = new THREE.MeshPhongMaterial( {color: color} );
             var pose_cam = new THREE.Mesh( pose_geometry, material );
 
             scene.add( pose_cam );
 
             //principal vector axes
             var line_points = [];
-            var temp_scale = 120000;
+            var temp_scale = 150000;
             line_points.push( new THREE.Vector3( tx, ty, tz ) );
             line_points.push( new THREE.Vector3( tx + pva_x / temp_scale, ty + pva_y / temp_scale, tz + pva_z / temp_scale ) );
 
@@ -142,7 +213,93 @@ window.onload = function() {
             pose_cam.position.y = ty;
             pose_cam.position.z = tz;
 
-            pose_cam.scale.set(0.2,0.2,0.2);
+            pose_cam.scale.set(pose_scale,pose_scale,pose_scale);
+        }
+
+    });
+
+    $(".loadGTPoses").click(function(){
+        //before this run python3 get_principal_axis_vects.py
+        var pose_data = fs.readFileSync(gt_poses_path).toString().split('\n');
+        pose_data.pop() //get last "" out
+
+        var color = yellow;
+
+        // so poses are centered like the model (have to use the model here)
+        const file_path = base_model_path;
+        var data = fs.readFileSync(file_path);
+        data = data.toString().split('\n');
+        data.pop() //get last "" out
+
+        // so model is centered
+        var sum_x = 0
+        var sum_y = 0
+        var sum_z = 0
+        for (var i = 3; i < data.length; i++) {
+            var data_line = data[i].split(" ")
+            var x = parseFloat(data_line[1]);
+            var y = parseFloat(data_line[2]);
+            var z = parseFloat(data_line[3]);
+
+            sum_x += x;
+            sum_y += y;
+            sum_z += z;
+        }
+        var mean_x = sum_x / data.length;
+        var mean_y = sum_y / data.length;
+        var mean_z = sum_z / data.length;
+
+        for (var i = 0; i < pose_data.length; i++) {
+
+            var data = pose_data[i].split(" ");
+
+            var name = data[0]
+
+            if(gt_images_names.includes(name) == false){
+                continue
+            }
+
+            var tx = parseFloat(data[5]) - mean_x;
+            var ty = parseFloat(data[6]) - mean_y;
+            var tz = parseFloat(data[7]) - mean_z;
+
+            var qx = parseFloat(data[1]);
+            var qy = parseFloat(data[2]);
+            var qz = parseFloat(data[3]);
+            var qw = parseFloat(data[4]);
+
+            //principal vector axis
+            var pva_x = parseFloat(data[8]);
+            var pva_y = parseFloat(data[9]);
+            var pva_z = parseFloat(data[10]);
+
+            var pose_geometry = new THREE.SphereGeometry(  0.5, 8, 8  );
+            var material = new THREE.MeshPhongMaterial( {color: color} );
+            var pose_cam = new THREE.Mesh( pose_geometry, material );
+
+            scene.add( pose_cam );
+
+            //principal vector axes
+            var line_points = [];
+            var temp_scale = 170000;
+            line_points.push( new THREE.Vector3( tx, ty, tz ) );
+            line_points.push( new THREE.Vector3( tx + pva_x / temp_scale, ty + pva_y / temp_scale, tz + pva_z / temp_scale ) );
+
+            var line_material = new THREE.LineBasicMaterial( { color: white } );
+            var line_geometry = new THREE.BufferGeometry().setFromPoints( line_points );
+            var line = new THREE.Line( line_geometry, line_material );
+
+            scene.add( line );
+
+            var quaternion = new THREE.Quaternion();
+            quaternion.fromArray([qx, qy, qz, qw]);
+            pose_cam.setRotationFromQuaternion(quaternion);
+
+            pose_cam.position.x = tx;
+            pose_cam.position.y = ty;
+            pose_cam.position.z = tz;
+
+            pose_cam.scale.set(pose_scale,pose_scale,pose_scale);
         }
 
     });
