@@ -1,10 +1,7 @@
 import numpy as np
 import cv2
 from cvxpnpl import pnp
-
 from RANSACParameters import RANSACParameters
-from parameters import Parameters
-from query_image import get_intrinsics
 
 MAX_RANSAC_ITERS = RANSACParameters.ransac_prosac_iterations
 ERROR_THRESHOLD = RANSACParameters.ransac_prosac_error_threshold
