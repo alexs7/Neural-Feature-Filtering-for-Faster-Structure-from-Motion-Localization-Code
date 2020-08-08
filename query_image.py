@@ -131,10 +131,11 @@ def get_images_camera_centers(images):
         cam_centers[v.name] = cam_center
     return cam_centers
 
-def get_images_camera_principal_axis_vectors(images, K):
+def get_images_camera_principal_axis_vectors(images, Ks):
     principal_axis_vectors = {}
     for k,v in images.items():
         pose_r = v.qvec2rotmat()
+        K = Ks[v.name]
         M = K @ pose_r
         m3 = M[2,:]
         principal_axis_vector = np.linalg.det(M) * m3
