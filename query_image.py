@@ -1,4 +1,6 @@
 import time
+
+import cv2
 import numpy as np
 import struct
 import collections
@@ -326,3 +328,15 @@ def get_intrinsics_from_camera_bin(cameras_path, id):
         K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
     assert(K is not None)
     return K
+
+def save_image_projected_points(image_path, K, P, points3D, outpath):
+    image = cv2.imread(image_path)
+    points = K.dot(P.dot(points3D.transpose())[0:3,:])
+    points = points // points[2,:]
+    points = points.transpose()
+    for i in range(len(points)):
+        x = int(points[i][0])
+        y = int(points[i][1])
+        center = (x, y)
+        cv2.circle(image, center, 4, (0, 0, 255), -1)
+    cv2.imwrite(outpath, image)
