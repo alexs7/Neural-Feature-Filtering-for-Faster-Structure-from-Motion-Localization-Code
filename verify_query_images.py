@@ -1,4 +1,6 @@
-
+# This file is to be used to verify the query iamges poses by projecting their
+# 3D points on the actual image.
+# Note that the "projected" folder has to be created manually
 import glob
 import os
 import sys
