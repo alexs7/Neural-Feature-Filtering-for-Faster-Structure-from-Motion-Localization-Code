@@ -102,7 +102,7 @@ print("Base Model")
 print(" RANSAC")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
     benchmark(parameters.benchmarks_iters, ransac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale, verbose = True)
-print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 results["ransac_base"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
@@ -110,7 +110,7 @@ print()
 print(" PROSAC only lowe's ratio - (lowes_distance_inverse_ratio)")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
     benchmark(parameters.benchmarks_iters, prosac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale, val_idx= RANSACParameters.lowes_distance_inverse_ratio_index, verbose = True)
-print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 results["prosac_base"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
@@ -121,7 +121,7 @@ print("Live Model")
 print(" RANSAC") #No need to run RANSAC multiple times here as it is not using any of the points3D scores
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
     benchmark(parameters.benchmarks_iters, ransac, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, verbose = True)
-print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 results["ransac_live"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
@@ -129,7 +129,7 @@ print()
 print(" RANSAC + dist")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
     benchmark(parameters.benchmarks_iters, ransac_dist, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx = RANSACParameters.use_ransac_dist, verbose = True)
-print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 results["ransac_dist_live"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
@@ -147,13 +147,13 @@ print(" PROSAC versions")
 np.seterr(divide='ignore', invalid='ignore', over='ignore') # this is because some matches will have a reliability_score of zero. so you might have a division by zero
 for prosac_sort_val in prosac_value_indices:
     print()
-    prosav_type = RANSACParameters.prosac_value_titles[prosac_sort_val]
-    print(prosav_type)
+    prosac_type = RANSACParameters.prosac_value_titles[prosac_sort_val]
+    print(prosac_type)
     inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
         benchmark(parameters.benchmarks_iters, prosac, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx=prosac_sort_val, verbose = True)
-    print(" Inliers: %1.1f | Outliers: %1.1f | Iterations: %1.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+    print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
     print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-    results[prosav_type] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
+    results[prosac_type] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
 np.save(parameters.save_results_path, results)
 
