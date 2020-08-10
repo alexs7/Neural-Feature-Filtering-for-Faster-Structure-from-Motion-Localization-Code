@@ -340,3 +340,20 @@ def save_image_projected_points(image_path, K, P, points3D, outpath):
         center = (x, y)
         cv2.circle(image, center, 4, (0, 0, 255), -1)
     cv2.imwrite(outpath, image)
+
+def save_heatmap_of_image(image_path, K, P, points3D, outpath, values):
+    values_norm = values / values.sum()
+    points3D = points3D[:,0:3]
+    image = cv2.imread(image_path)
+    width =  image.shape[0]
+    height =  image.shape[1]
+    heatmap_image = np.zeros((height, width, 1), np.uint8)
+    points = K.dot(P.dot(points3D.transpose())[0:3,:])
+    points = points // points[2,:]
+    points = points.transpose()
+    for i in range(len(points)):
+        x = int(points[i][0])
+        y = int(points[i][1])
+        heatmap_image[y,x] = values_norm[i]
+    heatmap = cv2.applyColorMap(heatmap_image, cv2.COLORMAP_HOT)
+    cv2.imwrite(outpath, heatmap)
