@@ -37,7 +37,7 @@ def get_db_sessions(no_images_per_session):
 def create_vm(parameters):
     # by "live model" I mean all the frames from future sessions localised in the base model, including images from base model
     live_model_all_images = read_images_binary(parameters.live_model_images_path)
-    live_model_points3D = read_points3d_default(parameters.live_model_points3D_path)  # live model's 3D points (same length as base (but different order!) as we do not add points when localising new points, but different image_ds for each point)
+    live_model_points3D = read_points3d_default(parameters.live_model_points3D_path)  # live model's 3D points (same length as base (but different order from base!) as we do not add points when localising new points, but different image_ds for each point)
     db = COLMAPDatabase.connect(parameters.live_db_path)
 
     sessions_numbers = np.loadtxt(parameters.no_images_per_session_path).astype(int)
