@@ -104,7 +104,7 @@ inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall 
     benchmark(parameters.benchmarks_iters, ransac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale, verbose = True)
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-results["ransac_base"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
+results[RANSACParameters.ransac_base] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
 print()
 print(" PROSAC only lowe's ratio - (lowes_distance_inverse_ratio)")
@@ -112,7 +112,7 @@ inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall 
     benchmark(parameters.benchmarks_iters, prosac, matches_base, query_images_names, K, query_images_ground_truth_poses, scale, val_idx= RANSACParameters.lowes_distance_inverse_ratio_index, verbose = True)
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-results["prosac_base"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
+results[RANSACParameters.prosac_base] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
 # -----
 
@@ -123,15 +123,31 @@ inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall 
     benchmark(parameters.benchmarks_iters, ransac, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, verbose = True)
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-results["ransac_live"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
+results[RANSACParameters.ransac_live] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
 print()
-print(" RANSAC + dist")
+print(" RANSAC + dist heatmap val:")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
-    benchmark(parameters.benchmarks_iters, ransac_dist, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx = RANSACParameters.use_ransac_dist, verbose = True)
+    benchmark(parameters.benchmarks_iters, ransac_dist, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx = RANSACParameters.use_ransac_dist_heatmap_val, verbose = True)
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
 print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-results["ransac_dist_live"] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
+results[RANSACParameters.ransac_dist_heatmap_val] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
+
+print()
+print(" RANSAC + dist reliability score:")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
+    benchmark(parameters.benchmarks_iters, ransac_dist, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx = RANSACParameters.use_ransac_dist_reliability_score, verbose = True)
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+results[RANSACParameters.ransac_dist_reliability_score] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
+
+print()
+print(" RANSAC + dist visibility score:")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = \
+    benchmark(parameters.benchmarks_iters, ransac_dist, matches_live, query_images_names, K, query_images_ground_truth_poses, scale, val_idx = RANSACParameters.use_ransac_dist_visibility_score, verbose = True)
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+results[RANSACParameters.ransac_dist_visibility_score] = [inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]
 
 prosac_value_indices = [RANSACParameters.lowes_distance_inverse_ratio_index,
                         RANSACParameters.higher_neighbour_val_index,

@@ -9,8 +9,8 @@ from RANSACParameters import RANSACParameters
 # r = reliability
 # v = visibility
 
-def get_sub_distribution(matches_for_image):
-    vals = matches_for_image[:, 7]
+def get_sub_distribution(matches_for_image, index):
+    vals = matches_for_image[:, index]
     sub_distribution = vals / np.sum(vals)
     sub_distribution = sub_distribution.reshape([sub_distribution.shape[0], 1])
     return sub_distribution
@@ -136,8 +136,17 @@ def run_comparison(func, matches, test_images, intrinsics, val_idx = None):
             if(val_idx != -1):
                 matches_for_image = sort_matches(matches_for_image, val_idx)
 
-            if(val_idx == -1):
-                sub_dist = get_sub_distribution(matches_for_image)
+            # These below are for RANSAC + dist versions
+            if(val_idx == RANSACParameters.use_ransac_dist_heatmap_val):
+                sub_dist = get_sub_distribution(matches_for_image, 7)
+                matches_for_image = np.hstack((matches_for_image, sub_dist))
+
+            if (val_idx == RANSACParameters.use_ransac_dist_reliability_score):
+                sub_dist = get_sub_distribution(matches_for_image, 9)
+                matches_for_image = np.hstack((matches_for_image, sub_dist))
+
+            if (val_idx == RANSACParameters.use_ransac_dist_visibility_score):
+                sub_dist = get_sub_distribution(matches_for_image, 11)
                 matches_for_image = np.hstack((matches_for_image, sub_dist))
 
         start = time.time()
