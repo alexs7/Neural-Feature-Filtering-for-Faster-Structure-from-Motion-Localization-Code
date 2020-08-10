@@ -140,6 +140,32 @@ def read_points3d_binary_id(path_to_model_file, id):
                 xyz_values = np.r_[xyz_values, xyz]
     return xyz_values
 
+def read_points3d_binary_id_plus_xyz(path_to_model_file, id):
+    """
+    see: src/base/reconstruction.cc
+        void Reconstruction::ReadPoints3DBinary(const std::string& path)
+        void Reconstruction::WritePoints3DBinary(const std::string& path)
+    """
+    xyz_id_values = np.empty((0, 4))
+    with open(path_to_model_file, "rb") as fid:
+        num_points = read_next_bytes(fid, 8, "Q")[0]
+        for point_line_index in range(num_points):
+            binary_point_line_properties = read_next_bytes(
+                fid, num_bytes=43, format_char_sequence="QdddBBBd")
+            point3D_id = binary_point_line_properties[0]
+            xyz = np.array(binary_point_line_properties[1:4])
+            track_length = read_next_bytes(
+                fid, num_bytes=8, format_char_sequence="Q")[0]
+            track_elems = read_next_bytes(
+                fid, num_bytes=8*track_length,
+                format_char_sequence="ii"*track_length)
+            image_ids = np.array(tuple(map(int, track_elems[0::2])))
+            if (id in image_ids):
+                xyz = np.r_[xyz, point3D_id]
+                xyz = np.reshape(xyz, [1,4])
+                xyz_id_values = np.r_[xyz_id_values, xyz]
+    return xyz_id_values
+
 def get_points3D(id): #this is assumed to be used for the new model (localised)
     points3D = read_points3d_binary_id("/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/colmap_data/data/new_model/points3D.bin", id)
     return points3D
