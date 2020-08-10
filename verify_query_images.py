@@ -4,7 +4,7 @@
 import glob
 import os
 import sys
-from point3D_loader import read_points3d_binary, read_points3d_binary_id
+from point3D_loader import read_points3d_binary_id
 from query_image import read_images_binary, get_image_by_name, get_intrinsics_from_camera_bin, \
     get_query_image_pose_from_images, save_image_projected_points
 
