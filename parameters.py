@@ -1,7 +1,7 @@
 class Parameters(object):
 
     def __init__(self, base_path):
-        self.benchmarks_iters = 1000
+        self.benchmarks_iters = 15
         self.avg_descs_base_path = base_path+"avg_descs_base.npy"
         self.avg_descs_live_path = base_path+"avg_descs_live.npy"
 
@@ -36,7 +36,7 @@ class Parameters(object):
         # then you can use these numbers to get images from each session. The numbers need to be sorted by session though. First is number of base model images.
         self.no_images_per_session_path = base_path+"live/session_lengths.txt"
 
-        self.ratio_test_val = 0.9
+        self.ratio_test_val = 1
 
         # This is the scale you will have to multiply your COLMAP model's acquired camera centers distance with.
         # Pass this in pose evaluator, and it will be multiplied with the distance of the gt camera center and your estimated camera center
