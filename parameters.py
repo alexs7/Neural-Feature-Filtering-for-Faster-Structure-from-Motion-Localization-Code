@@ -36,7 +36,7 @@ class Parameters(object):
         # then you can use these numbers to get images from each session. The numbers need to be sorted by session though. First is number of base model images.
         self.no_images_per_session_path = base_path+"live/session_lengths.txt"
 
-        self.ratio_test_val = 1
+        self.ratio_test_val = 0.9
 
         # This is the scale you will have to multiply your COLMAP model's acquired camera centers distance with.
         # Pass this in pose evaluator, and it will be multiplied with the distance of the gt camera center and your estimated camera center

@@ -133,7 +133,7 @@ def run_comparison(func, matches, test_images, intrinsics, val_idx = None):
         assert(len(matches_for_image) >= 4)
 
         if(val_idx is not None):
-            if(val_idx != -1):
+            if(val_idx >= 0):
                 matches_for_image = sort_matches(matches_for_image, val_idx)
 
             # These below are for RANSAC + dist versions
