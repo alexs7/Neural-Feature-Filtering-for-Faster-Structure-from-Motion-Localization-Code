@@ -17,6 +17,7 @@ from ransac_prosac import ransac, ransac_dist, prosac
 import sys
 
 base_path = sys.argv[1] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice2/" #trailing "/"
+do_feature_matching = sys.argv[2] == "1"
 parameters = Parameters(base_path)
 
 print("Doing path: " + base_path)
@@ -74,21 +75,23 @@ points3D_live_model_scores = [points3D_heatmap_vals, points3D_reliability_scores
 # Done getting the scores
 
 # 1: Feature matching
-print("Feature matching...")
 
 # TIP: Remember we are focusing on the model (and its descs) here so the cases to test are:
 # query images , train_descriptors from live model : will match base + query images descs to live_model avg descs -> (this can have multiple cases depending on the points3D score used)
 # query images , train_descriptors from base model : will match base + query images descs images descs to base avg descs -> (can only be one case...)
 
 #query descs against base model descs
-matches_base = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_base, points3D_xyz_base, parameters.ratio_test_val, verbose = True)
-np.save(parameters.matches_base_save_path, matches_base)
-print()
-matches_live = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz_live, parameters.ratio_test_val, verbose = True, points_scores_array = points3D_live_model_scores)
-np.save(parameters.matches_live_save_path, matches_live)
-
-matches_base = np.load(parameters.matches_base_save_path, allow_pickle=True).item()
-matches_live = np.load(parameters.matches_live_save_path, allow_pickle=True).item()
+if(do_feature_matching):
+    print("Feature matching...")
+    matches_base = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_base, points3D_xyz_base, parameters.ratio_test_val, verbose = True)
+    np.save(parameters.matches_base_save_path, matches_base)
+    print()
+    matches_live = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz_live, parameters.ratio_test_val, verbose = True, points_scores_array = points3D_live_model_scores)
+    np.save(parameters.matches_live_save_path, matches_live)
+else:
+    print("Skipping feature matching...")
+    matches_base = np.load(parameters.matches_base_save_path, allow_pickle=True).item()
+    matches_live = np.load(parameters.matches_live_save_path, allow_pickle=True).item()
 
 # Print options
 np.set_printoptions(precision=2)
