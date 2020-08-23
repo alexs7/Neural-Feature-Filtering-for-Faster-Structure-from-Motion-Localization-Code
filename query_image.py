@@ -131,6 +131,13 @@ def get_images_camera_centers(images):
         cam_centers[v.name] = cam_center
     return cam_centers
 
+def assign_K_to_frame(images, cameras_path):
+    Ks = {}
+    for k,v in images.items():
+        K = get_intrinsics_from_camera_bin(cameras_path, v.camera_id)
+        Ks[v.name] = K
+    return Ks
+
 def get_images_camera_principal_axis_vectors(images, Ks):
     principal_axis_vectors = {}
     for k,v in images.items():
