@@ -21,6 +21,35 @@ html, body {
     height: 100%;
 }
 
+.label {
+    position: relative;
+    display: block;
+}
+
+.basePoses{
+    width: 50%;
+    padding: 4px;
+    background-color: limegreen;
+    color: white;
+    border-radius: 4px;
+}
+
+.sessionPoses{
+    width: 50%;
+    padding: 4px;
+    background-color: blue;
+    color: white;
+    border-radius: 4px;
+}
+
+.queryPoses{
+    width: 50%;
+    padding: 4px;
+    background-color: yellow;
+    color: black;
+    border-radius: 4px;
+}
+
 #custom-handle {
     width: 3em;
     height: 1.6em;
