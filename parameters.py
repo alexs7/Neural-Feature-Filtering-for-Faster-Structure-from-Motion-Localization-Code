@@ -32,8 +32,7 @@ class Parameters(object):
 
         self.save_results_path = base_path+"results.npy"
 
-        # Parameters.no_images_per_session: Number of images per session. This is hardcoded for now, but since images are sorted by name, i.e by time in the database,
-        # then you can use these numbers to get images from each session. The numbers need to be sorted by session though. First is number of base model images.
+        # Parameters.no_images_per_session: Number of images per session. The numbers need to be sorted by session though. First is number of base model images.
         self.no_images_per_session_path = base_path+"live/session_lengths.txt"
 
         self.ratio_test_val = 0.9

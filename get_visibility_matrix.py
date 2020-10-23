@@ -84,6 +84,7 @@ def create_vm(parameters):
     t1_2 = 1  # 1 day
     weighted_per_session_matrix = np.empty([0, len(live_model_points3D)]) #or heatmap..
     for sessions_no, image_ids in sessions_from_db.items(): #ordered
+        # This might need refactoring.. no need for +1 and +1 ...
         t = len(sessions_from_db) - (sessions_no + 1) + 1 #since zero-based (14/07/2020, need to add one so it starts from the last number and goes down..)
         Nt = N0 * (0.5) ** (t / t1_2)
         for image_id in image_ids:

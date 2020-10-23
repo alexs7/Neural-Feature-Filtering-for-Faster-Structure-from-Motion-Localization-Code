@@ -11,7 +11,19 @@ result_11 = np.load("/home/alex/fullpipeline/colmap_data/CMU_data/slice11/result
 results_cmu = [result_3, result_4, result_6, result_10, result_11]
 
 # Coop
-result_coop = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1/results.npy", allow_pickle=True).item()
+result_coop = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1_7/results.npy", allow_pickle=True).item()
+# Coop sub_slices
+result_coop_1 = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1_1/results.npy", allow_pickle=True).item()
+result_coop_2 = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1_2/results.npy", allow_pickle=True).item()
+result_coop_3 = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1_3/results.npy", allow_pickle=True).item()
+result_coop_4 = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1_4/results.npy", allow_pickle=True).item()
+result_coop_5 = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1_5/results.npy", allow_pickle=True).item()
+result_coop_6 = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1_6/results.npy", allow_pickle=True).item()
+result_coop_7 = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1_7/results.npy", allow_pickle=True).item()
+# result_coop_8 = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1/results.npy", allow_pickle=True).item()
+
+#order matters
+results_coop_sub_slices = [result_coop_1, result_coop_2, result_coop_3, result_coop_4, result_coop_5, result_coop_6, result_coop_7]
 
 # print individual (This might not be needed for the paper)
 # for results in results_cmu:
@@ -82,6 +94,34 @@ for ransac_type in ransac_types:
     print("%2.0f & %2.0f & %2.0f & %2.2f & %2.2f & %2.2f" % (inliers_mean, outliers_mean, iters_mean, time_mean, transerror_mean, roterror_mean) + " - " + ransac_type)
 
 print()
+
+# print("ransac_type: Inliers | Outliers | Iters | Time | TransError | RotError (Coop data over time)")
+print("+s1 | +s2 | +s3 | +s4 | +s5 | +s6 | +s7 ")
+for ransac_type in ransac_types:
+    print(ransac_type)
+    inliers = []
+    outliers = []
+    iters = []
+    time = []
+    transerror = []
+    roterror = []
+    for results in results_coop_sub_slices:
+        inliers.append(results[ransac_type][0])
+        outliers.append(results[ransac_type][1])
+        iters.append(results[ransac_type][2])
+        time.append(results[ransac_type][3])
+        transerror.append(results[ransac_type][4])
+        roterror.append(results[ransac_type][5])
+
+    print("%2.0f & %2.0f & %2.0f & %2.0f & %2.0f & %2.0f & %2.0f" % (inliers[0], inliers[1], inliers[2], inliers[3], inliers[4], inliers[5], inliers[6] ))
+    print("%2.0f & %2.0f & %2.0f & %2.0f & %2.0f & %2.0f & %2.0f" % (outliers[0], outliers[1], outliers[2], outliers[3], outliers[4], outliers[5], outliers[6]))
+    print("%2.0f & %2.0f & %2.0f & %2.0f & %2.0f & %2.0f & %2.0f" % (iters[0], iters[1], iters[2], iters[3], iters[4], iters[5], iters[6]))
+    print("%2.2f & %2.2f & %2.2f & %2.2f & %2.2f & %2.2f & %2.2f" % (time[0], time[1], time[2], time[3], time[4], time[5], time[6]))
+    print("%2.2f & %2.2f & %2.2f & %2.2f & %2.2f & %2.2f & %2.2f" % (transerror[0], transerror[1], transerror[2], transerror[3], transerror[4], transerror[5], transerror[6]))
+    print("%2.2f & %2.2f & %2.2f & %2.2f & %2.2f & %2.2f & %2.2f" % (roterror[0], roterror[1], roterror[2], roterror[3], roterror[4], roterror[5], roterror[6]))
+    print()
+
+print()
 print("-------------- Matches Stats")
 
 # matches numbers
@@ -114,8 +154,8 @@ all_live_matches_mean = np.array(all_live_matches).mean()
 print("%2.0f & %2.0f" % (all_base_matches_mean , all_live_matches_mean))
 
 print("Coop")
-base_matches = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1/matches_base.npy", allow_pickle=True).item()
-live_matches = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1/matches_live.npy", allow_pickle=True).item()
+base_matches = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1_7/matches_base.npy", allow_pickle=True).item()
+live_matches = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1_7/matches_live.npy", allow_pickle=True).item()
 total_base_matches = []
 for k, v in base_matches.items():
     total_base_matches.append(v.shape[0])
