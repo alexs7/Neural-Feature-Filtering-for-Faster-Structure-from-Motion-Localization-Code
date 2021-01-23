@@ -1,3 +1,4 @@
+import pdb
 from parameters import Parameters
 from point3D_loader import read_points3d_default, get_points3D_xyz, index_dict, index_dict_reverse
 import numpy as np
@@ -12,19 +13,24 @@ from database import COLMAPDatabase
 def savePoints3DxyzToFile(points3D_xyz):
     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/points3D.txt", points3D_xyz)
 
-points3D_scores = np.load("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/visibility_matrices/1k/heatmap_matrix_avg_points_values_0.5.npy")
-points3D = read_points3d_default(Parameters.live_model_points3D_path)
-points3D_xyz_score = np.empty([0,4])
+points3D_scores = np.load("/home/alex/fullpipeline/colmap_data/alfa_mega/slice1/heatmap_matrix_avg_points_values.npy")
+points3D_scores = points3D_scores.sum(axis=0) # TODO: normalise ?
+points3D = read_points3d_default("/home/alex/fullpipeline/colmap_data/alfa_mega/slice1/live/model/points3D.bin") #Needs to be live model points
+points3D_avg_sift_desc = np.load("/home/alex/fullpipeline/colmap_data/alfa_mega/slice1/avg_descs_live.npy")
+total_dims = 132
+points3D_xyz_score_sift = np.empty([0, total_dims])
 points3D_indexing = index_dict_reverse(points3D)
 for k,v in points3D.items():
     index = points3D_indexing[v.id]
-    score = points3D_scores[0,index]
+    score = points3D_scores[index]
+    avg_sift_vector = points3D_avg_sift_desc[index]
     row = np.array([v.xyz[0], v.xyz[1], v.xyz[2], score]).reshape([1,4])
-    points3D_xyz_score = np.r_[points3D_xyz_score, row]
+    row = np.c_[row, avg_sift_vector.reshape([1, 128])]
+    points3D_xyz_score_sift = np.r_[points3D_xyz_score_sift, row]
 
-points3D_xyz_score = points3D_xyz_score[points3D_xyz_score[:,3].argsort()[::-1]]
+points3D_xyz_score_sift = points3D_xyz_score_sift[points3D_xyz_score_sift[:,3].argsort()[::-1]]
 # sort points
-np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/points3D_sorted_descending.txt", points3D_xyz_score[:,0:3])
+np.savetxt("/home/alex/fullpipeline/colmap_data/alfa_mega/slice1/points3D_sorted_descending_heatmap_per_image.txt", points3D_xyz_score_sift)
 
 # 28/06/2020 old code might still be useful
 
