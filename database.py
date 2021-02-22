@@ -26,6 +26,11 @@ class COLMAPDatabase(sqlite3.Connection):
             return np.getbuffer(array)
 
     @staticmethod
+    def connect_ML_db(path):
+        conn = sqlite3.connect(path)
+        return conn
+
+    @staticmethod
     def create_connection(db_file):
         sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
         sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
