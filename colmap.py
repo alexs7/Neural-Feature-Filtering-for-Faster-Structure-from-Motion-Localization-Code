@@ -3,7 +3,7 @@ import re
 import subprocess
 import tempfile
 
-colmap_bin = "colmap/COLMAP.app/Contents/MacOS/colmap"
+colmap_bin = "colmap"
 
 def override_ini_parameters(ini, params):
     if not params:
@@ -34,10 +34,13 @@ def save_ini(contents, ini_save_path):
 
     return ini_save_path
 
-def feature_extractor(database_path, image_path, image_list_path=None, ini_save_path=None, params=None):
+def feature_extractor(database_path, image_path, image_list_path=None, ini_save_path=None, params=None, query=False):
 
     # Find and read template INI.
-    input_ini_file = os.path.join('template_inis', 'colmap_feature_extraction.ini')
+    if(not query):
+        input_ini_file = os.path.join('template_inis', 'colmap_feature_extraction.ini')
+    else:
+        input_ini_file = os.path.join('template_inis', 'colmap_feature_extraction_query.ini')
     with open(input_ini_file, 'r') as f:
         colmap_ini = f.read()
 
