@@ -19,7 +19,7 @@ def get_point3D_score(points3D_scores, current_point3D_id, points3D_id_index):
     point_score = points3D_scores[point_index]
     return point_score
 
-def create_training_data(base_path, ml_db, points3D, points3D_id_index, points3D_scores, images, db):
+def create_training_data(ml_db, points3D, points3D_id_index, points3D_scores, images, db):
     img_index = -1
     for img_id , img_data in images.items():
         print("Doing image " + str(img_index + 1) + "/" + str(len(images.items())), end="\r")
@@ -47,7 +47,8 @@ def create_training_data(base_path, ml_db, points3D, points3D_id_index, points3D
                               (COLMAPDatabase.array_to_blob(xyz),) + (COLMAPDatabase.array_to_blob(xy),))
         img_index +=1
     ml_db.commit()
-base_path = sys.argv[1] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice2/" #trailing "/"
+
+base_path = sys.argv[1] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice1/" #trailing "/"
 parameters = Parameters(base_path)
 
 db_live = COLMAPDatabase.connect(parameters.live_db_path)
@@ -62,4 +63,4 @@ points3D_id_index = index_dict_reverse(live_model_points3D)
 # i.e /home/alex/fullpipeline/colmap_data/alfa_mega/slice1/ML_data/database.db
 ml_db_path = sys.argv[2]
 ml_data_db = COLMAPDatabase.create_connection(ml_db_path)
-training_data = create_training_data(base_path, ml_data_db, live_model_points3D, points3D_id_index, points3D_per_image_decay_scores, live_model_images, db_live)
+training_data = create_training_data(ml_data_db, live_model_points3D, points3D_id_index, points3D_per_image_decay_scores, live_model_images, db_live)
