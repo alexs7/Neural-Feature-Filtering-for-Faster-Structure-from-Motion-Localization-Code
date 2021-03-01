@@ -11,6 +11,7 @@ import glob
 import pandas as pd
 from database import COLMAPDatabase
 from sklearn.model_selection import KFold
+from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 # this might cause problems when loading the model
@@ -50,6 +51,12 @@ print("Splitting data into test/train..")
 # X_train, y_train, X_test, y_test = split_data(all_sifts, all_scores, 0.3, randomize = True)
 X_train, X_test, y_train, y_test = train_test_split(all_sifts, all_scores, test_size=0.3, shuffle=True, random_state=42)
 
+limit_no = 1000000
+X_train = X_train[0:limit_no, :]
+X_test = X_test[0:limit_no, :]
+y_train = y_train[0:limit_no]
+y_test = y_test[0:limit_no]
+
 # standard scaling - mean normalization
 X_train = ( X_train - X_train.mean() ) / X_train.std()
 X_test = ( X_test - X_test.mean() ) / X_test.std()
@@ -60,7 +67,7 @@ y_test = ( y_test - y_test.min() ) / ( y_test.max() - y_test.min() )
 print("y_train mean: " + str(y_train.mean()))
 print("y_test mean: " + str(y_test.mean()))
 
-num_folds = 5
+num_folds = 10
 acc_per_fold = []
 loss_per_fold = []
 histories = []
@@ -89,15 +96,33 @@ for train, test in kfold.split(X_train):
     print("Training.. on " + str(X_train[train].shape[0]) + " samples")
     history = model.fit(X_train[train], y_train[train],
                         validation_data=(X_train[test], y_train[test]),
-                        epochs=4, batch_size=6400,
+                        epochs=10, batch_size=3200,
                         verbose=1)
+
+    print(history.history.keys())
+    # "Loss"
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('Model Loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['Training Loss (MSE)', 'Validation Loss (MSE)'], loc='upper left')
+    plt.savefig(db_path.rsplit('/', 1)[0] + "/loss_kfold"+str(fold_no)+".png")
+
     histories.append(history)
 
-    score = model.evaluate(X_train[test], y_train[test], verbose=0, batch_size=6400)
+    score = model.evaluate(X_train[test], y_train[test], verbose=0, batch_size=3200)
     print(f"Fold score (MSE): {score}")
     eval_scores.append(score)
 
+    pred_train = model.predict(X_train[train])
+    print("RMSE on Training Data (predict(train_data)): " + str(np.sqrt(metrics.mean_squared_error(y_train[train], pred_train))))
+
+    pred_test = model.predict(X_train[test])
+    print("RMSE on Testing Data (predict(test_data)): " + str(np.sqrt(metrics.mean_squared_error(y_train[test], pred_test))))
+
     fold_no +=1
+
 
 # print("Evaluate Model..")
 # model.evaluate(X_test, y_test, verbose=2)
