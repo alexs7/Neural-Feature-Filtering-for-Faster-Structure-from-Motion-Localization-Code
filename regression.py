@@ -11,10 +11,17 @@ import glob
 import pandas as pd
 from database import COLMAPDatabase
 
-def soft_acc(y_true, y_pred):
-    return K.mean(K.equal(K.round(y_true), K.round(y_pred)))
+# this might cause problems when loading the model
+# def soft_acc(y_true, y_pred):
+#     return K.mean(K.equal(K.round(y_true), K.round(y_pred)))
 
-def split_data(features, target, test_percentage):
+def split_data(features, target, test_percentage, randomize = False):
+    if(randomize):
+        print("Randomizing data")
+        union = np.c_[features, target]
+        np.random.shuffle(union)
+        features = union[:, 0:128]
+        target = union[:, 128]
     rows_no = features.shape[0] #or test , same thing
     train_percentage = 1 - test_percentage
     train_max_idx = int(np.floor(rows_no * train_percentage))
@@ -37,7 +44,7 @@ all_scores = (score[0] for score in scores)
 all_scores = np.array(list(all_scores))
 
 print("Splitting data into test/train..")
-X_train, y_train, X_test, y_test = split_data(all_sifts, all_scores, 0.3)
+X_train, y_train, X_test, y_test = split_data(all_sifts, all_scores, 0.3, randomize = True)
 
 # standard scaling - mean normalization
 X_train = ( X_train - X_train.mean() ) / X_train.std()
@@ -58,28 +65,31 @@ model.add(Dense(8, kernel_initializer='normal', activation='relu'))
 model.add(Dense(1, kernel_initializer='normal', activation='sigmoid')) #TODO: relu might be more appropriate here (since score can never be negative)
 
 # Compile model
-model.compile(optimizer='adam', loss='mse', metrics=[soft_acc])
+model.compile(optimizer='adam', loss='mae')
 
 # train
-print("Training..")
-history = model.fit(X_train, y_train, epochs=100, batch_size=3200, verbose=2)
+print("Training.. on " + str(X_train.shape[0]) + " samples")
+history = model.fit(X_train, y_train, epochs=500, batch_size=3200, validation_split=0.3, shuffle=False, verbose='1')
 
 print(history.history.keys())
 # "Loss"
 plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
 plt.title('model loss')
 plt.ylabel('loss')
 plt.xlabel('epoch')
-plt.legend(['train', 'validation'], loc='upper left')
+plt.legend(['Training Loss (MSE)', 'Validation Loss (MSE)'], loc='upper left')
+plt.savefig(db_path.rsplit('/', 1)[0]+"/loss.png")
 plt.show()
 
 print("Evaluate Model..")
 model.evaluate(X_test, y_test, verbose=2)
 
+print("y_train mean: " + str(y_train.mean()))
+print("y_test mean: " + str(y_test.mean()))
+
 print("Saving Model")
 model.save(db_path.rsplit('/', 1)[0]+"/model")
-
-breakpoint()
 
 # evaluation
 # estimator = KerasRegressor(build_fn=model, epochs=100, batch_size=20, verbose=0)
