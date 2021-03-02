@@ -15,9 +15,11 @@ from sklearn.model_selection import KFold
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
-# sample commnad to run on bath cloud servers, ogg .. etc
-# python3 regression.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 16384 1000 first/
-# python3 regression.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 32768 500 second/
+# This file has a very simple model - 1 layer
+
+# sample command to run on bath cloud servers, ogg .. etc
+# python3 regression_simple.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 16384 1000 first_simple/
+# python3 regression_simple.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 32768 500 second_simple/
 
 # this might cause problems when loading the model
 # def soft_acc(y_true, y_pred):
@@ -39,7 +41,7 @@ def split_data(features, target, test_percentage, randomize = False):
     y_test = target[train_max_idx :]
     return X_train, y_train, X_test, y_test
 
-print("Running Script..!")
+print("Running Script (Simple)..!")
 
 db_path = sys.argv[1]
 num_folds = int(sys.argv[2])
@@ -99,10 +101,6 @@ for train, test in kfold.split(X_train):
     model = Sequential()
     # in keras the first layer is a hidden layer too, so input dims is OK here
     model.add(Dense(128, input_dim=128, kernel_initializer='normal', activation='relu')) #I know all input values will be positive at this point (SIFT)
-    model.add(Dense(64, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(32, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(16, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(8, kernel_initializer='normal', activation='relu'))
     model.add(Dense(1, kernel_initializer='normal', activation='sigmoid')) #TODO: relu might be more appropriate (?) here (since score can never be negative)
 
     # Compile model
