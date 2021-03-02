@@ -6,6 +6,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' #https://stackoverflow.com/questions/35
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 import tensorflow.keras.backend as K
+from tensorflow.keras.regularizers import l2
 import sys
 import glob
 import pandas as pd
@@ -34,6 +35,8 @@ def split_data(features, target, test_percentage, randomize = False):
     y_test = target[train_max_idx :]
     return X_train, y_train, X_test, y_test
 
+print("Running Script..!")
+
 db_path = sys.argv[1]
 ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
@@ -51,12 +54,6 @@ print("Splitting data into test/train..")
 # X_train, y_train, X_test, y_test = split_data(all_sifts, all_scores, 0.3, randomize = True)
 X_train, X_test, y_train, y_test = train_test_split(all_sifts, all_scores, test_size=0.3, shuffle=True, random_state=42)
 
-limit_no = 1000000
-X_train = X_train[0:limit_no, :]
-X_test = X_test[0:limit_no, :]
-y_train = y_train[0:limit_no]
-y_test = y_test[0:limit_no]
-
 # standard scaling - mean normalization
 X_train = ( X_train - X_train.mean() ) / X_train.std()
 X_test = ( X_test - X_test.mean() ) / X_test.std()
@@ -68,8 +65,9 @@ print("y_train mean: " + str(y_train.mean()))
 print("y_test mean: " + str(y_test.mean()))
 
 num_folds = 10
-acc_per_fold = []
-loss_per_fold = []
+batch_size = 3200
+# acc_per_fold = []
+# loss_per_fold = []
 histories = []
 eval_scores = []
 kfold = KFold(n_splits = num_folds, shuffle = True, random_state=42)
@@ -83,10 +81,7 @@ for train, test in kfold.split(X_train):
     model = Sequential()
     # in keras the first layer is a hidden layer too, so input dims is OK here
     model.add(Dense(128, input_dim=128, kernel_initializer='normal', activation='relu')) #I know all input values will be positive at this point (SIFT)
-    model.add(Dense(64, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(32, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(16, kernel_initializer='normal', activation='relu'))
-    model.add(Dense(8, kernel_initializer='normal', activation='relu'))
+    model.add(Dense(16, kernel_initializer='normal', activation='relu', kernel_regularizer=l2(0.1)))
     model.add(Dense(1, kernel_initializer='normal', activation='sigmoid')) #TODO: relu might be more appropriate (?) here (since score can never be negative)
 
     # Compile model
@@ -96,7 +91,7 @@ for train, test in kfold.split(X_train):
     print("Training.. on " + str(X_train[train].shape[0]) + " samples")
     history = model.fit(X_train[train], y_train[train],
                         validation_data=(X_train[test], y_train[test]),
-                        epochs=10, batch_size=3200,
+                        epochs=100, batch_size=batch_size,
                         verbose=1)
 
     print(history.history.keys())
@@ -107,11 +102,13 @@ for train, test in kfold.split(X_train):
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.legend(['Training Loss (MSE)', 'Validation Loss (MSE)'], loc='upper left')
-    plt.savefig(db_path.rsplit('/', 1)[0] + "/loss_kfold"+str(fold_no)+".png")
+    import pdb
+    pdb.set_trace()
+    plt.savefig(db_path.rsplit('/', 1)[0] + "/loss_kfold_simple_model_regular_"+str(fold_no)+".png")
 
     histories.append(history)
 
-    score = model.evaluate(X_train[test], y_train[test], verbose=0, batch_size=3200)
+    score = model.evaluate(X_train[test], y_train[test], verbose=1, batch_size=batch_size)
     print(f"Fold score (MSE): {score}")
     eval_scores.append(score)
 
@@ -123,7 +120,7 @@ for train, test in kfold.split(X_train):
 
     fold_no +=1
 
-
+breakpoint()
 # print("Evaluate Model..")
 # model.evaluate(X_test, y_test, verbose=2)
 #
