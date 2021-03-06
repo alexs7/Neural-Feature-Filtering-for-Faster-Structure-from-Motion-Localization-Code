@@ -15,10 +15,8 @@ from sklearn.model_selection import KFold
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
-# This file has a very simple model - 1 layer
-
-# sample command to run on bath cloud servers, ogg .. etc
-# python3 regression_simple.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 32768 30000 first_simple_30000_epochs/
+# sample commnad to run on bath cloud servers, ogg .. etc
+# python3 regression_simple.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 16384 1000 first_simple/
 # python3 regression_simple.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 32768 500 second_simple/
 
 # this might cause problems when loading the model
@@ -41,7 +39,7 @@ def split_data(features, target, test_percentage, randomize = False):
     y_test = target[train_max_idx :]
     return X_train, y_train, X_test, y_test
 
-print("Running Script (Simple)..!")
+print("Running Script..!")
 
 db_path = sys.argv[1]
 num_folds = int(sys.argv[2])
@@ -71,6 +69,9 @@ print("Splitting data into test/train..")
 
 # X_train, y_train, X_test, y_test = split_data(all_sifts, all_scores, 0.3, randomize = True)
 X_train, X_test, y_train, y_test = train_test_split(all_sifts, all_scores, test_size=0.2, shuffle=True, random_state=42)
+
+print("Total Training Size: " + str(X_train.shape[0]))
+print("Total Test Size: " + str(X_test.shape[0]))
 
 # standard scaling - mean normalization
 X_train = ( X_train - X_train.mean() ) / X_train.std()
@@ -140,6 +141,7 @@ for train, test in kfold.split(X_train):
     print("RMSE on Testing Data (predict(test_data)): " + str(rme_test_val))
     rmse_scores_test.append(rme_test_val)
 
+    print("Saving model..")
     model.save(base_path+"model")
     fold_no +=1
 

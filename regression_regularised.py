@@ -70,6 +70,9 @@ print("Splitting data into test/train..")
 # X_train, y_train, X_test, y_test = split_data(all_sifts, all_scores, 0.3, randomize = True)
 X_train, X_test, y_train, y_test = train_test_split(all_sifts, all_scores, test_size=0.2, shuffle=True, random_state=42)
 
+print("Total Training Size: " + str(X_train.shape[0]))
+print("Total Test Size: " + str(X_test.shape[0]))
+
 # standard scaling - mean normalization
 X_train = ( X_train - X_train.mean() ) / X_train.std()
 X_test = ( X_test - X_test.mean() ) / X_test.std()
@@ -143,6 +146,7 @@ for train, test in kfold.split(X_train):
     print("RMSE on Testing Data (predict(test_data)): " + str(rme_test_val))
     rmse_scores_test.append(rme_test_val)
 
+    print("Saving model..")
     model.save(base_path+"model")
     fold_no +=1
 
