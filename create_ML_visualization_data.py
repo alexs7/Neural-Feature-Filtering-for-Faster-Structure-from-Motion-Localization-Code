@@ -2,7 +2,7 @@ import os
 import numpy as np
 from tensorflow import keras
 import sys
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 import colmap
 from database import COLMAPDatabase
 from parameters import Parameters
@@ -75,7 +75,7 @@ points3D_indexing = index_dict_reverse(points3D)
 no = -1
 for k,v in points3D.items():
     no += 1
-    print("Point no: " + str(no) + "/" + str(len(points3D.items)), end="\r")
+    print("Point no: " + str(no) + "/" + str(len(v)), end="\r")
     index = points3D_indexing[v.id]
     score = points3D_per_image_decay_scores[index]
     avg_sift_vector = points3D_avg_sift_desc[index]
