@@ -5,6 +5,7 @@ import sys
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 import colmap
 from database import COLMAPDatabase
+from parameters import Parameters
 from query_image import get_image_id, get_keypoints_xy, get_queryDescriptors
 
 # This file will create the visualization data to view in threejs or any other viewer you create.
@@ -19,7 +20,7 @@ from query_image import get_image_id, get_keypoints_xy, get_queryDescriptors
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points3D_sorted_descending_heatmap_per_image.txt
 # /home/alex/fullpipeline/colmap_data/CMU_data/slice1/
-# oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points3D_sorted_descending_heatmap_per_image.txt /home/alex/fullpipeline/colmap_data/CMU_data/slice1/
+# oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points3D_sorted_descending_heatmap_per_image.txt /home/alex/fullpipeline/colmap_data/CMU_data/slice1/
 
 # test_db.db will be used to add data, so delete it before running this script
 test_db_path = sys.argv[1]
