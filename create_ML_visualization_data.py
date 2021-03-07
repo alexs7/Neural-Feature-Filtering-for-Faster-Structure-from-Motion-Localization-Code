@@ -76,12 +76,14 @@ for k,v in points3D.items():
     index = points3D_indexing[v.id]
     score = points3D_per_image_decay_scores[index]
     avg_sift_vector = points3D_avg_sift_desc[index]
-    import pdb
-    pdb.set_trace()
-    row = np.array([v.xyz[0], v.xyz[1], v.xyz[2], score]).reshape([1,4])
+    pred_score = model.predict(avg_sift_vector.reshape(1, 128))
+    row = np.array([v.xyz[0], v.xyz[1], v.xyz[2], pred_score, score]).reshape([1,5])
     row = np.c_[row, avg_sift_vector.reshape([1, 128])]
     points3D_xyz_score_sift = np.r_[points3D_xyz_score_sift, row]
 
 points3D_xyz_score_sift = points3D_xyz_score_sift[points3D_xyz_score_sift[:,3].argsort()[::-1]]
 # sort points
 np.savetxt(save_path_points, points3D_xyz_score_sift)
+import pdb
+pdb.set_trace()
+print("Done!")
