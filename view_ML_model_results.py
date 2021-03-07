@@ -29,7 +29,6 @@ y_test = np.load(base_path+"y_test.npy")
 
 print("Predicting...")
 pred_test = model.predict(X_test)
-pred_test = ( pred_test - pred_test.min() ) / ( pred_test.max() - pred_test.min() )
 
 # Just for clarity
 ground_truth = y_test
@@ -37,18 +36,19 @@ pred_truth = pred_test
 
 print("Plotting..")
 plt.cla()
-plt.axis([0, 1, 0, 14000])
-plt.hist(ground_truth, bins=500)
-plt.savefig(base_path + "hist_gt.png")
-plt.hist(pred_truth, bins=500)
-plt.savefig(base_path + "hist_pt.png")
+plt.axis([0, 1, 0, 600])
+plt.hist(ground_truth, bins=15000, label='GT values')
+plt.hist(pred_truth, bins=15000, label='GT values')
+plt.legend(loc="upper left")
+plt.savefig(base_path + "hist_gt_pt.png")
 
-for i in range(0, 100):
-    idx = np.random.choice(np.arange(len(y_test)), 80, replace=False)
-    plt.cla()
-    plt.plot(ground_truth[idx], label='GT')
-    plt.plot(pred_truth[idx], label='PT')
-    plt.savefig(base_path + "plot_"+str(i)+".png")
+# for i in range(0, 100):
+#     idx = np.random.choice(np.arange(len(y_test)), 80, replace=False)
+#     plt.cla()
+#     plt.plot(ground_truth[idx], label='GT values')
+#     plt.plot(pred_truth[idx], label='Pred values')
+#     plt.legend(loc="upper left")
+#     plt.savefig(base_path + "plot_"+str(i)+".png")
 
 print("Done")
 

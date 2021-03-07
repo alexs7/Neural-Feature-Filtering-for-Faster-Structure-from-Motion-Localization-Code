@@ -13,11 +13,11 @@ from database import COLMAPDatabase
 def savePoints3DxyzToFile(points3D_xyz):
     np.savetxt("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/threejs_data_exported/points3D.txt", points3D_xyz)
 
-points3D_scores = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1/heatmap_matrix_avg_points_values.npy")
+points3D_scores = np.load("colmap_data/Coop_data/slice1/heatmap_matrix_avg_points_values.npy")
 points3D_scores = points3D_scores.sum(axis=0)
 points3D_scores = points3D_scores / points3D_scores.sum() # TODO: normalisation needed ?
-points3D = read_points3d_default("/home/alex/fullpipeline/colmap_data/Coop_data/slice1/live/model/points3D.bin") #Needs to be live model points, because of ids changing compared to base model ( because of colmap )
-points3D_avg_sift_desc = np.load("/home/alex/fullpipeline/colmap_data/Coop_data/slice1/avg_descs_live.npy")
+points3D = read_points3d_default("colmap_data/Coop_data/slice1/live/model/points3D.bin") #Needs to be live model points, because of ids changing compared to base model ( because of colmap )
+points3D_avg_sift_desc = np.load("colmap_data/Coop_data/slice1/avg_descs_live.npy")
 total_dims = 132
 points3D_xyz_score_sift = np.empty([0, total_dims])
 points3D_indexing = index_dict_reverse(points3D)
@@ -31,7 +31,7 @@ for k,v in points3D.items():
 
 points3D_xyz_score_sift = points3D_xyz_score_sift[points3D_xyz_score_sift[:,3].argsort()[::-1]]
 # sort points
-np.savetxt("/home/alex/fullpipeline/colmap_data/Coop_data/slice1/points3D_sorted_descending_heatmap_per_image.txt", points3D_xyz_score_sift)
+np.savetxt("colmap_data/Coop_data/slice1/points3D_sorted_descending_heatmap_per_image.txt", points3D_xyz_score_sift)
 
 # 28/06/2020 old code might still be useful
 
