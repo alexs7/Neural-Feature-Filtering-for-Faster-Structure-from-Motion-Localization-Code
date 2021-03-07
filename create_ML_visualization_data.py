@@ -16,17 +16,19 @@ from query_image import get_image_id, get_keypoints_xy, get_queryDescriptors
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/
-# /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/results/
+# /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/
+# /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points3D_sorted_descending_heatmap_per_image.txt
 # /home/alex/fullpipeline/colmap_data/CMU_data/slice1/
-# oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/results/ /home/alex/fullpipeline/colmap_data/CMU_data/slice1/
+# oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points3D_sorted_descending_heatmap_per_image.txt /home/alex/fullpipeline/colmap_data/CMU_data/slice1/
 
 # test_db.db will be used to add data, so delete it before running this script
 test_db_path = sys.argv[1]
 images_dir = sys.argv[2]
 image_list_file = sys.argv[3]
 model_path = sys.argv[4]
-save_path = sys.argv[5]
-base_path = sys.argv[6] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice1/" #trailing "/"
+save_path_images = sys.argv[5]
+save_path_points = sys.argv[6]
+base_path = sys.argv[7] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice1/" #trailing "/"
 
 # make sure the templates_ini/feature_extractions file are the same between Mobile-Pose.. and fullpipeline
 colmap.feature_extractor(test_db_path, images_dir, image_list_file, query=True)
@@ -51,7 +53,7 @@ model = keras.models.load_model(model_path)
 #     data = np.concatenate((keypoints_xy, predictions), axis=1)
 #     data = data[data[:, 2].argsort()[::-1]]
 #
-#     np.savetxt(save_path + q_img.split(".")[0]+".txt", data)
+#     np.savetxt(save_path_images + q_img.split(".")[0]+".txt", data)
 
 # Points
 parameters = Parameters(base_path)
@@ -76,4 +78,4 @@ for k,v in points3D.items():
 
 points3D_xyz_score_sift = points3D_xyz_score_sift[points3D_xyz_score_sift[:,3].argsort()[::-1]]
 # sort points
-np.savetxt("colmap_data/Coop_data/slice1/points3D_sorted_descending_heatmap_per_image.txt", points3D_xyz_score_sift)
+np.savetxt(save_path_points, points3D_xyz_score_sift)
