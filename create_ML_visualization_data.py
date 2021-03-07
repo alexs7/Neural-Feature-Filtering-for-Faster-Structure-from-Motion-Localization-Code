@@ -21,7 +21,7 @@ from point3D_loader import read_points3d_default, index_dict_reverse
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points_predictions.db
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
-# oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
+# oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points_predictions.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
 
 # test_db.db will be used to add data, so delete it before running this script
 test_db_path = sys.argv[1]
@@ -83,7 +83,7 @@ for k,v in points3D.items():
     avg_sift_vector = points3D_avg_sift_desc[index]
     pred_score = model.predict(avg_sift_vector.reshape(1, 128))
     xyz = v.xyz
-    ml_db.execute("INSERT INTO data VALUES (?, ?, ?, ?)",
+    db_points_preds.execute("INSERT INTO data VALUES (?, ?, ?, ?)",
                   (COLMAPDatabase.array_to_blob(avg_sift_vector),) +
                   (pred_score,) +
                   (score,) + 
