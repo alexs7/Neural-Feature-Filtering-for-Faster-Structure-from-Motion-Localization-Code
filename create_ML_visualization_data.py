@@ -43,19 +43,20 @@ query_images = [x.strip() for x in query_images]
 model = keras.models.load_model(model_path)
 
 # Images
-# for i in range(len(query_images)):
-#     q_img = query_images[i]
-#     image_id = get_image_id(db, q_img)
-#     # keypoints data
-#     keypoints_xy = get_keypoints_xy(db, image_id)
-#     queryDescriptors = get_queryDescriptors(db, image_id)
-#
-#     predictions = model.predict(queryDescriptors)
-#
-#     data = np.concatenate((keypoints_xy, predictions), axis=1)
-#     data = data[data[:, 2].argsort()[::-1]]
-#
-#     np.savetxt(save_path_images + q_img.split(".")[0]+".txt", data)
+for i in range(len(query_images)):
+    print("Point no: " + str(i) + "/" + str(len(query_images)), end="\r")
+    q_img = query_images[i]
+    image_id = get_image_id(db, q_img)
+    # keypoints data
+    keypoints_xy = get_keypoints_xy(db, image_id)
+    queryDescriptors = get_queryDescriptors(db, image_id)
+
+    predictions = model.predict(queryDescriptors)
+
+    data = np.concatenate((keypoints_xy, predictions), axis=1)
+    data = data[data[:, 2].argsort()[::-1]]
+
+    np.savetxt(save_path_images + q_img.split(".")[0]+".txt", data)
 
 # Points
 parameters = Parameters(base_path)
