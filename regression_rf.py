@@ -15,12 +15,12 @@ from sklearn.model_selection import KFold
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from joblib import dump, load
+from sklearn.ensemble import RandomForestRegressor
 
 # This file contains a RF implementation
 
 # sample command to run on bath cloud servers, ogg .. etc
-# python3 regression_rf.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 1000 first_rf/
-# python3 regression_rf.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 100 second_rf/
+# python3 regression_rf.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 5 5 first_rf/
 
 def split_data(features, target, test_percentage, randomize = False):
     if(randomize):
@@ -43,13 +43,15 @@ print("Running Script (RF)..!")
 db_path = sys.argv[1]
 num_folds = int(sys.argv[2])
 num_of_trees = int(sys.argv[3])
-model_base_name = sys.argv[4]
+max_tree_depth = None if int(sys.argv[4]) == -1 else int(sys.argv[4])
+model_base_name = sys.argv[5]
 base_path = "colmap_data/Coop_data/slice1/ML_data/results/"
 os.makedirs(base_path+model_base_name)
 base_path = base_path+model_base_name
 
 print("num_folds: " + str(num_folds))
 print("num_of_trees: " + str(num_of_trees))
+print("max_tree_depth: " + str(max_tree_depth))
 
 ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
@@ -94,7 +96,10 @@ for train, test in kfold.split(X_train):
 
     # create model
     print("Creating model")
-    rf = RandomForestRegressor(n_estimatorsint = num_of_trees, random_state=42)
+    rf = RandomForestRegressor(n_estimators = num_of_trees,
+                               random_state=42, max_depth = max_tree_depth,
+                               n_jobs = -1,
+                               verbose = 1)
 
     # train
     print("Training.. on " + str(X_train[train].shape[0]) + " samples")
@@ -107,15 +112,13 @@ for train, test in kfold.split(X_train):
     mse_scores_test.append(mse_test_val)
 
     print("Saving model..")
-    dump(clf, base_path+'model.joblib')
+    dump(rf, base_path+"model_"+str(fold_no)+".joblib")
     fold_no +=1
 
 mse_mean = np.mean(mse_scores_test)
-
 print("MSE mean: " + str(mse_mean))
 
 np.save(base_path+"mse_mean", mse_mean)
-
 print("Done!")
 
 # print("Evaluate Model..")

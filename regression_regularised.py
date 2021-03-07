@@ -89,8 +89,8 @@ print("y_test mean: " + str(y_test.mean()))
 
 histories = []
 eval_scores = []
-rmse_scores_train = []
-rmse_scores_test = []
+mse_scores_train = []
+mse_scores_test = []
 kfold = KFold(n_splits = num_folds, shuffle = True, random_state=42)
 fold_no = 1
 for train, test in kfold.split(X_train):
@@ -137,32 +137,30 @@ for train, test in kfold.split(X_train):
     eval_scores.append(score)
 
     pred_train = model.predict(X_train[train])
-    rme_train_val = np.sqrt(metrics.mean_squared_error(y_train[train], pred_train))
-    print("RMSE on Training Data (predict(train_data)): " + str(rme_train_val))
-    rmse_scores_train.append(rme_train_val)
+    mse_train_val = metrics.mean_squared_error(y_train[train], pred_train)
+    print("MSE on Training Data (predict(train_data)): " + str(mse_train_val))
+    mse_scores_train.append(mse_train_val)
 
     pred_test = model.predict(X_train[test])
-    rme_test_val = np.sqrt(metrics.mean_squared_error(y_train[test], pred_test))
-    print("RMSE on Testing Data (predict(test_data)): " + str(rme_test_val))
-    rmse_scores_test.append(rme_test_val)
+    mse_test_val = metrics.mean_squared_error(y_train[test], pred_test)
+    print("MSE on Testing Data (predict(test_data)): " + str(mse_test_val))
+    mse_scores_test.append(mse_test_val)
 
     print("Saving model..")
-    model.save(base_path+"model")
-    fold_no +=1
+    model.save(base_path + "model_" + str(fold_no))
+    fold_no += 1
 
 mse_mean_eval = np.mean(eval_scores)
-rmse_mean_train = np.mean(rmse_scores_train)
-rmse_mean_test = np.mean(rmse_scores_test)
+mse_mean_train = np.mean(mse_scores_train)
+mse_mean_test = np.mean(mse_scores_test)
 
 print("MSE mean: " + str(mse_mean_eval))
-print("RMSE mean (train): " + str(rmse_mean_train))
-print("RMSE mean (test): " + str(rmse_mean_test))
+print("MSE mean (train): " + str(mse_mean_train))
+print("MSE mean (test): " + str(mse_mean_test))
 
-np.save(base_path+"mse_mean_eval", mse_mean_eval)
-np.save(base_path+"rmse_mean_train", rmse_mean_train)
-np.save(base_path+"rmse_mean_test", rmse_mean_test)
-
-print("Done!")
+np.save(base_path + "mse_mean_eval", mse_mean_eval)
+np.save(base_path + "mse_mean_train", mse_mean_train)
+np.save(base_path + "mse_mean_test", mse_mean_test)
 
 # print("Evaluate Model..")
 # model.evaluate(X_test, y_test, verbose=2)
