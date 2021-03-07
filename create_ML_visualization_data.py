@@ -44,7 +44,7 @@ model = keras.models.load_model(model_path)
 
 # Images
 for i in range(len(query_images)):
-    print("Point no: " + str(i) + "/" + str(len(query_images)), end="\r")
+    print("Image no: " + str(i) + "/" + str(len(query_images)), end="\r")
     q_img = query_images[i]
     image_id = get_image_id(db, q_img)
     # keypoints data
