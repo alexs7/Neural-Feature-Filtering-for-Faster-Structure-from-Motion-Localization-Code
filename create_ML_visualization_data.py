@@ -92,6 +92,8 @@ for k,v in points3D.items():
     # row = np.c_[row, avg_sift_vector.reshape([1, 128])]
     # points3D_xyz_score_sift = np.r_[points3D_xyz_score_sift, row]
 
+db_points_preds.commit()
+
 import pdb
 pdb.set_trace()
 
