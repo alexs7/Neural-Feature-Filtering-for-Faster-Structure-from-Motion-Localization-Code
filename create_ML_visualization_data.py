@@ -19,7 +19,7 @@ from point3D_loader import read_points3d_default, index_dict_reverse
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/
-# /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/
+# /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points_predictions.db
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
 # oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
 
@@ -29,12 +29,13 @@ images_dir = sys.argv[2]
 image_list_file = sys.argv[3]
 model_path = sys.argv[4]
 save_path_images = sys.argv[5]
-save_path_points = sys.argv[6]
+db_path_points = sys.argv[6]
 base_path = sys.argv[7] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice1/" #trailing "/"
 
 # make sure the templates_ini/feature_extractions file are the same between Mobile-Pose.. and fullpipeline
 colmap.feature_extractor(test_db_path, images_dir, image_list_file, query=True)
 db = COLMAPDatabase.connect(test_db_path)
+db_points_preds = COLMAPDatabase.create_connection_for_results(db_path_points)
 
 with open(image_list_file) as f:
     query_images = f.readlines()
@@ -81,18 +82,24 @@ for k,v in points3D.items():
     score = points3D_per_image_decay_scores[index]
     avg_sift_vector = points3D_avg_sift_desc[index]
     pred_score = model.predict(avg_sift_vector.reshape(1, 128))
-    row = np.array([v.xyz[0], v.xyz[1], v.xyz[2], pred_score, score]).reshape([1,5])
-    row = np.c_[row, avg_sift_vector.reshape([1, 128])]
-    points3D_xyz_score_sift = np.r_[points3D_xyz_score_sift, row]
+    xyz = v.xyz
+    ml_db.execute("INSERT INTO data VALUES (?, ?, ?, ?)",
+                  (COLMAPDatabase.array_to_blob(avg_sift_vector),) +
+                  (pred_score,) +
+                  (score,) + 
+                  (COLMAPDatabase.array_to_blob(xyz),))
+    # row = np.array([v.xyz[0], v.xyz[1], v.xyz[2], pred_score, score]).reshape([1,5])
+    # row = np.c_[row, avg_sift_vector.reshape([1, 128])]
+    # points3D_xyz_score_sift = np.r_[points3D_xyz_score_sift, row]
 
 import pdb
 pdb.set_trace()
 
-# sort points
-points3D_sorted_by_pred_score = points3D_xyz_score_sift[points3D_xyz_score_sift[:,3].argsort()[::-1]]
-points3D_sorted_by_score = points3D_xyz_score_sift[points3D_xyz_score_sift[:,4].argsort()[::-1]]
-
-np.savetxt(save_path_points + "points3D_sorted_by_score.txt", points3D_xyz_score_sift)
-np.savetxt(save_path_points + "points3D_sorted_by_pred_score.txt", points3D_xyz_score_sift)
+# # sort points
+# points3D_sorted_by_pred_score = points3D_xyz_score_sift[points3D_xyz_score_sift[:,3].argsort()[::-1]]
+# points3D_sorted_by_score = points3D_xyz_score_sift[points3D_xyz_score_sift[:,4].argsort()[::-1]]
+#
+# np.savetxt(save_path_points + "points3D_sorted_by_score.txt", points3D_xyz_score_sift)
+# np.savetxt(save_path_points + "points3D_sorted_by_pred_score.txt", points3D_xyz_score_sift)
 
 print("Done!")
