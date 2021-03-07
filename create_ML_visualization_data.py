@@ -75,7 +75,7 @@ points3D_indexing = index_dict_reverse(points3D)
 no = -1
 for k,v in points3D.items():
     no += 1
-    print("Point no: " + str(no) + "/" + str(len(v)), end="\r")
+    print("Point no: " + str(no) + "/" + str(len(points3D)), end="\r")
     index = points3D_indexing[v.id]
     score = points3D_per_image_decay_scores[index]
     avg_sift_vector = points3D_avg_sift_desc[index]
