@@ -78,18 +78,14 @@ no = -1
 for k,v in points3D.items():
     no += 1
     print("Point no: " + str(no) + "/" + str(len(points3D)), end="\r")
-    if(no == 1000): break
+    if(no == 100): break
     index = points3D_indexing[v.id]
     score = points3D_per_image_decay_scores[index]
     avg_sift_vector = points3D_avg_sift_desc[index]
     pred_score = model.predict(avg_sift_vector.reshape(1, 128))
-    pred_score = pred_score[0][0]
+    pred_score_float64 = pred_score.astype(np.float64)[0][0]
     xyz = v.xyz
-    db_points_preds.execute("INSERT INTO data VALUES (?, ?, ?, ?)",
-                  (COLMAPDatabase.array_to_blob(avg_sift_vector),) +
-                  (pred_score,) +
-                  (score,) + 
-                  (COLMAPDatabase.array_to_blob(xyz),))
+    db_points_preds.execute("INSERT INTO data VALUES (?, ?, ?, ?)",                  (COLMAPDatabase.array_to_blob(avg_sift_vector),) +               (pred_score,) +                  (score,) +                   (COLMAPDatabase.array_to_blob(xyz),))
     # row = np.array([v.xyz[0], v.xyz[1], v.xyz[2], pred_score, score]).reshape([1,5])
     # row = np.c_[row, avg_sift_vector.reshape([1, 128])]
     # points3D_xyz_score_sift = np.r_[points3D_xyz_score_sift, row]
@@ -98,10 +94,10 @@ db_points_preds.commit()
 
 points_preds_and_gt = db_points_preds.execute("SELECT pred_score, score, xyz FROM data").fetchall()
 xyzs = (COLMAPDatabase.blob_to_array(row[2] , np.float32) for row in points_preds_and_gt)
-pred_scores = (row[0] for row in points_preds_and_gt)
-scores = (row[1] for row in points_preds_and_gt)
 xyzs = np.array(list(xyzs))
+pred_scores = (row[0] for row in points_preds_and_gt)
 pred_scores = np.array(list(pred_scores))
+scores = (row[1] for row in points_preds_and_gt)
 scores = np.array(list(scores))
 
 import pdb
