@@ -92,7 +92,7 @@ for k,v in points3D.items():
 
 db_points_preds.commit()
 
-points_preds_and_gt = db_points_preds.execute("SELECT pred_score, score, xyz FROM data").fetchall()
+points_preds_and_gt = db_points_preds.execute("SELECT predscore, score, xyz FROM data").fetchall()
 xyzs = (COLMAPDatabase.blob_to_array(row[2] , np.float32) for row in points_preds_and_gt)
 xyzs = np.array(list(xyzs))
 pred_scores = (row[0] for row in points_preds_and_gt)
