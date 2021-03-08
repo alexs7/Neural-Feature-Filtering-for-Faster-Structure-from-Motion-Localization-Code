@@ -59,7 +59,7 @@ class COLMAPDatabase(sqlite3.Connection):
         sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
         sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
                                                 sift BLOB NOT NULL,
-                                                pred_score FLOAT NOT NULL,
+                                                predscore FLOAT NOT NULL,
                                                 score FLOAT NOT NULL, 
                                                 xyz BLOB NOT NULL
                                             );"""

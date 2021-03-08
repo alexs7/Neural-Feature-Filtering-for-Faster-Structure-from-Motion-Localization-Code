@@ -85,7 +85,7 @@ for k,v in points3D.items():
     pred_score = model.predict(avg_sift_vector.reshape(1, 128))
     pred_score_float64 = pred_score.astype(np.float64)[0][0]
     xyz = v.xyz
-    db_points_preds.execute("INSERT INTO data VALUES (?, ?, ?, ?)",                  (COLMAPDatabase.array_to_blob(avg_sift_vector),) +               (pred_score,) +                  (score,) +                   (COLMAPDatabase.array_to_blob(xyz),))
+    db_points_preds.execute("INSERT INTO data VALUES (?, ?, ?, ?)",                  (COLMAPDatabase.array_to_blob(avg_sift_vector),) +               (pred_score_float64,) +                  (score,) +                   (COLMAPDatabase.array_to_blob(xyz),))
     # row = np.array([v.xyz[0], v.xyz[1], v.xyz[2], pred_score, score]).reshape([1,5])
     # row = np.c_[row, avg_sift_vector.reshape([1, 128])]
     # points3D_xyz_score_sift = np.r_[points3D_xyz_score_sift, row]
