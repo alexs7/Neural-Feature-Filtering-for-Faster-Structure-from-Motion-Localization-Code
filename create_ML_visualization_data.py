@@ -1,8 +1,8 @@
 import os
 import numpy as np
-from tensorflow import keras
 import sys
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
+from tensorflow import keras
 import colmap
 from database import COLMAPDatabase
 from parameters import Parameters
@@ -102,16 +102,9 @@ xyzs = np.array(list(xyzs))
 pred_scores = np.array(list(pred_scores))
 scores = np.array(list(scores))
 
-
-
-all_sifts = (COLMAPDatabase.blob_to_array(sift[0] ,np.uint8) for sift in sifts)
-all_sifts = np.array(list(all_sifts))
-
-all_scores = (score[0] for score in scores)
-all_scores = np.array(list(all_scores))
-
 import pdb
 pdb.set_trace()
+
 
 # # sort points
 # points3D_sorted_by_pred_score = points3D_xyz_score_sift[points3D_xyz_score_sift[:,3].argsort()[::-1]]
