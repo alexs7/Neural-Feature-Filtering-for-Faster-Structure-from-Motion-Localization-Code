@@ -83,6 +83,8 @@ for k,v in points3D.items():
     avg_sift_vector = points3D_avg_sift_desc[index]
     pred_score = model.predict(avg_sift_vector.reshape(1, 128))
     xyz = v.xyz
+    import pdb
+    pdb.set_trace()
     db_points_preds.execute("INSERT INTO data VALUES (?, ?, ?, ?)",
                   (COLMAPDatabase.array_to_blob(avg_sift_vector),) +
                   (pred_score,) +
@@ -93,6 +95,22 @@ for k,v in points3D.items():
     # points3D_xyz_score_sift = np.r_[points3D_xyz_score_sift, row]
 
 db_points_preds.commit()
+
+points_preds_and_gt = db_points_preds.execute("SELECT pred_score, score, xyz FROM data").fetchall()
+xyzs = (COLMAPDatabase.blob_to_array(row[2] , np.float32) for row in points_preds_and_gt)
+pred_scores = (row[0] for row in points_preds_and_gt)
+scores = (row[1] for row in points_preds_and_gt)
+xyzs = np.array(list(xyzs))
+pred_scores = np.array(list(pred_scores))
+scores = np.array(list(scores))
+
+
+
+all_sifts = (COLMAPDatabase.blob_to_array(sift[0] ,np.uint8) for sift in sifts)
+all_sifts = np.array(list(all_sifts))
+
+all_scores = (score[0] for score in scores)
+all_scores = np.array(list(all_scores))
 
 import pdb
 pdb.set_trace()

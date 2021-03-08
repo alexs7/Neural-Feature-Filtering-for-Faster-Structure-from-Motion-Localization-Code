@@ -30,6 +30,8 @@ class COLMAPDatabase(sqlite3.Connection):
         conn = sqlite3.connect(path)
         return conn
 
+    # xyz -> np.float64, xy -> np.float64, score,pred_score -> as it is (I think you may be able to use np.float64/32)
+    # sift -> np.uint8
     @staticmethod
     def create_connection(db_file):
         sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
@@ -58,7 +60,7 @@ class COLMAPDatabase(sqlite3.Connection):
         sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
                                                 sift BLOB NOT NULL,
                                                 pred_score FLOAT NOT NULL,
-                                                score FLOAT NOT NULL,
+                                                score FLOAT NOT NULL, 
                                                 xyz BLOB NOT NULL
                                             );"""
         conn = None
