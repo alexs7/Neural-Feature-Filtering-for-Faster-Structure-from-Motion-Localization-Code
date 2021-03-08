@@ -20,8 +20,9 @@ from point3D_loader import read_points3d_default, index_dict_reverse
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points_predictions.db
+# /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
-# oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points_predictions.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
+# oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points_predictions.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
 
 # test_db.db will be used to add data, so delete it before running this script
 test_db_path = sys.argv[1]
@@ -30,7 +31,8 @@ image_list_file = sys.argv[3]
 model_path = sys.argv[4]
 save_path_images = sys.argv[5]
 db_path_points = sys.argv[6]
-base_path = sys.argv[7] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice1/" #trailing "/"
+save_path_points = sys.argv[7]
+base_path = sys.argv[8] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice1/" #trailing "/"
 
 # make sure the templates_ini/feature_extractions file are the same between Mobile-Pose.. and fullpipeline
 colmap.feature_extractor(test_db_path, images_dir, image_list_file, query=True)
@@ -78,37 +80,37 @@ no = -1
 for k,v in points3D.items():
     no += 1
     print("Point no: " + str(no) + "/" + str(len(points3D)), end="\r")
-    if(no == 100): break
     index = points3D_indexing[v.id]
     score = points3D_per_image_decay_scores[index]
     avg_sift_vector = points3D_avg_sift_desc[index]
     pred_score = model.predict(avg_sift_vector.reshape(1, 128))
-    pred_score_float64 = pred_score.astype(np.float64)[0][0]
+    pred_score_float64 = pred_score.astype(np.float64)[0][0] #for db reasons
     xyz = v.xyz
-    db_points_preds.execute("INSERT INTO data VALUES (?, ?, ?, ?)",                  (COLMAPDatabase.array_to_blob(avg_sift_vector),) +               (pred_score_float64,) +                  (score,) +                   (COLMAPDatabase.array_to_blob(xyz),))
+    db_points_preds.execute("INSERT INTO data VALUES (?, ?, ?, ?)",
+                            (COLMAPDatabase.array_to_blob(avg_sift_vector),) +
+                            (pred_score_float64,) +
+                            (score,) +
+                            (COLMAPDatabase.array_to_blob(xyz),))
     # row = np.array([v.xyz[0], v.xyz[1], v.xyz[2], pred_score, score]).reshape([1,5])
     # row = np.c_[row, avg_sift_vector.reshape([1, 128])]
     # points3D_xyz_score_sift = np.r_[points3D_xyz_score_sift, row]
 
 db_points_preds.commit()
 
-points_preds_and_gt = db_points_preds.execute("SELECT predscore, score, xyz FROM data").fetchall()
-xyzs = (COLMAPDatabase.blob_to_array(row[2] , np.float32) for row in points_preds_and_gt)
+points_preds_and_gt = db_points_preds.execute("SELECT pred_score, score, xyz FROM data").fetchall()
+xyzs = (COLMAPDatabase.blob_to_array(row[2] , np.float64) for row in points_preds_and_gt)
 xyzs = np.array(list(xyzs))
 pred_scores = (row[0] for row in points_preds_and_gt)
 pred_scores = np.array(list(pred_scores))
 scores = (row[1] for row in points_preds_and_gt)
 scores = np.array(list(scores))
+visual_points_data = np.c_[xyzs, pred_scores, scores]
 
-import pdb
-pdb.set_trace()
+# sort by score
+points3D_sorted_by_pred_score = visual_points_data[visual_points_data[:,3].argsort()[::-1]]
+points3D_sorted_by_score = visual_points_data[visual_points_data[:,4].argsort()[::-1]]
 
-
-# # sort points
-# points3D_sorted_by_pred_score = points3D_xyz_score_sift[points3D_xyz_score_sift[:,3].argsort()[::-1]]
-# points3D_sorted_by_score = points3D_xyz_score_sift[points3D_xyz_score_sift[:,4].argsort()[::-1]]
-#
-# np.savetxt(save_path_points + "points3D_sorted_by_score.txt", points3D_xyz_score_sift)
-# np.savetxt(save_path_points + "points3D_sorted_by_pred_score.txt", points3D_xyz_score_sift)
+np.savetxt(save_path_points + "points3D_sorted_by_pred_score.txt", points3D_sorted_by_pred_score)
+np.savetxt(save_path_points + "points3D_sorted_by_score.txt", points3D_sorted_by_score)
 
 print("Done!")
