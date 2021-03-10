@@ -44,7 +44,7 @@
   <button class="ml_model_debug_btn btn btn-primary" data-toggle="modal" data-target="#exampleModal">Load Sample Frame</button>
   <button class="resetCamera btn btn-primary">Reset World Camera</button>
   <button class="loadCOLMAPpoints btn btn-primary">Load 3D Points</button>
-  <button class="debugMLModel btn btn-primary">Debug ML (Sample Image)</button>
+  <button class="debugMLModel btn btn-primary" data-toggle="modal" data-target="#exampleModal">Debug ML (Random Image)</button>
   <br>
   <label>Size</label>
   <div class="slider_size"></div>
@@ -54,22 +54,26 @@
 
 <!-- Modal -->
 <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-xl" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Sample Frame</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        <div class="image_wrapper">
-          <img src="">
+        <div class="row">
+          <div class="image_wrapper_ml column">
+            <img class="image_ml">
+          </div>
+          <div class="image_wrapper_random column">
+            <img class="image_random">
+          </div>
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
+        <div class="slider_ml"></div>
       </div>
     </div>
   </div>

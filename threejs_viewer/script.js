@@ -40,6 +40,8 @@ var valued_points_preds_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/full
 var valued_points_scores_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/coop_local/ML_data/results/points3D_sorted_by_score.txt"
 var points_from_file = loadPoints3DFromFile(valued_points_preds_path);
 var points_from_file_shuffled = loadPoints3DFromFile(valued_points_preds_path, true);
+var ml_image_path = "/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/coop_local/ML_data/results/test_images/2020-06-22/frame_1592815474234.jpg"
+var frame_code = 1592815613180
 
 window.onload = function() {
 
@@ -56,6 +58,26 @@ window.onload = function() {
             handle.text( ui.value + "%");
             renderModelPath(points_from_file, red, percentage, points_from_file_shuffled);
         }});
+
+    $( ".slider_ml" ).slider({
+        min: 1,
+        max: 100,
+        value: 100,
+        slide: function( event, ui ) {
+            percentage = ui.value
+            console.log(percentage)
+            execSync("python3 draw_keypoints.py " + frame_code + " " + percentage, { cwd: '/Users/alex/Projects/EngDLocalProjects/Lego/fullpipeline/' });
+        }});
+
+    fs.watchFile("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/coop_local/ML_data/results/local_debug_data_for_threejs/frame_"+frame_code+"_ml.jpg", (curr, prev) => {
+        console.log("File have changed - ml");
+        $(".image_ml").attr("src","/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/coop_local/ML_data/results/local_debug_data_for_threejs/frame_"+frame_code+"_ml.jpg");
+    });
+
+    fs.watchFile("/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/coop_local/ML_data/results/local_debug_data_for_threejs/frame_"+frame_code+"_random.jpg", (curr, prev) => {
+        console.log("File have changed - random");
+        $(".image_random").attr("src","/Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/all_data_and_models/coop_local/ML_data/results/local_debug_data_for_threejs/frame_"+frame_code+"_random.jpg");
+    });
 
     $(".load_sorted_points").click(function(){
         renderModelPath(points_from_file, red);
@@ -77,8 +99,7 @@ window.onload = function() {
     });
 
     $(".debugMLModel").click(function(){
-        var image_path = dialog.showOpenDialogSync({ properties: ['openFile'] })
-        $(".ml_model_debug_frame").attr('src', image_path[0]);
+
     });
 
     $(".loadCOLMAPpoints").click(function(){
@@ -394,7 +415,7 @@ window.onload = function() {
         renderer.render( scene, camera );
     }
 
-    animate();
+    //animate();
 
     $( ".slider_size" ).slider({
         min: 0.01,

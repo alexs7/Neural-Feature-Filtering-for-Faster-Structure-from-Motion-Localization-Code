@@ -49,6 +49,22 @@ html, body {
     position: absolute;
 }
 
+.close{
+    padding: 0 !important;
+}
+
+.slider_ml{
+    width: 100%;
+}
+
+.image_wrapper_ml{
+    margin-left: 50px;
+}
+
+.image_wrapper_random{
+    margin-left: 50px;
+}
+
 .ml_model_debug_wrapper > img {
     width: 480px;
     height: 640px;
