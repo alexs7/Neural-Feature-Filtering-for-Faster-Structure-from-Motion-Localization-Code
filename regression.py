@@ -16,7 +16,7 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 regression.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 16384 1000 first/
+# python3 regression.py colmap_data/Coop_data/slice1/ML_data/ml_database_only_matched.db 5 16384 1000 first_only_matched/
 # python3 regression.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 32768 500 second/
 
 # this might cause problems when loading the model
@@ -102,13 +102,10 @@ for train, test in kfold.split(X_train):
     model = Sequential()
     # in keras the first layer is a hidden layer too, so input dims is OK here
     model.add(Dense(128, input_dim=128, kernel_initializer='normal', activation='relu')) #I know all input values will be positive at this point (SIFT)
-    model.add(Dropout(0.5))
     model.add(Dense(64, kernel_initializer='normal', activation='relu'))
     model.add(Dense(32, kernel_initializer='normal', activation='relu'))
-    model.add(Dropout(0.3))
     model.add(Dense(16, kernel_initializer='normal', activation='relu'))
     model.add(Dense(8, kernel_initializer='normal', activation='relu'))
-    model.add(Dropout(0.2))
     model.add(Dense(1, kernel_initializer='normal', activation='sigmoid')) #TODO: relu might be more appropriate (?) here (since score can never be negative)
 
     # Compile model

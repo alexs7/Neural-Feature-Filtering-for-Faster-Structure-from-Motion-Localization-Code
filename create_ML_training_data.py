@@ -8,14 +8,17 @@ from point3D_loader import read_points3d_default, index_dict_reverse
 from query_image import read_images_binary
 
 # The ML part for my second publication starts from here:
+# This file will use data from previous publication (live model + all sessions) and the live database. You can run this on your alienware or ogg/weatherwax
 # You run these in order:
+# (Note, load the python venv: source venv/bin/activate (not in docker!))
 # run, create_ML_training_data.py
 # then run any model such as regression.py, regression_rf.py, using docker on weatherwax or ogg cs.bath.ac.uk.
-# (Note the docker command to run is this: hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -ti bath:2020-gpu
+# (Note the docker command to run is: hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -ti bath:2020-gpu
+# (Note, you will need docker to run the models because it uses gpus, the venv uses python3.6 for some reason)
 # then run, view_ML_model_results.py, to evaluate the model on unseen data!
 # then run, create_ML_visualization_data.py, to create data from unseen images to evaluate visually the models!
 
-# Command example (for coop data):
+# Command example (for coop data, paths might change):
 # python3 create_ML_training_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
 #                                    /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database.db
 
@@ -41,8 +44,9 @@ def create_training_data(ml_db, points3D, points3D_id_index, points3D_scores, im
             current_point3D_id = img_data.point3D_ids[i]
 
             if(current_point3D_id == -1):
-                continue
-                # score = -99.0
+                # (switch between these two lines for matched non-matched features)
+                # continue
+                score = -99.0
             else:
                 score = get_point3D_score(points3D_scores, current_point3D_id, points3D_id_index)
 
