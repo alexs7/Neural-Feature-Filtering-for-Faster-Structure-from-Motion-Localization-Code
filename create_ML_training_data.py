@@ -11,7 +11,7 @@ from query_image import read_images_binary
 # This file will use data from previous publication (live model + all sessions) and the live database. You can run this on your alienware or ogg/weatherwax
 # You run these in order:
 # (Note, load the python venv: source venv/bin/activate (not in docker!))
-# run, create_ML_training_data.py
+# run, create_ML_training_data.py (see below)
 # then run any model such as regression.py, regression_rf.py, using docker on weatherwax or ogg cs.bath.ac.uk.
 # (Note the docker command to run is: hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -ti bath:2020-gpu
 # (Note, you will need docker to run the models because it uses gpus, the venv uses python3.6 for some reason)
@@ -43,12 +43,12 @@ def create_training_data(ml_db, points3D, points3D_id_index, points3D_scores, im
         for i in range(img_data.point3D_ids.shape[0]): # can loop through descs or img_data.xys - same thing
             current_point3D_id = img_data.point3D_ids[i]
 
-            if(current_point3D_id == -1):
-                # (switch between these two lines for matched non-matched features)
-                # continue
+            if(current_point3D_id == -1): # means feature is unmatched
                 score = -99.0
+                matched = 0
             else:
                 score = get_point3D_score(points3D_scores, current_point3D_id, points3D_id_index)
+                matched = 1
 
             if (current_point3D_id == -1):
                 xyz = np.array([0, 0, 0]) # safe to use as no image point will ever match to 0,0,0
@@ -59,9 +59,9 @@ def create_training_data(ml_db, points3D, points3D_id_index, points3D_scores, im
             xy = img_data.xys[i] #np.float64, same as xyz
             img_name = img_data.name
 
-            ml_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?)",
+            ml_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)",
                             (img_id,) + (img_name,) + (COLMAPDatabase.array_to_blob(desc),) + (score,) +
-                              (COLMAPDatabase.array_to_blob(xyz),) + (COLMAPDatabase.array_to_blob(xy),))
+                              (COLMAPDatabase.array_to_blob(xyz),) + (COLMAPDatabase.array_to_blob(xy),) + (matched,))
         img_index +=1
     print()
     print('Done')
@@ -79,7 +79,7 @@ points3D_per_image_decay_scores = np.load(parameters.per_image_decay_matrix_path
 points3D_per_image_decay_scores = points3D_per_image_decay_scores.sum(axis=0)
 points3D_id_index = index_dict_reverse(live_model_points3D)
 
-# i.e /home/alex/fullpipeline/colmap_data/alfa_mega/slice1/ML_data/database.db / or ml_database.db
+# i.e /home/alex/fullpipeline/colmap_data/alfa_mega/slice1/ML_data/database.db / or ml_database.db / or coop/alfa_mega
 # make sure you delete the database (.db) file first!
 ml_db_path = sys.argv[2]
 ml_data_db = COLMAPDatabase.create_connection(ml_db_path)

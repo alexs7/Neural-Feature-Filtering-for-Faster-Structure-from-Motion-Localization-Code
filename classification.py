@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.layers import Dense
 import tensorflow.keras.backend as K
 from tensorflow.keras.regularizers import l2
 import sys
@@ -16,8 +16,8 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 regression.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 16384 1000 regression/
-# python3 regression.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 32768 500 second/
+# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 16384 1000 classification/
+# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 32768 500 second_classification/
 
 # this might cause problems when loading the model
 # def soft_acc(y_true, y_pred):
@@ -56,18 +56,18 @@ print("epochs: " + str(epochs))
 
 ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
-sifts_scores = ml_db.execute("SELECT sift, score FROM data").fetchall() #guarantees same order
+sifts_scores = ml_db.execute("SELECT sift, matched FROM data").fetchall() #guarantees same order
 
 all_sifts = (COLMAPDatabase.blob_to_array(row[0] , np.uint8) for row in sifts_scores)
 all_sifts = np.array(list(all_sifts))
 
-all_scores = (row[1] for row in sifts_scores)
-all_scores = np.array(list(all_scores))
+all_targets = (row[1] for row in sifts_scores) #binary values
+all_targets = np.array(list(all_targets))
 
 print("Splitting data into test/train..")
 
-# X_train, y_train, X_test, y_test = split_data(all_sifts, all_scores, 0.3, randomize = True)
-X_train, X_test, y_train, y_test = train_test_split(all_sifts, all_scores, test_size=0.2, shuffle=True, random_state=42)
+# X_train, y_train, X_test, y_test = split_data(all_sifts, all_targets, 0.3, randomize = True)
+X_train, X_test, y_train, y_test = train_test_split(all_sifts, all_targets, test_size=0.2, shuffle=True, random_state=42)
 
 print("Total Training Size: " + str(X_train.shape[0]))
 print("Total Test Size: " + str(X_test.shape[0]))
@@ -80,8 +80,8 @@ y_train = ( y_train - y_train.min() ) / ( y_train.max() - y_train.min() )
 y_test = ( y_test - y_test.min() ) / ( y_test.max() - y_test.min() )
 
 print("Saving unseen test data..")
-np.save(base_path+"X_test", X_test)
-np.save(base_path+"y_test", y_test)
+# np.save(base_path+"X_test", X_test)
+# np.save(base_path+"y_test", y_test)
 
 print("y_train mean: " + str(y_train.mean()))
 print("y_test mean: " + str(y_test.mean()))
@@ -99,15 +99,18 @@ for train, test in kfold.split(X_train):
     print("Creating model")
     model = Sequential()
     # in keras the first layer is a hidden layer too, so input dims is OK here
-    model.add(Dense(128, input_dim=128, kernel_initializer='normal', activation='sigmoid')) #I know all input values will be positive at this point (SIFT)
+    model.add(Dense(128, input_dim=128, kernel_initializer='normal', activation='sigmoid')) #Keep values from 0 to 1 as 
     model.add(Dense(64, kernel_initializer='normal', activation='sigmoid'))
     model.add(Dense(32, kernel_initializer='normal', activation='sigmoid'))
     model.add(Dense(16, kernel_initializer='normal', activation='sigmoid'))
     model.add(Dense(8, kernel_initializer='normal', activation='sigmoid'))
-    model.add(Dense(1, kernel_initializer='normal', activation='sigmoid')) #TODO: relu might be more appropriate (?) here (since score can never be negative)
+    model.add(Dense(4, kernel_initializer='normal', activation='sigmoid'))
+    model.add(Dense(2, kernel_initializer='normal', activation='sigmoid'))
+    model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
 
     # Compile model
-    model.compile(optimizer='adam', loss='mse')
+    # The loss here will be, binary_crossentropy
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['binary_accuracy'])
 
     # train
     print("Training.. on " + str(X_train[train].shape[0]) + " samples")
@@ -118,59 +121,40 @@ for train, test in kfold.split(X_train):
 
     print(history.history.keys())
     # "Loss"
+    # The loss here will be, binary_crossentropy
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
     plt.title('Model Loss')
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
-    plt.legend(['Training Loss (MSE)', 'Validation Loss (MSE)'], loc='upper left')
+    plt.legend(['Training Loss (binary_crossentropy)', 'Validation Loss (binary_crossentropy)'], loc='upper left')
     plt.savefig(base_path + "loss_"+str(fold_no)+".png")
 
+    plt.clf()
+    plt.plot(history.history['binary_accuracy'])
+    plt.plot(history.history['val_binary_accuracy'])
+    plt.title('Model Binary Accuracy')
+    plt.ylabel('Binary Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['Training Binary Accuracy', 'Validation Binary Accuracy'], loc='upper left')
+    plt.savefig(base_path + "binary_accuracy_"+str(fold_no)+".png")
+
     print("Evaluating..")
-    score = model.evaluate(X_train[test], y_train[test], verbose=0, batch_size=batch_size)
-    print(f"Fold score (MSE): {score}")
-    eval_scores.append(score)
-
-    pred_train = model.predict(X_train[train])
-    mse_train_val = metrics.mean_squared_error(y_train[train], pred_train)
-    print("MSE on Training Data (predict(train_data)): " + str(mse_train_val))
-    mse_scores_train.append(mse_train_val)
-
-    pred_test = model.predict(X_train[test])
-    mse_test_val = metrics.mean_squared_error(y_train[test], pred_test)
-    print("MSE on Testing Data (predict(test_data)): " + str(mse_test_val))
-    mse_scores_test.append(mse_test_val)
+    acc = model.evaluate(X_train[test], y_train[test], verbose=0, batch_size=batch_size)
+    print(f"  Binary Accuracy: {acc[1]}")
+    print(f"  Binary Crossentropy Loss: {acc[0]}")
+    # save only binary accuracy for now ?
+    eval_scores.append(acc[1])
 
     print("Saving model..")
-    model.save(base_path + "model_" + str(fold_no))
+    model.save(base_path+"model_" + str(fold_no))
 
     print("Saving model metrics..")
-    np.save(base_path + "fold_score_" + str(fold_no), score)
-    fold_no += 1
+    np.save(base_path + "acc_" + str(fold_no), acc[1])
+    fold_no +=1
 
-mse_mean_eval = np.mean(eval_scores)
-mse_mean_train = np.mean(mse_scores_train)
-mse_mean_test = np.mean(mse_scores_test)
+accu_mean = np.mean(eval_scores)
+print("Accuraccy Mean: " + str(accu_mean))
+np.save(base_path+"acc_mean", mse_mean_eval)
+print("Done!")
 
-print("MSE mean: " + str(mse_mean_eval))
-print("MSE mean (train): " + str(mse_mean_train))
-print("MSE mean (test): " + str(mse_mean_test))
-
-np.save(base_path + "mse_mean_eval", mse_mean_eval)
-np.save(base_path + "mse_mean_train", mse_mean_train)
-np.save(base_path + "mse_mean_test", mse_mean_test)
-
-# print("Evaluate Model..")
-# model.evaluate(X_test, y_test, verbose=2)
-#
-# print("y_train mean: " + str(y_train.mean()))
-# print("y_test mean: " + str(y_test.mean()))
-#
-# print("Saving Model")
-# model.save(db_path.rsplit('/', 1)[0]+"/model")
-
-# evaluation
-# estimator = KerasRegressor(build_fn=model, epochs=100, batch_size=20, verbose=0)
-# kfold = KFold(n_splits=10)
-# results = cross_val_score(estimator, X, Y, cv=kfold)
-# print("Results: %.2f (%.2f) MSE" % (results.mean(), results.std()))

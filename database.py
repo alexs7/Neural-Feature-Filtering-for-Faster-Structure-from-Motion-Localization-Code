@@ -41,7 +41,8 @@ class COLMAPDatabase(sqlite3.Connection):
                                                 sift BLOB NOT NULL,
                                                 score FLOAT NOT NULL,
                                                 xyz BLOB NOT NULL,
-                                                xy BLOB NOT NULL
+                                                xy BLOB NOT NULL,
+                                                matched INTEGER NOT NULL
                                             );"""
         conn = None
         try:

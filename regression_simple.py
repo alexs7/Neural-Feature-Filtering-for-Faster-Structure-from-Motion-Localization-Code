@@ -56,13 +56,12 @@ print("epochs: " + str(epochs))
 
 ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
-sifts = ml_db.execute("SELECT sift FROM data").fetchall()
-scores = ml_db.execute("SELECT score FROM data").fetchall()
+sifts_scores = ml_db.execute("SELECT sift, score FROM data").fetchall() #guarantees same order
 
-all_sifts = (COLMAPDatabase.blob_to_array(sift[0] ,np.uint8) for sift in sifts)
+all_sifts = (COLMAPDatabase.blob_to_array(row[0] , np.uint8) for row in sifts_scores)
 all_sifts = np.array(list(all_sifts))
 
-all_scores = (score[0] for score in scores)
+all_scores = (row[1] for row in sifts_scores)
 all_scores = np.array(list(all_scores))
 
 print("Splitting data into test/train..")
@@ -87,7 +86,6 @@ np.save(base_path+"y_test", y_test)
 print("y_train mean: " + str(y_train.mean()))
 print("y_test mean: " + str(y_test.mean()))
 
-histories = []
 eval_scores = []
 mse_scores_train = []
 mse_scores_test = []
@@ -101,7 +99,8 @@ for train, test in kfold.split(X_train):
     print("Creating model")
     model = Sequential()
     # in keras the first layer is a hidden layer too, so input dims is OK here
-    model.add(Dense(128, input_dim=128, kernel_initializer='normal', activation='relu')) #I know all input values will be positive at this point (SIFT)
+    # TODO: maybe change the activation function to 'sigmoid from relu' as your score will be always less than 1 and more than 0 (after normalization)?
+    model.add(Dense(128, input_dim=128, kernel_initializer='normal', activation='sigmoid')) #I know all input values will be positive at this point (SIFT)
     model.add(Dense(1, kernel_initializer='normal', activation='sigmoid')) #TODO: relu might be more appropriate (?) here (since score can never be negative)
 
     # Compile model
@@ -124,8 +123,6 @@ for train, test in kfold.split(X_train):
     plt.legend(['Training Loss (MSE)', 'Validation Loss (MSE)'], loc='upper left')
     plt.savefig(base_path + "loss_"+str(fold_no)+".png")
 
-    histories.append(history)
-
     print("Evaluating..")
     score = model.evaluate(X_train[test], y_train[test], verbose=0, batch_size=batch_size)
     print(f"Fold score (MSE): {score}")
@@ -143,6 +140,9 @@ for train, test in kfold.split(X_train):
 
     print("Saving model..")
     model.save(base_path+"model_" + str(fold_no))
+
+    print("Saving model metrics..")
+    np.save(base_path + "fold_score_" + str(fold_no), score)
     fold_no +=1
 
 mse_mean_eval = np.mean(eval_scores)

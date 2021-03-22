@@ -16,8 +16,8 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 regression.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 16384 1000 regression/
-# python3 regression.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 32768 500 second/
+# python3 regression_on_only_matched.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 16384 1000 regression_on_only_matched/
+# python3 regression_on_only_matched.py colmap_data/Coop_data/slice1/ML_data/ml_database.db 5 32768 500 second/
 
 # this might cause problems when loading the model
 # def soft_acc(y_true, y_pred):
@@ -56,7 +56,7 @@ print("epochs: " + str(epochs))
 
 ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
-sifts_scores = ml_db.execute("SELECT sift, score FROM data").fetchall() #guarantees same order
+sifts_scores = ml_db.execute("SELECT sift, score FROM data WHERE matched = 1").fetchall() #guarantees same order
 
 all_sifts = (COLMAPDatabase.blob_to_array(row[0] , np.uint8) for row in sifts_scores)
 all_sifts = np.array(list(all_sifts))
