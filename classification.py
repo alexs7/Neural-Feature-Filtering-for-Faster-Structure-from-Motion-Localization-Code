@@ -155,6 +155,6 @@ for train, test in kfold.split(X_train):
 
 accu_mean = np.mean(eval_scores)
 print("Accuraccy Mean: " + str(accu_mean))
-np.save(base_path+"acc_mean", mse_mean_eval)
+np.save(base_path+"acc_mean", accu_mean)
 print("Done!")
 
