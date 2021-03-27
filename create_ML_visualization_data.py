@@ -11,18 +11,19 @@ from point3D_loader import read_points3d_default, index_dict_reverse
 
 # This file will create the visualization data to view in threejs or any other viewer you create.
 # For images and pointclouds
+# Even though it is called visual.db, it is not used for testing ML models as unseen data.
 
 # Command:
 # python3 create_ML_visualization_data.py
-# /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db
-# /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/
+# /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual.db
+# /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_images/2020-06-22/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points_predictions.db
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/
 # /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
-# oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_db.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/test_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points_predictions.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
+# oneliner: python3 create_ML_visualization_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_images/2020-06-22/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/images_list.txt /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/model/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/images/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/points_predictions.db /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/visual_data/points/ /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
 
 # test_db.db will be used to add data, so delete it before running this script
 test_db_path = sys.argv[1]
@@ -37,7 +38,7 @@ base_path = sys.argv[8] # example: "/home/alex/fullpipeline/colmap_data/CMU_data
 # make sure the templates_ini/feature_extractions file are the same between Mobile-Pose.. and fullpipeline
 colmap.feature_extractor(test_db_path, images_dir, image_list_file, query=True)
 db = COLMAPDatabase.connect(test_db_path)
-db_points_preds = COLMAPDatabase.create_connection_for_results(db_path_points)
+db_points_preds = COLMAPDatabase.create_db_for_visual_data(db_path_points)
 
 with open(image_list_file) as f:
     query_images = f.readlines()
