@@ -79,19 +79,22 @@ def prepare_data_for_training(db_path_all, db_path_train_class, db_path_test_cla
     # y_train = ( y_train - y_train.min() ) / ( y_train.max() - y_train.min() )
     # y_test = ( y_test - y_test.min() ) / ( y_test.max() - y_test.min() )
 
-    print("Classification Data:")
+    print("Classification Data...")
     print(" Total Training Size: " + str(X_train.shape[0]))
     print(" Total Test Size: " + str(X_test.shape[0]))
     print(" y_train mean: " + str(y_train.mean()))
     print(" y_test mean: " + str(y_test.mean()))
 
     for i in range(X_train.shape[0]):
+        print("Inserting entry " + str(i) + "/" + str(X_train.shape[0]), end="\r")
         db_train_class.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_train[i,:]),) + (y_train[i],))
+        db_train_class.commit()
     for i in range(X_test.shape[0]):
+        print("Inserting entry " + str(i) + "/" + str(X_test.shape[0]), end="\r")
         db_test_class.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_test[i,:]),) + (y_test[i],))
+        db_test_class.commit()
 
-    db_train_class.commit()
-    db_test_class.commit()
+    print("Done!")
 
     print("Splitting data into test/train..")
     # regression
@@ -105,22 +108,24 @@ def prepare_data_for_training(db_path_all, db_path_train_class, db_path_test_cla
     y_train = ( y_train - y_train.min() ) / ( y_train.max() - y_train.min() )
     y_test = ( y_test - y_test.min() ) / ( y_test.max() - y_test.min() )
 
-    print("Regression Data:")
+    print("Regression Data...")
     print(" Total Training Size: " + str(X_train.shape[0]))
     print(" Total Test Size: " + str(X_test.shape[0]))
     print(" y_train mean: " + str(y_train.mean()))
     print(" y_test mean: " + str(y_test.mean()))
 
     for i in range(X_train.shape[0]):
+        print("Inserting entry " + str(i) + "/" + str(X_train.shape[0]), end="\r")
         db_train_reg.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_train[i,:]),) + (y_train[i],))
+        db_train_reg.commit()
     for i in range(X_test.shape[0]):
+        print("Inserting entry " + str(i) + "/" + str(X_test.shape[0]), end="\r")
         db_test_reg.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_test[i,:]),) + (y_test[i],))
+        db_test_reg.commit()
 
-    db_train_reg.commit()
-    db_test_reg.commit()
+    print("Done!")
 
     return
-
 
 def get_image_decs(db, image_id):
     data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
