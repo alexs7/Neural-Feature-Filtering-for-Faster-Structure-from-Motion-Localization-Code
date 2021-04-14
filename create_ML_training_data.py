@@ -14,7 +14,8 @@ from sklearn.model_selection import train_test_split
 # (Note, load the python venv: source venv/bin/activate (not in docker!))
 # run, create_ML_training_data.py (see below)
 # then run any model such as regression.py, regression_rf.py, using docker on weatherwax or ogg cs.bath.ac.uk.
-# (Note the docker command to run is: hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -ti bath:2020-gpu
+# (Note the docker command to run is (and before run this "hare reserve 20000" to reserve a port):
+# hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -p 20000:80 -ti bath:2020-gpu
 # (Note, you will need docker to run the models because it uses gpus, the venv uses python3.6 for some reason)
 # then run, view_ML_model_results.py, to evaluate the model on unseen data!
 # then run, create_ML_visualization_data.py, to create data from unseen images to evaluate visually the models!
@@ -57,6 +58,13 @@ def prepare_data_for_training(db_path_all, db_path_train_class, db_path_test_cla
 
     all_data = db_all.execute("SELECT sift, score, matched FROM data ORDER BY image_id DESC").fetchall()
 
+    # begin transactions
+    db_all.execute("BEGIN")
+    db_train_class.execute("BEGIN")
+    db_test_class.execute("BEGIN")
+    db_train_reg.execute("BEGIN")
+    db_test_reg.execute("BEGIN")
+
     all_sifts = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in all_data)
     all_sifts = np.array(list(all_sifts))
 
@@ -88,11 +96,9 @@ def prepare_data_for_training(db_path_all, db_path_train_class, db_path_test_cla
     for i in range(X_train.shape[0]):
         print("Inserting entry " + str(i) + "/" + str(X_train.shape[0]), end="\r")
         db_train_class.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_train[i,:]),) + (y_train[i],))
-        db_train_class.commit()
     for i in range(X_test.shape[0]):
         print("Inserting entry " + str(i) + "/" + str(X_test.shape[0]), end="\r")
         db_test_class.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_test[i,:]),) + (y_test[i],))
-        db_test_class.commit()
 
     print("Done!")
 
@@ -117,11 +123,15 @@ def prepare_data_for_training(db_path_all, db_path_train_class, db_path_test_cla
     for i in range(X_train.shape[0]):
         print("Inserting entry " + str(i) + "/" + str(X_train.shape[0]), end="\r")
         db_train_reg.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_train[i,:]),) + (y_train[i],))
-        db_train_reg.commit()
     for i in range(X_test.shape[0]):
         print("Inserting entry " + str(i) + "/" + str(X_test.shape[0]), end="\r")
         db_test_reg.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_test[i,:]),) + (y_test[i],))
-        db_test_reg.commit()
+
+    # finishing BEGIN with COMMIT
+    db_train_class.execute("COMMIT")
+    db_test_class.execute("COMMIT")
+    db_train_reg.execute("COMMIT")
+    db_test_reg.execute("COMMIT")
 
     print("Done!")
 
@@ -140,8 +150,9 @@ def get_point3D_score(points3D_scores, current_point3D_id, points3D_id_index):
     return point_score
 
 def create_all_data(ml_db_path, points3D, points3D_id_index, points3D_scores, images, db):
-    ml_db = COLMAPDatabase.create_db_for_all_data(ml_db_path)
+    ml_db = COLMAPDatabase.create_db_for_all_data(ml_db_path) #returns a connection
     img_index = 0
+    ml_db.execute("BEGIN")
     for img_id , img_data in images.items():
         print("Doing image " + str(img_index + 1) + "/" + str(len(images.items())), end="\r")
         descs = get_image_decs(db, img_id)
@@ -169,6 +180,7 @@ def create_all_data(ml_db_path, points3D, points3D_id_index, points3D_scores, im
                             (img_id,) + (img_name,) + (COLMAPDatabase.array_to_blob(desc),) + (score,) +
                               (COLMAPDatabase.array_to_blob(xyz),) + (COLMAPDatabase.array_to_blob(xy),) + (matched,))
         img_index +=1
+
     print()
     print('Done!')
     ml_db.commit()
