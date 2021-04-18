@@ -31,10 +31,11 @@ class COLMAPDatabase(sqlite3.Connection):
         return conn
 
     @staticmethod
-    def create_db_for_training_data_class(db_file):
+    def create_db_for_training_data(db_file):
         sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
         sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
                                                 sift BLOB NOT NULL,
+                                                score FLOAT NOT NULL,
                                                 matched INTEGER NOT NULL
                                             );"""
         conn = None
@@ -49,47 +50,12 @@ class COLMAPDatabase(sqlite3.Connection):
             print(e)
 
     @staticmethod
-    def create_db_for_test_data_class(db_file):
+    def create_db_for_test_data(db_file):
         sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
         sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
                                                 sift BLOB NOT NULL,
+                                                score FLOAT NOT NULL,
                                                 matched INTEGER NOT NULL
-                                            );"""
-        conn = None
-        try:
-            conn = sqlite3.connect(db_file)
-            conn.execute(sql_drop_table_if_exists)
-            conn.commit()
-            conn.execute(sql_create_data_table)
-            conn.commit()
-            return conn
-        except Error as e:
-            print(e)
-
-    @staticmethod
-    def create_db_for_training_data_reg(db_file):
-        sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
-        sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
-                                                sift BLOB NOT NULL,
-                                                score FLOAT NOT NULL
-                                            );"""
-        conn = None
-        try:
-            conn = sqlite3.connect(db_file)
-            conn.execute(sql_drop_table_if_exists)
-            conn.commit()
-            conn.execute(sql_create_data_table)
-            conn.commit()
-            return conn
-        except Error as e:
-            print(e)
-
-    @staticmethod
-    def create_db_for_test_data_reg(db_file):
-        sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
-        sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
-                                                sift BLOB NOT NULL,
-                                                score FLOAT NOT NULL
                                             );"""
         conn = None
         try:

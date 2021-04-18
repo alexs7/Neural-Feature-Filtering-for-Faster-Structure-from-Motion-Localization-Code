@@ -47,23 +47,18 @@ def split_data(features, target, test_percentage, randomize = False):
     y_test = target[train_max_idx :]
     return X_train, y_train, X_test, y_test
 
-def prepare_data_for_training(db_path_all, db_path_train_class, db_path_test_class, db_path_train_reg, db_path_test_reg, test_size = 0.1, shuffle = True, random_state = 42):
+def prepare_data_for_training(db_path_all, db_path_train, db_path_test, test_size = 0.1, shuffle = True, random_state = 42):
     db_all = COLMAPDatabase.connect_ML_db(db_path_all)
     # "_class" = classification
     # "_reg" = regression
-    db_train_class = COLMAPDatabase.create_db_for_training_data_class(db_path_train_class)
-    db_test_class = COLMAPDatabase.create_db_for_test_data_class(db_path_test_class)
-    db_train_reg = COLMAPDatabase.create_db_for_training_data_reg(db_path_train_reg)
-    db_test_reg = COLMAPDatabase.create_db_for_test_data_reg(db_path_test_reg)
+    db_train = COLMAPDatabase.create_db_for_training_data(db_path_train)
+    db_test = COLMAPDatabase.create_db_for_test_data(db_path_test)
 
     all_data = db_all.execute("SELECT sift, score, matched FROM data ORDER BY image_id DESC").fetchall()
 
     # begin transactions
-    db_all.execute("BEGIN")
-    db_train_class.execute("BEGIN")
-    db_test_class.execute("BEGIN")
-    db_train_reg.execute("BEGIN")
-    db_test_reg.execute("BEGIN")
+    db_train.execute("BEGIN")
+    db_test.execute("BEGIN")
 
     all_sifts = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in all_data)
     all_sifts = np.array(list(all_sifts))
@@ -74,65 +69,34 @@ def prepare_data_for_training(db_path_all, db_path_train_class, db_path_test_cla
     all_targets = (row[2] for row in all_data)  # binary values
     all_targets = np.array(list(all_targets))
 
+    indices = np.arange(len(all_data))
+
     print("Splitting data into test/train..")
     # classification
-    X_train, X_test, y_train, y_test = train_test_split(all_sifts, all_targets, test_size=test_size, shuffle=shuffle, random_state=random_state)
+    X_train, X_test, y_train, y_test, idx_train, idx_test = train_test_split(all_sifts, all_targets, indices, test_size=test_size, shuffle=shuffle, random_state=random_state)
 
-    # preproseccing
-    # standard scaling - mean normalization
-    X_train = (X_train - X_train.mean()) / X_train.std()
-    X_test = (X_test - X_test.mean()) / X_test.std()
+    print("Data Info...")
+    print(" Total Training Size: " + str(idx_train.shape[0]))
+    print(" Total Test Size: " + str(idx_test.shape[0]))
+    print(" values_train mean: " + str(all_scores[idx_train].mean())) #negative mean because of -99 values
+    print(" values_test mean: " + str(all_scores[idx_test].mean()))
+    print(" classes_train mean: " + str(all_targets[idx_train].mean()))
+    print(" classes_test mean: " + str(all_targets[idx_test].mean()))
 
-    # min-max normalization - this  might not be needed for binary classification
-    # y_train = ( y_train - y_train.min() ) / ( y_train.max() - y_train.min() )
-    # y_test = ( y_test - y_test.min() ) / ( y_test.max() - y_test.min() )
-
-    print("Classification Data...")
-    print(" Total Training Size: " + str(X_train.shape[0]))
-    print(" Total Test Size: " + str(X_test.shape[0]))
-    print(" y_train mean: " + str(y_train.mean()))
-    print(" y_test mean: " + str(y_test.mean()))
-
-    for i in range(X_train.shape[0]):
+    for i in range(len(idx_train)):
+        curr_index = idx_train[i]
         print("Inserting entry " + str(i) + "/" + str(X_train.shape[0]), end="\r")
-        db_train_class.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_train[i,:]),) + (y_train[i],))
-    for i in range(X_test.shape[0]):
+        db_train.execute("INSERT INTO data VALUES (?, ?, ?)", (COLMAPDatabase.array_to_blob(all_sifts[curr_index,:]),) + (all_scores[curr_index],) + (int(all_targets[curr_index]),))
+    for i in range(len(idx_test)):
+        curr_index = idx_test[i]
         print("Inserting entry " + str(i) + "/" + str(X_test.shape[0]), end="\r")
-        db_test_class.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_test[i,:]),) + (y_test[i],))
+        db_test.execute("INSERT INTO data VALUES (?, ?, ?)", (COLMAPDatabase.array_to_blob(all_sifts[curr_index,:]),) + (all_scores[curr_index],) + (int(all_targets[curr_index]),))
 
-    print("Done!")
+    print()
+    print("Committing..")
 
-    print("Splitting data into test/train..")
-    # regression
-    X_train, X_test, y_train, y_test = train_test_split(all_sifts, all_scores, test_size=test_size, shuffle=shuffle, random_state=random_state)
-
-    # standard scaling - mean normalization
-    X_train = (X_train - X_train.mean()) / X_train.std()
-    X_test = (X_test - X_test.mean()) / X_test.std()
-
-    # min-max normalization
-    y_train = ( y_train - y_train.min() ) / ( y_train.max() - y_train.min() )
-    y_test = ( y_test - y_test.min() ) / ( y_test.max() - y_test.min() )
-
-    print("Regression Data...")
-    print(" Total Training Size: " + str(X_train.shape[0]))
-    print(" Total Test Size: " + str(X_test.shape[0]))
-    print(" y_train mean: " + str(y_train.mean()))
-    print(" y_test mean: " + str(y_test.mean()))
-
-    for i in range(X_train.shape[0]):
-        print("Inserting entry " + str(i) + "/" + str(X_train.shape[0]), end="\r")
-        db_train_reg.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_train[i,:]),) + (y_train[i],))
-    for i in range(X_test.shape[0]):
-        print("Inserting entry " + str(i) + "/" + str(X_test.shape[0]), end="\r")
-        db_test_reg.execute("INSERT INTO data VALUES (?, ?)", (COLMAPDatabase.array_to_blob(X_test[i,:]),) + (y_test[i],))
-
-    # finishing BEGIN with COMMIT
-    db_train_class.execute("COMMIT")
-    db_test_class.execute("COMMIT")
-    db_train_reg.execute("COMMIT")
-    db_test_reg.execute("COMMIT")
-
+    db_train.execute("COMMIT")
+    db_test.execute("COMMIT")
     print("Done!")
 
     return
@@ -200,12 +164,10 @@ points3D_id_index = index_dict_reverse(live_model_points3D)
 # i.e /home/alex/fullpipeline/colmap_data/alfa_mega/slice1/ML_data/database.db / or ml_database.db / or coop/alfa_mega
 # make sure you delete the databases (.db) file first!
 ml_db_path = sys.argv[2]
-db_path_train_class = sys.argv[3]
-db_path_test_class = sys.argv[4]
-db_path_train_reg = sys.argv[5]
-db_path_test_reg = sys.argv[6]
+db_path_train = sys.argv[3]
+db_path_test = sys.argv[4]
 
 print("Creating all data..")
 create_all_data(ml_db_path, live_model_points3D, points3D_id_index, points3D_per_image_decay_scores, live_model_images, db_live)
 print("Preparing all data for training..")
-prepare_data_for_training(ml_db_path, db_path_train_class, db_path_test_class, db_path_train_reg, db_path_test_reg, test_size = 0.1, shuffle = True, random_state = 42)
+prepare_data_for_training(ml_db_path, db_path_train, db_path_test, test_size = 0.1, shuffle = True, random_state = 42)
