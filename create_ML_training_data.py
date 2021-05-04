@@ -14,9 +14,9 @@ from sklearn.model_selection import train_test_split
 # (Note, load the python venv: source venv/bin/activate (not in docker!))
 # run, create_ML_training_data.py (see below)
 # then run any model such as regression.py, regression_rf.py, using docker on weatherwax or ogg cs.bath.ac.uk.
-# (Note the docker command to run is (and before run this "hare reserve 20000" to reserve a port):
-# hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -p 20000:80 -ti bath:2020-gpu
-# (Note, you will need docker to run the models because it uses gpus, the venv uses python3.6 for some reason)
+# (Note the docker command to run is (and before run this "hare reserve 20000" to reserve a port , change to "fullpipeline dir first" ):
+# hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0,1 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -p 20000:80 -ti bath:2020-gpu
+# (Note, you will need docker to run the models because it uses gpus, the venv uses python3.6 for some reason - it's ok I think)
 # then run, view_ML_model_results.py, to evaluate the model on unseen data!
 # then run, create_ML_visualization_data.py, to create data from unseen images to evaluate visually the models!
 
@@ -29,6 +29,15 @@ from sklearn.model_selection import train_test_split
 #                                    /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_test_reg.db
 # one liner:
 # python3 create_ML_training_data.py /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_all.db /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_train_class.db /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_test_class.db /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_train_reg.db /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_test_reg.db
+
+# Tensorboard Notes:
+# https://chadrick-kwag.net/how-to-manually-write-to-tensorboard-from-tf-keras-callback-useful-trick-when-writing-a-handful-of-validation-metrics-at-once/
+# You need 2 terminals
+# 1 - to run tensorboard, you ssh with "ssh -L 9999:localhost:20000 ar2056@weatherwax.cs.bath.ac.uk"
+# then run "tensorboard --logdir colmap_data/Coop_data/slice1/ML_data/results/ --port 20000" (might need to reserve a port with hare)
+# the you visit "http://localhost:9999" on your local machine.
+# 2 - the terminal you usually run the hare command from above and Tensorflow will read from the dir you store the results.
+# Will need to flush with the writer though, https://stackoverflow.com/questions/52483296/when-do-i-have-to-use-tensorflows-filewriter-flush-method
 
 # Mine not needed
 def split_data(features, target, test_percentage, randomize = False):
@@ -157,7 +166,7 @@ db_live = COLMAPDatabase.connect(parameters.live_db_path)
 live_model_images = read_images_binary(parameters.live_model_images_path)
 live_model_points3D = read_points3d_default(parameters.live_model_points3D_path)
 
-points3D_per_image_decay_scores = np.load(parameters.per_image_decay_matrix_path)
+points3D_per_image_decay_scores = np.load(parameters.per_image_decay_matrix_path) #switch this to session scores if needed
 points3D_per_image_decay_scores = points3D_per_image_decay_scores.sum(axis=0)
 points3D_id_index = index_dict_reverse(live_model_points3D)
 
