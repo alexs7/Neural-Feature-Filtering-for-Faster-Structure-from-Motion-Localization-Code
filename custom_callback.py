@@ -2,7 +2,9 @@ import tensorflow as tf
 from tensorflow import keras
 from database import COLMAPDatabase
 from parameters import Parameters
-# from query_image import read_images_binary, load_images_from_text_file
+import numpy as np
+from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
+from point3D_loader import read_points3d_default, get_points3D_xyz
 
 class CustomCallback(keras.callbacks.Callback):
 
@@ -11,27 +13,42 @@ class CustomCallback(keras.callbacks.Callback):
         self.writer = tf.summary.create_file_writer(self.cust_log_dir)
 
     def on_train_begin(self, logs=None):
-        # Note: you will need to run this first get_points_3D_mean_desc_single_model.py - to get the 3D points avg descs from the model.
+        print("Setting up...")
+        # the "gt" here means "after_epoch_data" pretty much
+        db_gt_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/after_epoch_database.db"
+        query_images_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/images.bin"
+        query_images_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/images_list.txt"
+        query_cameras_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/cameras.bin"
+        live_points3D_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/model/points3D.bin"
+
+        db_gt = COLMAPDatabase.connect(db_gt_path) # you need this database to get the query images descs as they do not exist in the live db!
+        query_images = read_images_binary(query_images_bin_path)
+        query_images_names = load_images_from_text_file(query_images_path)
+        localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
+        query_images_ground_truth_poses = get_query_images_pose_from_images(localised_query_images_names, query_images)
+
+        # Againg these two because points3D will have different order.
+        # epoch query points
+        # epoch_points3D_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/points3D.bin"
+        # points3D_epoch = read_points3d_default(epoch_points3D_bin_path)
+        # points3D_xyz_epoch = get_points3D_xyz(points3D_epoch)
+
+        # live points
+        # Note: you will need to run this first, "get_points_3D_mean_desc_single_model.py" - to get the 3D points avg descs from the live model.
         # use the folder original_live_data/ otherwise you will be using the epoch image/3D point descriptors if you use the new_model
         # also you will need the scale between the colmap poses and the ARCore poses (for 2020-06-22 the 392 images are from morning run)
+        # Matching will happen from the query images (epoch images) on the live model, otherwise if you use the epoch model it will be "cheating"
+        # as the descriptors from the epoch images that you are trying to match will already be in the epoch model. Just use the epoch model for ground truth pose errors comparisons.
+        train_descriptors_live = np.load('colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/avg_descs.npy')
+        points3D_live = read_points3d_default(live_points3D_bin_path)
+        points3D_xyz_live = get_points3D_xyz(points3D_live)
 
-        # the "gt" here means "after_epoch_data" pretty much
-        db_gt_path = 'colmap_data/Coop_data/slice1/ML_data/after_epoch_data/after_epoch_database.db'
-        epoch_images_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/images.bin"
-        epoch_points_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/points3D.bin"
-        epoch_cameras_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/cameras.bin"
-
-        db_gt = COLMAPDatabase.connect(db_gt_path)
-        epoch_images = read_images_binary(epoch_images_bin_path)
-        epoch_images_names = load_images_from_text_file(parameters.query_images_path)
-        localised_epoch_images_names = get_localised_image_by_names(epoch_images_names, epoch_images_bin_path)
-        epoch_images_ground_truth_poses = get_query_images_pose_from_images(localised_epoch_images_names, epoch_images)
-        points3D_epoch = read_points3d_default(epoch_points_bin_path)
-        points3D_xyz_epoch = get_points3D_xyz(points3D_epoch)
-        K = get_intrinsics_from_camera_bin(epoch_cameras_bin_path, 3) #3 because 1 -base, 2 -live, 3 -epoch images
+        K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3) #3 because 1 -base, 2 -live, 3 -epoch images
 
         import pdb
         pdb.set_trace()
+
+        # get the baseline matches and random matches here and pick a variable number
 
         # keys = list(logs.keys())
         # print("Starting training; got log keys: {}".format(keys))
