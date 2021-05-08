@@ -15,15 +15,18 @@ from point3D_loader import read_points3d_default, index_dict
 from query_image import read_images_binary
 
 def get_desc_avg(points3D, db):
+    no = 0
     points_mean_descs = np.empty([0, 128])
 
     for k,v in points3D.items():
+        no += 1
         point_id = v.id
         points3D_descs = np.empty([0, 128])
         points_image_ids = points3D[point_id].image_ids #COLMAP adds the image twice some times.
         # Loop through the points' image ids and check if it is seen by any image_ids
         # If it is seen then get the desc for each id.
         for k in range(len(points_image_ids)):
+            print("Point: " + str(no) + ", Image: " + str(k), end="\r")
             id = points_image_ids[k]
             data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(id) + "'")
             data = COLMAPDatabase.blob_to_array(data.fetchone()[0], np.uint8)
@@ -38,6 +41,8 @@ def get_desc_avg(points3D, db):
         # adding and calulating the mean here!
         points_mean_descs = np.r_[points_mean_descs, points3D_descs.mean(axis=0).reshape(1,128)]
     return points_mean_descs
+
+print()
 
 db_path = sys.argv[1]
 model_images_bin_path = sys.argv[2]
