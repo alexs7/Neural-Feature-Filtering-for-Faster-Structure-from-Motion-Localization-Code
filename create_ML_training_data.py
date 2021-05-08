@@ -20,6 +20,11 @@ from sklearn.model_selection import train_test_split
 # then run, view_ML_model_results.py, to evaluate the model on unseen data!
 # then run, create_ML_visualization_data.py, to create data from unseen images to evaluate visually the models!
 
+# for docker you might also need to run these for "cv2"
+# apt-get update
+# apt-get install ffmpeg libsm6 libxext6  -y
+# pip install opencv-contrib-python
+
 # Command example (for coop data, paths might change):
 # python3 create_ML_training_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
 #                                    /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_all.db
