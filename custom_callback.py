@@ -58,12 +58,12 @@ class CustomCallback(keras.callbacks.Callback):
         # db_gt, again because we need the descs from the query images
         ratio_test_val = 0.9 # as previous publication
         # random 80 ones - why 80 ?
-        random_no = 80
+        random_no = 80 # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
         random_matches = feature_matcher_wrapper(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose = True, random_limit = random_no)
         # all of them as in first publiation (should be around 800 for each image)
         vanillia_matches = feature_matcher_wrapper(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose = True )
 
-        # get the benchmark data here for random (top50) features and the 800 from previous publication - will return the average values for each image
+        # get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
         benchmarks_iters = 5
 
         inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
@@ -73,9 +73,6 @@ class CustomCallback(keras.callbacks.Callback):
         inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
         print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
         print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-
-        import pdb
-        pdb.set_trace()
 
         # get the baseline matches and random matches here and pick a variable number
 
