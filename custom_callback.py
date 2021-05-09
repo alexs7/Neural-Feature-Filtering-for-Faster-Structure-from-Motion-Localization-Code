@@ -8,6 +8,7 @@ from point3D_loader import read_points3d_default, get_points3D_xyz
 from feature_matching_generator_ML import feature_matcher_wrapper
 from ransac_prosac import ransac, ransac_dist, prosac
 from get_scale import calc_scale_COLMAP_ARCORE
+from benchmark import benchmark
 
 class CustomCallback(keras.callbacks.Callback):
 
@@ -51,24 +52,22 @@ class CustomCallback(keras.callbacks.Callback):
         ar_core_poses_path = 'colmap_data/Coop_data/slice1/ML_data/after_epoch_data/test_images/2020-06-22/arcore_poses/'
         colmap_poses_path = query_images_bin_path #just for clarity purposes
         scale = calc_scale_COLMAP_ARCORE(ar_core_poses_path, colmap_poses_path)
-        
-        import pdb
-        pdb.set_trace()
+        print("Scale: " + str(scale))
 
         print("Feature matching random and vanillia descs..")
         # db_gt, again because we need the descs from the query images
         ratio_test_val = 0.75
-        # random 50 ones - why 50 ?
-        random_no = 50
+        # random 80 ones - why 80 ?
+        random_no = 80
         random_matches = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose = True, random_limit = random_no)
         # all of them as in first publiation (should be around 800 for each image)
         vanillia_matches = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose = True )
 
-
         # get the benchmark data here for random (top50) features and the 800 from previous publication - will return the average values for each image
         benchmarks_iters = 15
         inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark(benchmarks_iters, ransac, vanillia_matches, query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
-        
+        import pdb
+        pdb.set_trace()
 
         # get the baseline matches and random matches here and pick a variable number
 

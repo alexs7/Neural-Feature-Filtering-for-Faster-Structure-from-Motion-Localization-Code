@@ -1,5 +1,5 @@
 # This file is just to get scales between COLMAP and ARCORE, or COLMAP and COLMAP.
-# manual work to set the directories, this file was copied from the newer branch.
+# this file was copied from the newer branch (as I got the scale using another way before submission), with some minor changes
 import glob
 import sys
 
@@ -10,13 +10,24 @@ from query_image import read_images_binary, get_image_camera_center_by_name, get
 def calc_scale_COLMAP_ARCORE(arcore_devices_poses_path, colmap_model_images_path):
 
     model_images = read_images_binary(colmap_model_images_path)
-    model_images_names = get_images_names(model_images)
-    ar_core_cam_centers = {} #This in metric
+    model_images_names_temp = get_images_names(model_images)
 
+    ar_core_cam_centers = {} #This in metric
+    ar_core_poses_names = []
     for file in glob.glob(arcore_devices_poses_path+"displayOrientedPose_*.txt"):
         pose = np.loadtxt(file)
         cam_center = np.array(pose[0:3, 3]) # remember in ARCore the matrices' t component is the camera center in the world
-        ar_core_cam_centers["frame_"+file.split("_")[-1].split(".")[0]+".jpg"] = cam_center
+        ar_core_poses_name = "frame_"+file.split("_")[-1].split(".")[0]+".jpg"
+        ar_core_poses_names.append(ar_core_poses_name)
+        ar_core_cam_centers[ar_core_poses_name] = cam_center
+
+    model_images_names = []
+    for image_name in model_images_names_temp: #filtering stage
+       if image_name in ar_core_poses_names:
+           model_images_names.append(image_name)
+
+    # assert (len(model_images_names) == len(ar_core_poses_names)) - trick this will fail! why? because ar_core_poses_names are just the names, model_images_names are the localised one so less!
+    print("model_images_names size: " + str(len(model_images_names)))
 
     scales = []
     for i in range(5000): #just to be safe
@@ -35,7 +46,7 @@ def calc_scale_COLMAP_ARCORE(arcore_devices_poses_path, colmap_model_images_path
         scales.append(scale)
 
     scale = np.mean(scales)
-    print("Scale: " + str(scale))
+
     return scale
 
 # arcore_poses_path = sys.argv[1]

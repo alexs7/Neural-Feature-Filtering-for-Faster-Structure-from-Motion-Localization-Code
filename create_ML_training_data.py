@@ -20,10 +20,8 @@ from sklearn.model_selection import train_test_split
 # then run, view_ML_model_results.py, to evaluate the model on unseen data!
 # then run, create_ML_visualization_data.py, to create data from unseen images to evaluate visually the models!
 
-# for docker you might also need to run these for "cv2"
-# apt-get update
-# apt-get install ffmpeg libsm6 libxext6  -y
-# pip install opencv-contrib-python
+# for docker you might also need to run these for "cv2" and "cvxpnpl"
+# apt-get update && apt-get install ffmpeg libsm6 libxext6 libblas-dev liblapack-dev -y && pip install opencv-contrib-python && pip install scs && pip install cvxpnpl
 
 # Command example (for coop data, paths might change):
 # python3 create_ML_training_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
@@ -42,7 +40,7 @@ from sklearn.model_selection import train_test_split
 # then run "tensorboard --logdir colmap_data/Coop_data/slice1/ML_data/results/ --port 20000" (might need to reserve a port with hare)
 # the you visit "http://localhost:9999" on your local machine.
 # 2 - the terminal you usually run the hare command from above and Tensorflow will read from the dir you store the results.
-# Will need to flush with the writer though, https://stackoverflow.com/questions/52483296/when-do-i-have-to-use-tensorflows-filewriter-flush-method
+# Will need to flush with the writer though, https://stackoverflow.com/questions/52483296/when-do-i-have-to-use-tensorflows-filewriter-flush-method (doesn't work...)
 
 # Mine not needed
 def split_data(features, target, test_percentage, randomize = False):
