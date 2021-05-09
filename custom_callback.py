@@ -56,16 +56,24 @@ class CustomCallback(keras.callbacks.Callback):
 
         print("Feature matching random and vanillia descs..")
         # db_gt, again because we need the descs from the query images
-        ratio_test_val = 0.75
+        ratio_test_val = 0.9 # as previous publication
         # random 80 ones - why 80 ?
         random_no = 80
-        random_matches = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose = True, random_limit = random_no)
+        random_matches = feature_matcher_wrapper(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose = True, random_limit = random_no)
         # all of them as in first publiation (should be around 800 for each image)
-        vanillia_matches = feature_matcher_wrapper(db_gt, query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose = True )
+        vanillia_matches = feature_matcher_wrapper(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose = True )
 
         # get the benchmark data here for random (top50) features and the 800 from previous publication - will return the average values for each image
-        benchmarks_iters = 15
-        inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark(benchmarks_iters, ransac, vanillia_matches, query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+        benchmarks_iters = 5
+
+        inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+        print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+        print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+
+        inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+        print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+        print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+
         import pdb
         pdb.set_trace()
 
