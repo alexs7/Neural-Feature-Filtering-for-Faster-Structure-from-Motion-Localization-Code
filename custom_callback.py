@@ -68,11 +68,11 @@ class CustomCallback(keras.callbacks.Callback):
 
         inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
         print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
-        print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+        print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 
         inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
         print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
-        print(" Trans Error (m): %2.2f | Rotation (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+        print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 
         import pdb
         pdb.set_trace()
