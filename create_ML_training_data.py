@@ -23,16 +23,6 @@ from sklearn.model_selection import train_test_split
 # for docker you might also need to run these for "cv2" and "cvxpnpl"
 # apt-get update && apt-get install ffmpeg libsm6 libxext6 libblas-dev liblapack-dev -y && pip install opencv-contrib-python && pip install scs && pip install cvxpnpl
 
-# Command example (for coop data, paths might change):
-# python3 create_ML_training_data.py /home/alex/fullpipeline/colmap_data/Coop_data/slice1/
-#                                    /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_all.db
-#                                    /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_train_class.db
-#                                    /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_test_class.db
-#                                    /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_train_reg.db
-#                                    /home/alex/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_test_reg.db
-# one liner:
-# python3 create_ML_training_data.py /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_all.db /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_train_class.db /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_test_class.db /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_train_reg.db /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_test_reg.db
-
 # Tensorboard Notes:
 # https://chadrick-kwag.net/how-to-manually-write-to-tensorboard-from-tf-keras-callback-useful-trick-when-writing-a-handful-of-validation-metrics-at-once/
 # You need 2 terminals
@@ -175,9 +165,9 @@ points3D_id_index = index_dict_reverse(live_model_points3D)
 
 # i.e /home/alex/fullpipeline/colmap_data/alfa_mega/slice1/ML_data/database.db / or ml_database.db / or coop/alfa_mega
 # make sure you delete the databases (.db) file first!
-ml_db_path = sys.argv[2]
-db_path_train = sys.argv[3]
-db_path_test = sys.argv[4]
+ml_db_path = sys.argv[2] #colmap_data/Coop_data/slice1/ML_data/ml_database_all.db
+db_path_train = sys.argv[3] #colmap_data/Coop_data/slice1/ML_data/ml_database_train.db
+db_path_test = sys.argv[4] #colmap_data/Coop_data/slice1/ML_data/ml_database_test.db
 
 print("Creating all data..")
 create_all_data(ml_db_path, live_model_points3D, points3D_id_index, points3D_per_image_decay_scores, live_model_images, db_live)

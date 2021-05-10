@@ -10,74 +10,17 @@ from ransac_prosac import ransac, ransac_dist, prosac
 from get_scale import calc_scale_COLMAP_ARCORE
 from benchmark import benchmark
 
+# Before this you have to run "python3 prepare_comparison_data.py" to prepare and save comparison data
 class CustomCallback(keras.callbacks.Callback):
 
     def __init__(self, cust_log_dir):
         self.cust_log_dir = cust_log_dir
         self.writer = tf.summary.create_file_writer(self.cust_log_dir)
 
-    def on_train_begin(self, logs=None):
-        print("Setting up...")
-        # the "gt" here means "after_epoch_data" pretty much
-        db_gt_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/after_epoch_database.db"
-        query_images_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/images.bin"
-        query_images_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/images_list.txt"
-        query_cameras_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/cameras.bin"
-        live_points3D_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/model/points3D.bin"
-
-        db_gt = COLMAPDatabase.connect(db_gt_path) # you need this database to get the query images descs as they do not exist in the live db!
-        query_images = read_images_binary(query_images_bin_path)
-        query_images_names = load_images_from_text_file(query_images_path)
-        localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
-        query_images_ground_truth_poses = get_query_images_pose_from_images(localised_query_images_names, query_images)
-
-        # Againg these two because points3D will have different order.
-        # epoch query points
-        # epoch_points3D_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/points3D.bin"
-        # points3D_epoch = read_points3d_default(epoch_points3D_bin_path)
-        # points3D_xyz_epoch = get_points3D_xyz(points3D_epoch)
-
-        # live points
-        # Note: you will need to run this first, "get_points_3D_mean_desc_single_model.py" - to get the 3D points avg descs from the live model.
-        # use the folder original_live_data/ otherwise you will be using the epoch image/3D point descriptors if you use the new_model
-        # also you will need the scale between the colmap poses and the ARCore poses (for 2020-06-22 the 392 images are from morning run)
-        # Matching will happen from the query images (epoch images) on the live model, otherwise if you use the epoch model it will be "cheating"
-        # as the descriptors from the epoch images that you are trying to match will already be in the epoch model. Just use the epoch model for ground truth pose errors comparisons.
-        train_descriptors_live = np.load('colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/avg_descs.npy').astype(np.float32)
-        points3D_live = read_points3d_default(live_points3D_bin_path)
-        points3D_xyz_live = get_points3D_xyz(points3D_live)
-
-        K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3) #3 because 1 -base, 2 -live, 3 -epoch images
-        # for ar_core data
-        ar_core_poses_path = 'colmap_data/Coop_data/slice1/ML_data/after_epoch_data/test_images/2020-06-22/arcore_poses/'
-        colmap_poses_path = query_images_bin_path #just for clarity purposes
-        scale = calc_scale_COLMAP_ARCORE(ar_core_poses_path, colmap_poses_path)
-        print("Scale: " + str(scale))
-
-        print("Feature matching random and vanillia descs..")
-        # db_gt, again because we need the descs from the query images
-        ratio_test_val = 0.9 # as previous publication
-        # random 80 ones - why 80 ?
-        random_no = 80 # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
-        random_matches = feature_matcher_wrapper(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose = True, random_limit = random_no)
-        # all of them as in first publiation (should be around 800 for each image)
-        vanillia_matches = feature_matcher_wrapper(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose = True )
-
-        # get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
-        benchmarks_iters = 5
-
-        inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
-        print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
-        print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-
-        inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
-        print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
-        print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-
-        # get the baseline matches and random matches here and pick a variable number
-
-        # keys = list(logs.keys())
-        # print("Starting training; got log keys: {}".format(keys))
+    # def on_train_begin(self, logs=None):
+    #     # load comparison data here
+    #     keys = list(logs.keys())
+    #     print("Stop training; got log keys: {}".format(keys))
 
     # def on_train_end(self, logs=None):
     #     keys = list(logs.keys())
@@ -87,11 +30,12 @@ class CustomCallback(keras.callbacks.Callback):
     #     keys = list(logs.keys())
     #     print("Start epoch {} of training; got log keys: {}".format(epoch, keys))
 
-    def on_epoch_end(self, epoch, logs=None):
+    # def on_epoch_end(self, epoch, logs=None):
+    #
+    #     import pdb
+    #     pdb.set_trace()
 
-        import pdb
-        pdb.set_trace()
-
+        # (this is pretty much the evaluation that will be used after teh model has trained or after each epoch)
         # 1 - get the gt poses
         # 2 - predict matchable features using current model (use those only for matching)
         # 3 - use all features for matching
@@ -100,23 +44,18 @@ class CustomCallback(keras.callbacks.Callback):
         # 6 - compare the errors from 2,3 and 4 against the gt poses from COLMAP
         # 7 - pass the numbers to tensorboard
 
-        # import pdb
-        # pdb.set_trace()
-        # writer = tf.summary.create_file_writer(self.tb_callback.log_dir) #self.tb_callback.writer
-        # writer = tf.summary.create_file_writer(self.tb_callback.log_dir)
+        # This is what writes to the file, after training is done
+        # with self.writer.as_default():
+        #     val = tf.summary.scalar("my_metric", 0.5, step=step)
         #
-        # writer = tf.summary.create_file_writer("/tmp/mylogs/eager")
+        # self.writer.flush()
 
-        with self.writer.as_default():
-            for step in range(100):
-                # other model code would go here
-                tf.summary.scalar("my_metric", 0.5, step=step)
-
-        self.writer.flush()
-
-        # import pdb
-        # pdb.set_trace()
-        #
+        # Extra code
+        # import pdb  # pdb.set_trace()
+    # writer = tf.summary.create_file_writer(self.tb_callback.log_dir)
+    # #self.tb_callback.writer
+    # writer = tf.summary.create_file_writer(self.tb_callback.log_dir)
+    # writer = tf.summary.create_file_writer("/tmp/mylogs/eager")
         # tf.summary.scalar(tag, value, step=step)
         #
         # for name, value in items_to_write.items():

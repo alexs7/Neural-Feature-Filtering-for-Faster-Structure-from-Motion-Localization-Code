@@ -42,9 +42,9 @@ print("TensorBoard log_dir: " + log_dir)
 print("CustomCallback log_dir: " + cust_log_dir)
 
 tensorboard_cb = TensorBoard(log_dir=log_dir)
-cust_callback = CustomCallback(cust_log_dir)
+# cust_callback = CustomCallback(cust_log_dir)
 
-all_callbacks = [tensorboard_cb, cust_callback]
+all_callbacks = [tensorboard_cb] #removed cust_callback for now
 
 print("Running Script..!")
 print(MODEL_NAME)
@@ -87,7 +87,7 @@ model.compile(optimizer=opt, loss='binary_crossentropy', metrics=metrics)
 
 # Before training you should use a baseline model
 
-# Train
+# Train (or fit() )
 # Just for naming's sake
 X_train = sift_vecs
 y_train = classes
@@ -97,6 +97,11 @@ history = model.fit(X_train, y_train,
                     batch_size=batch_size,
                     verbose=2,
                     callbacks=all_callbacks)
+
+# Save model here
+
+import pdb
+pdb.set_trace()
 
 print("Done!")
 
