@@ -1,3 +1,5 @@
+# This is an old file to just view the results. 11/05/2021 probably needs updating.
+
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 from tensorflow import keras

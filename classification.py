@@ -99,9 +99,9 @@ history = model.fit(X_train, y_train,
                     callbacks=all_callbacks)
 
 # Save model here
-
-import pdb
-pdb.set_trace()
+print("Saving model")
+model_save_path = os.path.join("colmap_data/Coop_data/slice1/ML_data/results/", MODEL_NAME, "model")
+model.save(model_save_path)
 
 print("Done!")
 
