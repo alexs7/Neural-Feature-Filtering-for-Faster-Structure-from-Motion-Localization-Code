@@ -2,7 +2,7 @@ import os
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import Sequential
@@ -33,9 +33,9 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 600
+# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 700
 
-MODEL_NAME = "BinaryClassificationSimple-{}".format(int(time.time()))
+MODEL_NAME = "BinaryClassificationSimple-{}".format(int(time.time())) + "-" + time.ctime()
 log_dir = "colmap_data/Coop_data/slice1/ML_data/results/{}".format(MODEL_NAME)
 cust_log_dir = "colmap_data/Coop_data/slice1/ML_data/results/{}".format(MODEL_NAME) + "/my_metrics"
 
@@ -69,7 +69,7 @@ classes = (row[1] for row in data) #binary values
 classes = np.array(list(classes))
 
 ratio = np.where(classes == 1)[0].shape[0] / np.where(classes == 0)[0].shape[0]
-print("Ratio of data T to F: " + str(ratio))
+print("Ratio of Positives to Negatives: " + str(ratio))
 
 print("Total Training Size: " + str(sift_vecs.shape[0]))
 
@@ -81,13 +81,13 @@ sift_vecs = scaler.fit_transform(sift_vecs)
 print("Creating model")
 model = Sequential()
 # in keras the first layer is a hidden layer too, so input dims is OK here
-model.add(Dense(128, input_dim=128, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
-model.add(Dense(64, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
-model.add(Dense(32, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
-model.add(Dense(16, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
-model.add(Dense(4, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
-model.add(Dense(2, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
-model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
+model.add(Dense(128, input_dim=128, activation='relu')) #TODO: relu or sigmoid ?
+# model.add(Dense(64, activation='relu'))
+# model.add(Dense(32, activation='relu'))
+# model.add(Dense(16, activation='relu'))
+# model.add(Dense(4, activation='relu'))
+# model.add(Dense(2, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, binary_crossentropy
@@ -104,7 +104,7 @@ history = model.fit(X_train, y_train,
                     validation_split=0.1,
                     epochs=epochs,
                     batch_size=batch_size,
-                    verbose=2,
+                    verbose=1,
                     callbacks=all_callbacks)
 
 # Save model here
