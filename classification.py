@@ -18,6 +18,7 @@ from database import COLMAPDatabase
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from custom_callback import CustomCallback
+from sklearn.preprocessing import StandardScaler
 
 metrics = [
       keras.metrics.TruePositives(name='tp'),
@@ -32,7 +33,7 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 16384 500
+# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 600
 
 MODEL_NAME = "BinaryClassificationSimple-{}".format(int(time.time()))
 log_dir = "colmap_data/Coop_data/slice1/ML_data/results/{}".format(MODEL_NAME)
@@ -67,23 +68,31 @@ sift_vecs = np.array(list(sift_vecs))
 classes = (row[1] for row in data) #binary values
 classes = np.array(list(classes))
 
+ratio = np.where(classes == 1)[0].shape[0] / np.where(classes == 0)[0].shape[0]
+print("Ratio of data T to F: " + str(ratio))
+
 print("Total Training Size: " + str(sift_vecs.shape[0]))
 
 # standard scaling - mean normalization
-# sift_vecs = ( sift_vecs - sift_vecs.mean() ) / sift_vecs.std()
-
-# min-max normalization classes - maybe not needed for binary classification ?
+scaler = StandardScaler()
+sift_vecs = scaler.fit_transform(sift_vecs)
 
 # Create model
 print("Creating model")
 model = Sequential()
 # in keras the first layer is a hidden layer too, so input dims is OK here
 model.add(Dense(128, input_dim=128, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
+model.add(Dense(64, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
+model.add(Dense(32, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
+model.add(Dense(16, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
+model.add(Dense(4, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
+model.add(Dense(2, kernel_initializer='normal', activation='relu')) #TODO: relu or sigmoid ?
 model.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, binary_crossentropy
-model.compile(optimizer=opt, loss='binary_crossentropy', metrics=metrics)
+model.compile(optimizer=opt, loss=keras.losses.BinaryCrossentropy(), metrics=metrics)
+model.summary()
 
 # Before training you should use a baseline model
 
@@ -101,7 +110,10 @@ history = model.fit(X_train, y_train,
 # Save model here
 print("Saving model")
 model_save_path = os.path.join("colmap_data/Coop_data/slice1/ML_data/results/", MODEL_NAME, "model")
-model.save(model_save_path)
+model.save(model_save_path) #double check with keras.models.load_model(model_save_path) in debug
+
+import pdb
+pdb.set_trace()
 
 print("Done!")
 
