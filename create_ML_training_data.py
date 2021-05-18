@@ -32,6 +32,14 @@ from sklearn.model_selection import train_test_split
 # 2 - the terminal you usually run the hare command from above and Tensorflow will read from the dir you store the results.
 # Will need to flush with the writer though, https://stackoverflow.com/questions/52483296/when-do-i-have-to-use-tensorflows-filewriter-flush-method (doesn't work...)
 
+# Docker Notes:
+# create an image using the docker file under "/homes/ar2056/docker"
+# hare build -t ar2056/cuda11_0 . (whatever cuda version the machine uses)
+# hare run -dit --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --workdir /home -v /homes/ar2056/:/home/ --name ar2056 ar2056/cuda11_0:latest (build container)
+# run this first (from laptop), then launch Pycharm for remote dev
+# ssh -L 6000:172.17.0.5:22 ar2056@weatherwax.cs.bath.ac.uk
+# ssh into weatherwax, to use git, do not use git in the docker container.
+
 # Mine not needed
 def split_data(features, target, test_percentage, randomize = False):
     if(randomize):
