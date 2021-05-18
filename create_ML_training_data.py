@@ -34,11 +34,12 @@ from sklearn.model_selection import train_test_split
 
 # Docker Notes:
 # create an image using the docker file under "/homes/ar2056/docker"
-# hare build -t ar2056/cuda11_0 . (whatever cuda version the machine uses)
-# hare run -dit --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --workdir /home -v /homes/ar2056/:/home/ --name ar2056 ar2056/cuda11_0:latest (build container)
+# hare build -t ar2056/basic . (whatever name you prefer)
+# hare run -dit --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --workdir /home -v /homes/ar2056/:/home/ --name ar2056_basic ar2056/basic:latest (build container)
 # run this first (from laptop), then launch Pycharm for remote dev
 # ssh -L 6000:172.17.0.5:22 ar2056@weatherwax.cs.bath.ac.uk
-# ssh into weatherwax, to use git, do not use git in the docker container.
+# use git locally on your laptop - the cloud does not like git
+# get IP of container with "hare inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container name>"
 
 # Mine not needed
 def split_data(features, target, test_percentage, randomize = False):
