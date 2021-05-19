@@ -3,6 +3,7 @@ from itertools import chain
 import cv2
 import numpy as np
 import sys
+from create_ML_training_data import get_image_decs
 
 # creates 2d-3d matches data for ransac comparison
 def get_keypoints_xy(db, image_id):
@@ -111,7 +112,7 @@ def feature_matcher_wrapper_ml(model, db, query_images, trainDescriptors, points
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
-        queryDescriptors = get_queryDescriptors(db, image_id)
+        queryDescriptors = get_image_decs(db, image_id)
 
         queryDescriptors_pred = model.predict(queryDescriptors)
 
