@@ -21,19 +21,19 @@ from custom_callback import CustomCallback
 from sklearn.preprocessing import StandardScaler
 
 metrics = [
-      keras.metrics.TruePositives(name='tp'),
-      keras.metrics.FalsePositives(name='fp'),
-      keras.metrics.TrueNegatives(name='tn'),
-      keras.metrics.FalseNegatives(name='fn'),
-      keras.metrics.BinaryAccuracy(name='binary_accuracy'),
-      keras.metrics.Precision(name='precision'),
-      keras.metrics.Recall(name='recall'),
-      keras.metrics.AUC(name='auc'),
-      keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
+    keras.metrics.TruePositives(name='tp'),
+    keras.metrics.FalsePositives(name='fp'),
+    keras.metrics.TrueNegatives(name='tn'),
+    keras.metrics.FalseNegatives(name='fn'),
+    keras.metrics.BinaryAccuracy(name='binary_accuracy'),
+    keras.metrics.Precision(name='precision'),
+    keras.metrics.Recall(name='recall'),
+    keras.metrics.AUC(name='auc'),
+    keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 800 Simple
+# python3 classification_1.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 800 ReversePyramid
 
 db_path = sys.argv[1]
 batch_size = int(sys.argv[2])
@@ -83,6 +83,11 @@ print("Creating model")
 model = Sequential()
 # in keras the first layer is a hidden layer too, so input dims is OK here
 model.add(Dense(128, input_dim=128, activation='relu')) #TODO: relu or sigmoid ?
+model.add(Dense(64, activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(16, activation='relu'))
+model.add(Dense(4, activation='relu'))
+model.add(Dense(2, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)

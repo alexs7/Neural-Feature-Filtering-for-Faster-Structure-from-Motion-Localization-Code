@@ -2,6 +2,8 @@ import os
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+from keras.layers import Dropout
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 import tensorflow as tf
 from tensorflow import keras
@@ -33,7 +35,7 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 800 Simple
+# python3 classification_3.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 800 Dropout
 
 db_path = sys.argv[1]
 batch_size = int(sys.argv[2])
@@ -83,6 +85,10 @@ print("Creating model")
 model = Sequential()
 # in keras the first layer is a hidden layer too, so input dims is OK here
 model.add(Dense(128, input_dim=128, activation='relu')) #TODO: relu or sigmoid ?
+model.add(Dropout(0.2))
+model.add(Dense(32, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(4, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)

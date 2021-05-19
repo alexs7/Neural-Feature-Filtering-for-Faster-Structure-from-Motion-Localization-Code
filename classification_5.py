@@ -33,7 +33,7 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 800 Simple
+# python3 classification_5.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 800 RandomLayers
 
 db_path = sys.argv[1]
 batch_size = int(sys.argv[2])
@@ -83,6 +83,10 @@ print("Creating model")
 model = Sequential()
 # in keras the first layer is a hidden layer too, so input dims is OK here
 model.add(Dense(128, input_dim=128, activation='relu')) #TODO: relu or sigmoid ?
+model.add(Dense(100, activation='relu'))
+model.add(Dense(400, activation='relu'))
+model.add(Dense(100, activation='relu'))
+model.add(Dense(400, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
