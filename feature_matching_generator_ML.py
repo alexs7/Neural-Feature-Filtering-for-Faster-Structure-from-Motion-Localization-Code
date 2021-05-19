@@ -97,7 +97,7 @@ def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ra
 
     return matches
 
-def feature_matcher_wrapper_ml(class_model, reg_model, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose = False, points_scores_array=None, random_limit = -1):
+def feature_matcher_wrapper_ml(model, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose = False, points_scores_array=None, random_limit = -1):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -113,12 +113,12 @@ def feature_matcher_wrapper_ml(class_model, reg_model, db, query_images, trainDe
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
 
-        queryDescriptors_class = class_model.predict(queryDescriptors)
-        queryDescriptors_reg = reg_model.predict(queryDescriptors)
+        queryDescriptors_pred = model.predict(queryDescriptors)
 
-        if(np.unique(queryDescriptors_class).shape[0] !=1):
-            import pdb
-            pdb.set_trace()
+        breakpoint()
+
+        if(np.unique(queryDescriptors_pred).shape[0] !=1):
+            breakpoint()
 
         # if(random_limit != -1):
         #     # len(queryDescriptors) or len(keypoints_xy) - should return the number or rows and be the same.
