@@ -33,7 +33,7 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 800 Simple
+# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 900 Simple
 
 db_path = sys.argv[1]
 batch_size = int(sys.argv[2])
