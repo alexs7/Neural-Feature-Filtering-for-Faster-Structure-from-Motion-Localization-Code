@@ -112,7 +112,7 @@ def prepare_data_for_training(db_path_all, db_path_train, db_path_test, test_siz
 
     return
 
-def get_image_decs(db, image_id):
+def get_image_decs(db, image_id): #not to be confused with get_queryDescriptors() in feature_matching_generator.py - that one normalises descriptors.
     data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
     data = COLMAPDatabase.blob_to_array(data.fetchone()[0], np.uint8)
     descs_rows = int(np.shape(data)[0] / 128)
