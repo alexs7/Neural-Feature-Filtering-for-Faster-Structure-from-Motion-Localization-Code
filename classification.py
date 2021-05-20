@@ -2,6 +2,8 @@ import os
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+from keras.callbacks import EarlyStopping
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 import tensorflow as tf
 from tensorflow import keras
@@ -17,8 +19,8 @@ from database import COLMAPDatabase
 # from sklearn.model_selection import KFold
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
-from custom_callback import CustomCallback
 from sklearn.preprocessing import StandardScaler
+from custom_callback import getModelCheckpointBinaryClassification, getEarlyStoppingBinaryClassification
 
 metrics = [
       keras.metrics.TruePositives(name='tp'),
@@ -33,7 +35,7 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 900 Simple
+# python3 classification.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 900 SimpleEarlyStopping
 
 db_path = sys.argv[1]
 batch_size = int(sys.argv[2])
@@ -41,16 +43,16 @@ epochs = int(sys.argv[3])
 name = sys.argv[4]
 
 MODEL_NAME = "BinaryClassification-{}-{}".format( name, time.ctime())
+
 log_dir = "colmap_data/Coop_data/slice1/ML_data/results/{}".format(MODEL_NAME)
-cust_log_dir = "colmap_data/Coop_data/slice1/ML_data/results/{}".format(MODEL_NAME) + "/my_metrics"
+early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
 
 print("TensorBoard log_dir: " + log_dir)
-print("CustomCallback log_dir: " + cust_log_dir)
-
 tensorboard_cb = TensorBoard(log_dir=log_dir)
-# cust_callback = CustomCallback(cust_log_dir)
-
-all_callbacks = [tensorboard_cb] #removed cust_callback for now
+print("Early_stop_model_save_dir log_dir: " + early_stop_model_save_dir)
+mc_callback = getModelCheckpointBinaryClassification(early_stop_model_save_dir)
+es_callback = getEarlyStoppingBinaryClassification()
+all_callbacks = [tensorboard_cb, mc_callback, es_callback]
 
 print("Running Script..!")
 print(MODEL_NAME)
@@ -80,6 +82,7 @@ print("Total Training Size: " + str(sift_vecs.shape[0]))
 
 # Create model
 print("Creating model")
+
 model = Sequential()
 # in keras the first layer is a hidden layer too, so input dims is OK here
 model.add(Dense(128, input_dim=128, activation='relu')) #TODO: relu or sigmoid ?

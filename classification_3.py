@@ -19,8 +19,8 @@ from database import COLMAPDatabase
 # from sklearn.model_selection import KFold
 from sklearn import metrics
 from sklearn.model_selection import train_test_split
-from custom_callback import CustomCallback
 from sklearn.preprocessing import StandardScaler
+from custom_callback import getModelCheckpointBinaryClassification, getEarlyStoppingBinaryClassification
 
 metrics = [
       keras.metrics.TruePositives(name='tp'),
@@ -43,16 +43,16 @@ epochs = int(sys.argv[3])
 name = sys.argv[4]
 
 MODEL_NAME = "BinaryClassification-{}-{}".format( name, time.ctime())
+
 log_dir = "colmap_data/Coop_data/slice1/ML_data/results/{}".format(MODEL_NAME)
-cust_log_dir = "colmap_data/Coop_data/slice1/ML_data/results/{}".format(MODEL_NAME) + "/my_metrics"
+early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
 
 print("TensorBoard log_dir: " + log_dir)
-print("CustomCallback log_dir: " + cust_log_dir)
-
 tensorboard_cb = TensorBoard(log_dir=log_dir)
-# cust_callback = CustomCallback(cust_log_dir)
-
-all_callbacks = [tensorboard_cb] #removed cust_callback for now
+print("Early_stop_model_save_dir log_dir: " + early_stop_model_save_dir)
+mc_callback = getModelCheckpointBinaryClassification(early_stop_model_save_dir)
+es_callback = getEarlyStoppingBinaryClassification()
+all_callbacks = [tensorboard_cb, mc_callback, es_callback]
 
 print("Running Script..!")
 print(MODEL_NAME)
