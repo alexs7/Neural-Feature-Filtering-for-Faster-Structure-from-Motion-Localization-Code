@@ -5,15 +5,16 @@ from parameters import Parameters
 import numpy as np
 from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
 from point3D_loader import read_points3d_default, get_points3D_xyz
-from feature_matching_generator_ML import feature_matcher_wrapper, feature_matcher_wrapper_ml
+from feature_matching_generator_ML import feature_matcher_wrapper_model
 from ransac_prosac import ransac, ransac_dist, prosac
 from get_scale import calc_scale_COLMAP_ARCORE
-from benchmark import benchmark
+from benchmark import benchmark, benchmark_ml
 import sys
 
-# example commnad: "python3 model_evaluator.py colmap_data/Coop_data/slice1/ML_data/results/BinaryClassificationSimple-1620823885/model/"
+# example commnad: "python3 model_evaluator.py colmap_data/Coop_data/slice1/ML_data/results/BinaryClassification-ReversePyramid-Tue\ May\ 18\ 20\:08\:12\ 2021/model/"
 class_model_dir = sys.argv[1]
 
+print("Loading Model..")
 class_model = keras.models.load_model(class_model_dir)
 
 db_gt_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/after_epoch_database.db"
@@ -21,10 +22,11 @@ db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the 
 
 # load data generated from "prepare_comaprison_data.py"
 print("Loading Data..")
-train_descriptors_live = np.load('colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/avg_descs.npy').astype(np.float32)
+points3D_info = np.load('colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/avg_descs_xyz.npy').astype(np.float32)
+train_descriptors_live = points3D_info[:, 0:128]
 query_images_ground_truth_poses = np.load("colmap_data/Coop_data/slice1/ML_data/comparison_data/query_images_ground_truth_poses.npy", allow_pickle=True).item()
 localised_query_images_names = np.ndarray.tolist(np.load("colmap_data/Coop_data/slice1/ML_data/comparison_data/localised_query_images_names.npy"))
-points3D_xyz_live = np.load("colmap_data/Coop_data/slice1/ML_data/comparison_data/points3D_xyz_live.npy")
+points3D_xyz_live = np.load("colmap_data/Coop_data/slice1/ML_data/comparison_data/points3D_xyz_live.npy")  # can also pick them up from points3D_info
 K = np.load("colmap_data/Coop_data/slice1/ML_data/comparison_data/K.npy")
 scale = np.load("colmap_data/Coop_data/slice1/ML_data/comparison_data/scale.npy")
 random_matches = np.load("colmap_data/Coop_data/slice1/ML_data/comparison_data/random_matches.npy", allow_pickle=True).item()
@@ -38,5 +40,12 @@ print("Feature matching using model..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 0.9  # as previous publication
 # top 80 ones - why 80 ?
-top = 80  # top or random - here it is top, because I am using the models
-model_matches = feature_matcher_wrapper_ml(class_model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=top)
+top = 400  # top or random - here it is top, because I am using the models
+model_matches = feature_matcher_wrapper_model(class_model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=top, pick_top_ones=True)
+
+print("Benchmarking ML model..")
+benchmarks_iters = 15
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, model_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall])
