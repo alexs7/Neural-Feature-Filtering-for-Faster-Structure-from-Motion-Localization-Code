@@ -35,7 +35,7 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 classification_3.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 900 Dropout
+# python3 classification_3.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 900 DropoutEarlyStopping
 
 db_path = sys.argv[1]
 batch_size = int(sys.argv[2])
