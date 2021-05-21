@@ -1,5 +1,6 @@
 # This file is copied from my previous publication and using now with minor modification for the ML approach
 #  such as not normalising the descriptors.
+import time
 from itertools import chain
 import cv2
 import numpy as np
@@ -37,6 +38,7 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
+    total_time = 0
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -56,6 +58,7 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
+        start = time.time()
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
@@ -87,6 +90,10 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
         matches[query_image] = np.array(good_matches)
         matches_sum.append(len(good_matches))
 
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
+
     if(verbose):
         print()
         total_all_images = np.sum(matches_sum)
@@ -94,7 +101,7 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
         matches_all_avg = total_all_images / len(matches_sum)
         print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
 
-    return matches
+    return matches, total_time
 
 # This is used for benchmarking a ML model
 # It will predict if a desc if matchable or not first then pick "random_limit" (or limited random) matchable descs to do the feature matching
