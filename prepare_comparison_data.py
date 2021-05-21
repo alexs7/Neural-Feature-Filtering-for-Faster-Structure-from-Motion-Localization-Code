@@ -7,8 +7,13 @@ from ransac_prosac import ransac, ransac_dist, prosac
 from get_scale import calc_scale_COLMAP_ARCORE
 from benchmark import benchmark, benchmark_ml
 
+# sample commnad to run
+# python3 prepare_comparison_data.py
+
 # The data generated here will be then later used for evaluating ML models in the model_evaluator.py
 # Will also save the random matches and the full (800) mathces for all the test (or epoch) images - no need to infer at every evaluation.
+
+# TODO: USE THE GT IMAGES FROM THE PREVIOUS PUBLICATION AND RERUN get_points_3D_mean_desc_single_model_ml.py
 
 print("Setting up...")
 # the "gt" here means "after_epoch_data" pretty much
@@ -46,23 +51,27 @@ ratio_test_val = 0.9  # as previous publication
 # random 80 ones - why 80 ?
 random_no = 80  # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
 # db_gt is only used to get the SIFT features from the query images, nothing to do with the train_descriptors_live and points3D_xyz_live order. That latter order needs to be corresponding btw.
-random_matches = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=random_no)
+random_matches, featm_time_random = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=random_no)
 # all of them as in first publication (should be around 800 for each image)
-vanillia_matches = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True)
+vanillia_matches, featm_time_vanillia = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True)
 
 # get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
 benchmarks_iters = 15 #same as first publication
 
 print("Benchmarking Random..")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
-print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+total_time_rand = time + featm_time_random
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, total_time_rand))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+print("For Excel %2.1f , %2.1f , %2.1f , %2.2f , %2.2f, %2.2f" % (inlers_no, outliers, iterations, total_time_rand, trans_errors_overall, rot_errors_overall))
 random_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall])
 
 print("Benchmarking Vanillia..")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
-print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, time))
+total_time_vanil = time + featm_time_vanillia
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Time: %2.2f" % (inlers_no, outliers, iterations, total_time_vanil))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+print("For Excel %2.1f , %2.1f , %2.1f , %2.2f , %2.2f, %2.2f" % (inlers_no, outliers, iterations, total_time_vanil, trans_errors_overall, rot_errors_overall))
 vanillia_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall])
 
 np.save("colmap_data/Coop_data/slice1/ML_data/comparison_data/query_images_ground_truth_poses.npy", query_images_ground_truth_poses)
