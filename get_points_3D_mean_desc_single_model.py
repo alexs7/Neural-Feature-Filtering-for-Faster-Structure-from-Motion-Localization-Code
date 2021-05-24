@@ -6,6 +6,7 @@
 #                  /Users/alex/Projects/EngDLocalProjects/LEGO/fullpipeline/colmap_data/data/descriptors_avg/avg_descs.npy
 
 # one liner (for weatherwax server, ogg etc)
+# "after_epoch_data" - not relevant was deleted but you get the idea for the paths
 # python3 get_points_3D_mean_desc_single_model.py /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/database.db /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/model/images.bin /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/model/points3D.bin /homes/ar2056/fullpipeline/colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/avg_descs.npy
 
 import sys

@@ -109,7 +109,7 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
-    np.set_printoptions(threshold=sys.maxsize)
+    total_time = 0
     matchable_threshold = 0.5
     keypoints_xy_descs_pred = np.empty([0, 131]) #(SIFT + xy + prediction val)
 
@@ -152,6 +152,7 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
+        start = time.time()
         temp_matches = matcher.knnMatch(queryDescriptors_pred, trainDescriptors, k=2)
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
@@ -183,6 +184,10 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
         matches[query_image] = np.array(good_matches)
         matches_sum.append(len(good_matches))
 
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
+
     if(verbose):
         print()
         total_all_images = np.sum(matches_sum)
@@ -190,4 +195,4 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
         matches_all_avg = total_all_images / len(matches_sum)
         print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
 
-    return matches
+    return matches, total_time

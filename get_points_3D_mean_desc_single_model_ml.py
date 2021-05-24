@@ -8,6 +8,7 @@
 # 2 - live images
 # 3 - live points3D
 # 4 - output filename
+# "after_epoch_data" - not relevant was deleted but you get the idea for the paths
 # python3 get_points_3D_mean_desc_single_model_ml.py colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/database.db colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/model/images.bin colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/model/points3D.bin colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/avg_descs_xyz.npy
 
 import sys
