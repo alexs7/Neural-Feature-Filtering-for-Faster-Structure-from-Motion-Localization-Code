@@ -6,21 +6,23 @@ from feature_matching_generator_ML import feature_matcher_wrapper_ml
 from ransac_prosac import ransac, ransac_dist, prosac
 from get_scale import calc_scale_COLMAP_ARCORE
 from benchmark import benchmark, benchmark_ml
+from parameters import Parameters
 
 # sample commnad to run
 # python3 prepare_comparison_data.py
 
 # The data generated here will be then later used for evaluating ML models in the model_evaluator.py
-# Will also save the random matches and the full (800) mathces for all the test (or epoch) images - no need to infer at every evaluation.
+# Will also save the random matches and the full (800) mathces for all the query images - no need to infer at every evaluation.
 
 # TODO: USE THE GT IMAGES FROM THE PREVIOUS PUBLICATION AND RERUN get_points_3D_mean_desc_single_model_ml.py
 
 print("Setting up...")
-# the "gt" here means "after_epoch_data" pretty much
-db_gt_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/after_epoch_database.db"
-query_images_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/images.bin"
-query_images_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/images_list.txt"
-query_cameras_bin_path = "colmap_data/Coop_data/slice1/ML_data/after_epoch_data/new_model/cameras.bin"
+# the "gt" here means ground truth (also used as query)
+# Instead or "ML_data/original_data/" you could use the "gt" folder form the previous publication folder, but I add more data now such as the arcore poses folder.
+db_gt_path = " colmap_data/Coop_data/slice1/ML_data/original_data/gt/database.db"
+query_images_bin_path = "colmap_data/Coop_data/slice1/ML_data/original_data/gt/model/images.bin"
+query_images_path = "colmap_data/Coop_data/slice1/ML_data/original_data/gt/query_name.txt"
+query_cameras_bin_path = "colmap_data/Coop_data/slice1/ML_data/original_data/gt/model/cameras.bin"
 
 db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the query images descs as they do not exist in the live db!
 query_images = read_images_binary(query_images_bin_path)
@@ -30,15 +32,15 @@ query_images_ground_truth_poses = get_query_images_pose_from_images(localised_qu
 
 # live points
 # Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py" - to get the 3D points avg descs, and corresponding xyz coordinates (128 + 3) from the LIVE model.
-# use the folder original_live_data/ otherwise you will be using the epoch image/3D point descriptors if you use the new_model
-# also you will need the scale between the colmap poses and the ARCore poses (for 2020-06-22 the 392 images are from morning run)
-# Matching will happen from the query images (epoch images) on the live model, otherwise if you use the epoch model it will be "cheating"
-# as the descriptors from the epoch images that you are trying to match will already be in the epoch model. Just use the epoch model for ground truth pose errors comparisons.
-points3D_info = np.load('colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/avg_descs_xyz.npy').astype(np.float32)
+# use the folder original_live_data/ otherwise you will be using the query image/3D point descriptors if you use the new_model
+# also you will need the scale between the colmap poses and the ARCore poses (for example the 2020-06-22 the 392 images are from morning run - wahtever you use)
+# Matching will happen from the query images (query images) on the live model, otherwise if you use the query (gt) model it will be "cheating"
+# as the descriptors from the query images that you are trying to match will already be in the query model. Just use the query model for ground truth pose errors comparisons.
+points3D_info = np.load('colmap_data/Coop_data/slice1/ML_data/avg_descs_xyz_ml.npy').astype(np.float32)
 points3D_xyz_live = points3D_info[:,128:131] # in my publication I used to get the points seperately from the LIVE model, but here get_points_3D_mean_desc_single_model_ml.py already returns them
 train_descriptors_live = points3D_info[:, 0:128]
 
-K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3)  # 3 because 1 -base, 2 -live, 3 -epoch images
+K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3)  # 3 because 1 -base, 2 -live, 3 -query images
 # for ar_core data
 ar_core_poses_path = 'colmap_data/Coop_data/slice1/ML_data/after_epoch_data/test_images/2020-06-22/arcore_poses/'
 colmap_poses_path = query_images_bin_path  # just for clarity purposes

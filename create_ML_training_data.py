@@ -37,7 +37,7 @@ from sklearn.model_selection import train_test_split
 # hare build -t ar2056/basic . (whatever name you prefer)
 # hare run -dit --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --workdir /home -v /homes/ar2056/:/home/ --name ar2056_basic ar2056/basic:latest (build container)
 # run this first (from laptop), then launch Pycharm for remote dev
-# ssh -L 6000:172.17.0.5:22 ar2056@weatherwax.cs.bath.ac.uk
+# ssh -L 6000:172.17.0.5:22 ar2056@weatherwax.cs.bath.ac.uk (make sure the IP points to a full-working docker, and the docker has to have the ip of 172.17.0.5 or same)
 # use git locally on your laptop - the cloud does not like git
 # get IP of container with "hare inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container name>"
 
