@@ -136,7 +136,7 @@ def create_all_data(ml_db_path, points3D, points3D_id_index, points3D_scores, im
             current_point3D_id = img_data.point3D_ids[i]
 
             if(current_point3D_id == -1): # means feature is unmatched
-                score = -99.0
+                score = -99.0 #TODO: This needs to change to 0 - its messes up regression
                 matched = 0
             else:
                 score = get_point3D_score(points3D_scores, current_point3D_id, points3D_id_index)

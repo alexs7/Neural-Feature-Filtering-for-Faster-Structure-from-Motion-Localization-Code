@@ -31,7 +31,7 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 regression.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 900 SimpleEarlyStopping
+# python3 regression_4.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 900 ManyManyNodesLayersEarlyStopping
 
 db_path = sys.argv[1]
 batch_size = int(sys.argv[2])
@@ -81,6 +81,14 @@ print("Creating model")
 model = Sequential()
 # in keras the first layer is a hidden layer too, so input dims is OK here
 model.add(Dense(128, input_dim=128, activation='relu')) #TODO: relu or sigmoid ?
+model.add(Dense(256, activation='relu'))
+model.add(Dense(256, activation='relu'))
+model.add(Dense(256, activation='relu'))
+model.add(Dense(256, activation='relu'))
+model.add(Dense(256, activation='relu'))
+model.add(Dense(256, activation='relu'))
+model.add(Dense(256, activation='relu'))
+model.add(Dense(256, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
