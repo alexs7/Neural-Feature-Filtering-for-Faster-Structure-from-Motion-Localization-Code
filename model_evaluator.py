@@ -52,5 +52,5 @@ inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall 
 total_time_model = time + featm_time_model
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, featm_time_model ))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-print(" For Excel %2.1f , %2.1f , %2.1f , %2.2f , %2.2f, %2.2f" % (inlers_no, outliers, iterations, total_time_model, trans_errors_overall, rot_errors_overall))
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, featm_time_model, total_time_model, trans_errors_overall, rot_errors_overall))
 model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) #use this line to save the results for a number of model
