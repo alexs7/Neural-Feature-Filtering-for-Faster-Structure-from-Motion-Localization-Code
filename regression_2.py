@@ -104,7 +104,7 @@ history = model.fit(X_train, y_train,
                     shuffle=True,
                     batch_size=batch_size,
                     verbose=1,
-                    callbacks=[])
+                    callbacks=[all_callbacks])
 
 # Save model here
 print("Saving model")
