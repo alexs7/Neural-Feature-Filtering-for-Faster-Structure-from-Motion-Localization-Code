@@ -89,7 +89,7 @@ model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
+model.add(Dense(1))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, MeanSquaredError

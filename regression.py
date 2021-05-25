@@ -81,7 +81,7 @@ print("Creating model")
 model = Sequential()
 # in keras the first layer is a hidden layer too, so input dims is OK here
 model.add(Dense(128, input_dim=128, activation='relu')) #TODO: relu or sigmoid ?
-model.add(Dense(1, activation='sigmoid'))
+model.add(Dense(1))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, MeanSquaredError
