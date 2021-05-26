@@ -12,6 +12,8 @@ from benchmark import benchmark, benchmark_ml
 import sys
 
 # example commnad: "python3 model_evaluator.py colmap_data/Coop_data/slice1/ML_data/results/BinaryClassification-ReversePyramid-Tue\ May\ 18\ 20\:08\:12\ 2021/model/"
+# TODO: For this code in this file you have to use the image in weatherwax, and run docker interactively.
+# hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -p 20000:80 -ti bath:2020-gpu
 class_model_dir = sys.argv[1]
 
 print("Loading Model..")

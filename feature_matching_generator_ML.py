@@ -122,7 +122,12 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
-        queryDescriptors_pred = model.predict(queryDescriptors)
+
+        start = time.time()
+        queryDescriptors_pred = model.predict_on_batch(queryDescriptors) #, use_multiprocessing=True, workers = 4)
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
 
         # only keep matchable ones - discard the rest
         matchable_desc_indices = np.where(queryDescriptors_pred > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/queryDescriptors_pred
@@ -177,6 +182,7 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
                         scores.append(points_scores[0, m.trainIdx])
                         scores.append(points_scores[0, n.trainIdx])
 
+                # TODO: add a flag and predict a score for each match to use later in PROSAC
                 match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
