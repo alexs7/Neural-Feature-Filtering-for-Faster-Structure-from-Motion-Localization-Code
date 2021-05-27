@@ -5,6 +5,8 @@ import numpy as np
 from keras.callbacks import EarlyStopping
 from keras.layers import Dropout
 
+from data import getRegressionData
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 import tensorflow as tf
 from tensorflow import keras
@@ -58,23 +60,7 @@ print("Batch_size: " + str(batch_size))
 print("Epochs: " + str(epochs))
 
 print("Loading data..")
-ml_db = COLMAPDatabase.connect_ML_db(db_path)
-
-data = ml_db.execute("SELECT sift, score FROM data").fetchall() #guarantees same order - maybe ?
-
-sift_vecs = (COLMAPDatabase.blob_to_array(row[0] , np.uint8) for row in data)
-sift_vecs = np.array(list(sift_vecs))
-
-scores = (row[1] for row in data) #continuous values
-scores = np.array(list(scores))
-
-scores[scores == -99] = 0 #This is a temp fix. 'Check create_ML_training_data.py' fo proper fix
-
-print("Total Training Size: " + str(sift_vecs.shape[0]))
-
-# standard scaling - mean normalization
-# scaler = StandardScaler()
-# sift_vecs = scaler.fit_transform(sift_vecs)
+sift_vecs, scores = getRegressionData(db_path)
 
 # Create model
 print("Creating model")
@@ -90,7 +76,7 @@ model.add(Dense(1))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, MeanSquaredError
-model.compile(optimizer=opt, loss=keras.losses.MeanSquaredError(), metrics=metrics)
+model.compile(optimizer=opt, loss=keras.losses.MeanAbsoluteError(), metrics=metrics)
 model.summary()
 
 # Before training you should use a baseline model
