@@ -12,8 +12,9 @@ from benchmark import benchmark, benchmark_ml
 import sys
 
 # example commnad: "python3 model_evaluator.py colmap_data/Coop_data/slice1/ML_data/results/BinaryClassification-ReversePyramid-Tue\ May\ 18\ 20\:08\:12\ 2021/model/"
-# TODO: For this code in this file you have to use the image in weatherwax, and run docker interactively.
-# hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -p 20000:80 -ti bath:2020-gpu
+# TODO: For this code in this file you have to use the container 'ar2056_evaluator_gpu' in weatherwax (and install tensorflow, cvxpnpl, check create_ML_training_data.py).
+# The container was build with this: hare run -dit --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --workdir /home -v /homes/ar2056/:/home/ --name ar2056_evaluator_gpu bath:2020-gpu
+# This is because the method predict_on_batch() needs the GPUs for speed
 class_model_dir = sys.argv[1]
 
 print("Loading Model..")
@@ -31,16 +32,16 @@ localised_query_images_names = np.ndarray.tolist(np.load("colmap_data/Coop_data/
 points3D_xyz_live = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/points3D_xyz_live.npy")  # can also pick them up from points3D_info
 K = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/K.npy")
 scale = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/scale.npy")
-random_matches = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/random_matches.npy", allow_pickle=True).item()
-vanillia_matches = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/vanillia_matches.npy", allow_pickle=True).item()
-# results data, check "prepare_comaprison_data.py" for order
-random_matches_data = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/random_matches_data.npy")
-vanillia_matches_data = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/vanillia_matches_data.npy")
+# these are not needed now here
+# random_matches = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/random_matches.npy", allow_pickle=True).item()
+# vanillia_matches = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/vanillia_matches.npy", allow_pickle=True).item()
+# random_matches_data = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/random_matches_data.npy")
+# vanillia_matches_data = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/vanillia_matches_data.npy")
 
 # evaluation starts here
 print("Feature matching using model..")
 # db_gt, again because we need the descs from the query images
-ratio_test_val = 0.9  # as previous publication
+ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 # top 80 ones - why 80 ?
 top = 80  # top or random - here it is top, because I am using the models (run a loop, 400, 80, 40)
 model_matches, featm_time_model = feature_matcher_wrapper_model(class_model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=top, pick_top_ones=True)
