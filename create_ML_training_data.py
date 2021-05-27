@@ -21,6 +21,7 @@ from sklearn.model_selection import train_test_split
 # then run, create_ML_visualization_data.py, to create data from unseen images to evaluate visually the models!
 
 # for docker you might also need to run these for "cv2" and "cvxpnpl"
+# might need this too: pip install tensorflow (not for bath:2020-gpu image)
 # apt-get update && apt-get install ffmpeg libsm6 libxext6 libblas-dev liblapack-dev -y && pip install opencv-contrib-python && pip install scs && pip install cvxpnpl
 
 # Tensorboard Notes:
