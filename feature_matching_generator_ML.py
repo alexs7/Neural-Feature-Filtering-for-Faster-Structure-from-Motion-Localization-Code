@@ -87,6 +87,10 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
 
+        # sanity check
+        if(ratio_test_val == 1.0):
+            assert len(good_matches) == len(temp_matches)
+
         matches[query_image] = np.array(good_matches)
         matches_sum.append(len(good_matches))
 
@@ -129,7 +133,7 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
         elapsed_time = end - start
         total_time += elapsed_time
 
-        # only keep matchable ones - discard the rest
+        # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than 80!
         matchable_desc_indices = np.where(queryDescriptors_pred > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/queryDescriptors_pred
         matchable_desc_indices_length = matchable_desc_indices.shape[0]
 
@@ -186,6 +190,10 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
                 match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
+
+        # sanity check
+        if (ratio_test_val == 1.0):
+            assert len(good_matches) == len(temp_matches)
 
         matches[query_image] = np.array(good_matches)
         matches_sum.append(len(good_matches))
