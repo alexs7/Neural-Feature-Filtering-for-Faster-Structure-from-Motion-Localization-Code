@@ -108,13 +108,13 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
     return matches, total_time
 
 # This is used for benchmarking a ML model
-# It will predict if a desc if matchable or not first then pick "random_limit" (or limited random) matchable descs to do the feature matching
-def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose = False, points_scores_array=None, random_limit = -1, pick_top_ones = False):
+# It will predict if a desc if matchable or not first, then pick "class_top" (sorted) matchable descs to do the feature matching
+def feature_matcher_wrapper_model(classifier, regressor, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose = False, class_top = None, regre_top = None):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     total_time = 0
-    matchable_threshold = 0.5
+    matchable_threshold = 0.5 #increase this for better results ?
     keypoints_xy_descs_pred = np.empty([0, 131]) #(SIFT + xy + prediction val)
 
     #  go through all the test images and match their descs to the 3d points avg descs
@@ -127,42 +127,48 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
 
-        start = time.time()
-        queryDescriptors_pred = model.predict_on_batch(queryDescriptors) #, use_multiprocessing=True, workers = 4)
-        end = time.time()
-        elapsed_time = end - start
-        total_time += elapsed_time
+        assert(class_top is not None) # this for now can never be None
 
-        # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than 80!
-        matchable_desc_indices = np.where(queryDescriptors_pred > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/queryDescriptors_pred
-        matchable_desc_indices_length = matchable_desc_indices.shape[0]
-
-        keypoints_xy = keypoints_xy[matchable_desc_indices]
-        queryDescriptors = queryDescriptors[matchable_desc_indices]
-        queryDescriptors_pred = queryDescriptors_pred[matchable_desc_indices]
-
-        # if pick_top_ones is set to True then it will sort by predicted value and pick the top ones (random_limit)
-        # if not then it will pick random ones from a pool of only matchable descs
-        if(pick_top_ones):
-            keypoints_xy_descs_pred = np.c_[keypoints_xy, queryDescriptors, queryDescriptors_pred]
-            keypoints_xy_descs_pred_sorted = keypoints_xy_descs_pred[keypoints_xy_descs_pred[:, 130].argsort()[::-1]]
-
-            keypoints_xy = keypoints_xy_descs_pred_sorted[0:random_limit, 0:2]
-            queryDescriptors_pred = keypoints_xy_descs_pred_sorted[0:random_limit, 2:130]
-        else:
-            if(matchable_desc_indices_length > random_limit): #if the network predicts more than 80 as matchable then pick random matchable 80.
-                random_matchable_idx = np.random.choice(matchable_desc_indices, random_limit, replace=False)
-                # notice the overwriting here
-                keypoints_xy = keypoints_xy[random_matchable_idx]
-                queryDescriptors_pred = queryDescriptors[random_matchable_idx]
+        xy_queryDescriptors_pred_top = None
+        if(class_top is not None):
+            start = time.time()
+            queryDescriptors_pred = classifier.predict_on_batch(queryDescriptors)  # , use_multiprocessing=True, workers = 4)
+            end = time.time()
+            elapsed_time = end - start
+            total_time += elapsed_time
+            # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than 'class_top'!
+            matchable_desc_indices = np.where(queryDescriptors_pred > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors
+            matchable_desc_indices_length = matchable_desc_indices.shape[0]
+            keypoints_xy = keypoints_xy[matchable_desc_indices]
+            queryDescriptors = queryDescriptors[matchable_desc_indices]
+            # [x,y,sift] = 130
+            queryDescriptors_data = np.c_[keypoints_xy, queryDescriptors]
+            if (matchable_desc_indices_length > class_top): #NOTE: matchable_desc_indices_length.size < class_top sometimes
+                random_matchable_idx = np.random.choice(np.arange(queryDescriptors_data.shape[0]), class_top, replace=False)
+                xy_queryDescriptors_pred_top = queryDescriptors_data[random_matchable_idx]
             else:
-                keypoints_xy = keypoints_xy[matchable_desc_indices]
-                queryDescriptors_pred = queryDescriptors[matchable_desc_indices]
+                xy_queryDescriptors_pred_top = queryDescriptors_data
 
+            # further processing if we want to use the regressor too
+            if (regre_top is not None):
+                start = time.time()
+                queryDescriptors_pred_scores = regressor.predict_on_batch(xy_queryDescriptors_pred_top[:,2:130])  # matchable only at this point
+                end = time.time()
+                elapsed_time = end - start
+                total_time += elapsed_time
+                xy_queryDescriptors_pred_top = np.c_[xy_queryDescriptors_pred_top, queryDescriptors_pred_scores] #do not include in total time
+                start = time.time()
+                xy_queryDescriptors_pred_top = xy_queryDescriptors_pred_top[xy_queryDescriptors_pred_top[:, 130].argsort()[::-1]] #sort desc order by predicted score, and add to total time
+                end = time.time()
+                elapsed_time = end - start
+                total_time += elapsed_time
+                xy_queryDescriptors_pred_top = xy_queryDescriptors_pred_top[0:regre_top,:]
+
+        assert (xy_queryDescriptors_pred_top is not None)
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()
-        temp_matches = matcher.knnMatch(queryDescriptors_pred, trainDescriptors, k=2)
+        temp_matches = matcher.knnMatch(xy_queryDescriptors_pred_top[:,2:130], trainDescriptors, k=2)
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
         # m the closest, n is the second closest
@@ -177,16 +183,13 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
                     raise Exception("m.trainIdx error!")
                 # idx1.append(m.queryIdx)
                 # idx2.append(m.trainIdx)
-                scores = []
+                scores = [] #this could be a scalar but publication code used an array so keeping it so it breaks other code
                 xy2D = keypoints_xy[m.queryIdx, :].tolist()
                 xyz3D = points3D_xyz[m.trainIdx, :].tolist()
 
-                if (points_scores_array is not None):
-                    for points_scores in points_scores_array:
-                        scores.append(points_scores[0, m.trainIdx])
-                        scores.append(points_scores[0, n.trainIdx])
+                if (regre_top is not None):
+                    scores.append(xy_queryDescriptors_pred_top[m.queryIdx, 130]) #TODO: maybe add another score from another network trained on the per session score
 
-                # TODO: add a flag and predict a score for each match to use later in PROSAC
                 match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
@@ -195,12 +198,12 @@ def feature_matcher_wrapper_model(model, db, query_images, trainDescriptors, poi
         if (ratio_test_val == 1.0):
             assert len(good_matches) == len(temp_matches)
 
-        matches[query_image] = np.array(good_matches)
-        matches_sum.append(len(good_matches))
-
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
+
+        matches[query_image] = np.array(good_matches)
+        matches_sum.append(len(good_matches))
 
     if(verbose):
         print()

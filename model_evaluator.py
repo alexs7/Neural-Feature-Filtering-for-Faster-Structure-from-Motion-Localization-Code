@@ -11,14 +11,16 @@ from get_scale import calc_scale_COLMAP_ARCORE
 from benchmark import benchmark, benchmark_ml
 import sys
 
-# example commnad: "python3 model_evaluator.py colmap_data/Coop_data/slice1/ML_data/results/BinaryClassification-ReversePyramid-Tue\ May\ 18\ 20\:08\:12\ 2021/model/"
-# TODO: For this code in this file you have to use the container 'ar2056_evaluator_gpu' in weatherwax (and install tensorflow, cvxpnpl, check create_ML_training_data.py).
-# The container was build with this: hare run -dit --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --workdir /home -v /homes/ar2056/:/home/ --name ar2056_evaluator_gpu bath:2020-gpu
+# The models here are the best performing for classification and regression as of 28 May
+# example commnad: "python3 model_evaluator.py colmap_data/Coop_data/slice1/ML_data/results/BinaryClassification-ManyManyNodesLayersEarlyStopping-Fri\ May\ 21\ 07\:46\:55\ 2021/early_stop_model/  colmap_data/Coop_data/slice1/ML_data/results/Regression-ManyManyNodesLayersEarlyStopping-Thu\ May\ 27\ 15\:17\:26\ 2021/early_stop_model/"
+# TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.3
 # This is because the method predict_on_batch() needs the GPUs for speed
 class_model_dir = sys.argv[1]
+regression_model_dir = sys.argv[2]
 
 print("Loading Model..")
 class_model = keras.models.load_model(class_model_dir)
+regression_model = keras.models.load_model(regression_model_dir)
 
 db_gt_path = "colmap_data/Coop_data/slice1/ML_data/original_data/gt/database.db"
 db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the query images descs as they do not exist in the live db!
@@ -43,17 +45,49 @@ print("Feature matching using model..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 # top 80 ones - why 80 ?
-top = 80  # top or random - here it is top, because I am using the models (run a loop, 400, 80, 40)
-model_matches, featm_time_model = feature_matcher_wrapper_model(class_model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=top, pick_top_ones=True)
-print("Feature Matching time for model samples: " + str(featm_time_model))
+first_top = 80  # top or random - here it is top, because I am using the models (run a loop, 400, 80, 40)
+second_top = 60 # used for regression
+
+print("Getting matches using classifier only..")
+classifier_matches, classifier_feature_matching_time = feature_matcher_wrapper_model(class_model, None, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, class_top=first_top, regre_top=None)
+print("Feature Matching time: " + str(classifier_feature_matching_time))
 
 print()
 
-print("Benchmarking ML model..")
-benchmarks_iters = 15
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, model_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
-total_time_model = time + featm_time_model
-print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, featm_time_model ))
+# print("Getting matches using classifier and regressor..")
+# classifier_and_regressor_matches, classifier_and_regressor_feature_matching_time = feature_matcher_wrapper_model(class_model, regression_model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, class_top=first_top, regre_top=second_top)
+# print("Feature Matching time: " + str(classifier_and_regressor_feature_matching_time))
+
+print("Benchmarking ML model(s)..")
+benchmarks_iters = 1
+
+print("RANSAC.. (classifier only)")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, classifier_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+total_time_model = time + classifier_feature_matching_time
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, classifier_feature_matching_time))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, featm_time_model, total_time_model, trans_errors_overall, rot_errors_overall))
-model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) #use this line to save the results for a number of model
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, classifier_feature_matching_time, total_time_model, trans_errors_overall, rot_errors_overall))
+# model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) # do I need this ?
+print()
+
+import pdb
+pdb.set_trace()
+
+# print("RANSAC.. (classifier and regressor)")
+# inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, classifier_and_regressor_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+# total_time_model = time + classifier_and_regressor_feature_matching_time
+# print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, classifier_and_regressor_feature_matching_time))
+# print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+# print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, classifier_and_regressor_feature_matching_time, total_time_model, trans_errors_overall, rot_errors_overall))
+# # model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) # do I need this ?
+# print()
+#
+# print("PROSAC - using score per image regression")
+# print()
+# inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, classifier_and_regressor_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True) #val_idx is None here so it passes the already sorted matches to PROSAC in 'ransac_comparison.py'
+# total_time_model = time + classifier_and_regressor_feature_matching_time
+# print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, classifier_and_regressor_feature_matching_time))
+# print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+# print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, classifier_and_regressor_feature_matching_time, total_time_model, trans_errors_overall, rot_errors_overall))
+# # model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) # do I need this ?
+# print()
