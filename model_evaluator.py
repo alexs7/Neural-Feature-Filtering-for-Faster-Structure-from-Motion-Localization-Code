@@ -13,7 +13,7 @@ import sys
 
 # The models here are the best performing for classification and regression as of 28 May
 # example commnad: "python3 model_evaluator.py colmap_data/Coop_data/slice1/ML_data/results/BinaryClassification-ManyManyNodesLayersEarlyStopping-Fri\ May\ 21\ 07\:46\:55\ 2021/early_stop_model/  colmap_data/Coop_data/slice1/ML_data/results/Regression-ManyManyNodesLayersEarlyStopping-Thu\ May\ 27\ 15\:17\:26\ 2021/early_stop_model/"
-# TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.3
+# TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.13 (or whatever IP it is)
 # This is because the method predict_on_batch() needs the GPUs for speed
 class_model_dir = sys.argv[1]
 regression_model_dir = sys.argv[2]
@@ -46,10 +46,14 @@ print("Feature matching using model..")
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 # top 80 ones - why 80 ?
 first_top = 80  # top or random - here it is top, because I am using the models (run a loop, 400, 80, 40)
-second_top = 60 # used for regression
+second_top = 40 # used for regression
 
 print("Getting matches using classifier only..")
-classifier_matches, classifier_feature_matching_time = feature_matcher_wrapper_model(class_model, None, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, class_top=first_top, regre_top=None)
+# classifier_matches, classifier_feature_matching_time = feature_matcher_wrapper_model(class_model, None, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, class_top=first_top, regre_top=None)
+classifier_matches, classifier_feature_matching_time = feature_matcher_wrapper_model(class_model, regression_model, db_gt,
+                                                                                     localised_query_images_names, train_descriptors_live, points3D_xyz_live,
+                                                                                     ratio_test_val, verbose=True, class_top=first_top, regres_top=second_top,
+                                                                                     pick_top_ones=True)
 print("Feature Matching time: " + str(classifier_feature_matching_time))
 
 print()
