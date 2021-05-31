@@ -109,14 +109,16 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
 
 # This is used for benchmarking a ML model
 # It will predict if a desc if matchable or not first, then pick "class_top" (sorted) matchable descs to do the feature matching
-def feature_matcher_wrapper_model(classifier, regressor, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose = False, points_scores_array=None, class_top = -1, regres_top = -1, pick_top_ones = False):
+def feature_matcher_wrapper_model(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor = None, verbose = False, points_scores_array=None, class_top = -1, regres_top = -1, pick_top_ones = False):
     assert(classifier is not None)
+    # TODO: multiply classification and regression output to get a value from 0 to 1 - change that to be your cost function
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     total_time = 0
     matchable_threshold = 0.5
     keypoints_xy_descs_pred = np.empty([0, 131]) #(xy + SIFT + prediction val)
+    using_regressor = (regres_top != -1 and regressor is not None)
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -167,7 +169,7 @@ def feature_matcher_wrapper_model(classifier, regressor, db, query_images, train
                 queryDescriptors = queryDescriptors[matchable_desc_indices]
 
         # further processing if we want to use the regressor too
-        if (regres_top != -1):
+        if (using_regressor):
             start = time.time()
             regression_predictions = regressor.predict_on_batch(queryDescriptors)  # matchable only at this point
             regression_sorted_indices = regression_predictions[:, 0].argsort()[::-1]
@@ -176,10 +178,12 @@ def feature_matcher_wrapper_model(classifier, regressor, db, query_images, train
             total_time += elapsed_time
             keypoints_xy = keypoints_xy[regression_sorted_indices]
             queryDescriptors = queryDescriptors[regression_sorted_indices]
+            sorted_regression_predictions = regression_predictions[regression_sorted_indices]
 
             # pick the top ones
             keypoints_xy = keypoints_xy[0:regres_top, :]
             queryDescriptors = queryDescriptors[0:regres_top, :]
+            sorted_regression_predictions = sorted_regression_predictions[0:regres_top, :]
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -190,7 +194,7 @@ def feature_matcher_wrapper_model(classifier, regressor, db, query_images, train
         # m the closest, n is the second closest
         good_matches = []
         for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
-            assert(m.distance <=  n.distance)
+            assert(m.distance <= n.distance) #TODO: maybe count how many pass the ratio test VS how many they dont without the NN ?
             # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
             if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
                 if(m.queryIdx >= keypoints_xy.shape[0]): #keypoints_xy.shape[0] always same as classifier_predictions.shape[0]
@@ -203,10 +207,9 @@ def feature_matcher_wrapper_model(classifier, regressor, db, query_images, train
                 xy2D = keypoints_xy[m.queryIdx, :].tolist()
                 xyz3D = points3D_xyz[m.trainIdx, :].tolist()
 
-                if (points_scores_array is not None):
-                    for points_scores in points_scores_array:
-                        scores.append(points_scores[0, m.trainIdx])
-                        scores.append(points_scores[0, n.trainIdx])
+                if (using_regressor): #TODO: replace with old code that used scores arrays for both decay score per image and session (so here you will have 2 models regressors each trained on each score)
+                    assert(sorted_regression_predictions is not None)
+                    scores.append(sorted_regression_predictions[m.queryIdx, 0])
 
                 # TODO: add a flag and predict a score for each match to use later in PROSAC
                 match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
