@@ -123,7 +123,8 @@ def feature_matcher_wrapper_model(db, query_images, trainDescriptors, points3D_x
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
         query_image = query_images[i]
-        if(verbose): print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image, end="\r")
+        if(verbose):
+            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
@@ -139,6 +140,9 @@ def feature_matcher_wrapper_model(db, query_images, trainDescriptors, points3D_x
         # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than 80!
         matchable_desc_indices = np.where(classifier_predictions > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/classifier_predictions
         matchable_desc_indices_length = matchable_desc_indices.shape[0]
+
+        if(verbose):
+            print("From " + str(queryDescriptors.shape[0]) + " matches, matchable are now: " + str(matchable_desc_indices_length))
 
         keypoints_xy = keypoints_xy[matchable_desc_indices]
         queryDescriptors = queryDescriptors[matchable_desc_indices]
@@ -156,9 +160,10 @@ def feature_matcher_wrapper_model(db, query_images, trainDescriptors, points3D_x
 
             keypoints_xy = keypoints_xy[classification_sorted_indices]
             queryDescriptors = queryDescriptors[classification_sorted_indices]
-            # pick the top ones
-            keypoints_xy = keypoints_xy[0:class_top, :]
-            queryDescriptors = queryDescriptors[0:class_top, :]
+            # pick the top ones, otherwise use all
+            if(class_top != -1):
+                keypoints_xy = keypoints_xy[0:class_top, :]
+                queryDescriptors = queryDescriptors[0:class_top, :]
         else:
             if(matchable_desc_indices_length > class_top): #if the network predicts more than 80 as matchable then pick random matchable 80.
                 random_matchable_idx = np.random.choice(matchable_desc_indices, class_top, replace=False)

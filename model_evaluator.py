@@ -1,5 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
+
+from RANSACParameters import RANSACParameters
 from database import COLMAPDatabase
 from parameters import Parameters
 import numpy as np
@@ -45,8 +47,8 @@ print("Feature matching using model..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 # top 80 ones - why 80 ?
-first_top = 80  # top or random - here it is top, because I am using the models (run a loop, 400, 80, 40)
-second_top = 60 # used for regression
+first_top = -1  # top or random - here it is top, because I am using the models (run a loop, 400, 80, 40)
+second_top = 80 # used for regression
 
 print("Getting matches using classifier only..")
 classifier_matches, classifier_feature_matching_time = feature_matcher_wrapper_model(db_gt,localised_query_images_names, train_descriptors_live, points3D_xyz_live,
@@ -63,7 +65,7 @@ classifier_and_regressor_matches, classifier_and_regressor_feature_matching_time
 print("Feature Matching time: " + str(classifier_and_regressor_feature_matching_time))
 
 print("Benchmarking ML model(s)..")
-benchmarks_iters = 15
+benchmarks_iters = 1
 
 print("RANSAC.. (classifier only)")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, classifier_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
@@ -76,6 +78,15 @@ print()
 
 print("RANSAC.. (classifier and regressor)")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, classifier_and_regressor_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+total_time_model = time + classifier_and_regressor_feature_matching_time
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, classifier_and_regressor_feature_matching_time))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, classifier_and_regressor_feature_matching_time, total_time_model, trans_errors_overall, rot_errors_overall))
+# model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) # do I need this ?
+print()
+
+print("RANSAC dist.. (classifier and regressor)")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac_dist, classifier_and_regressor_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=RANSACParameters.use_ransac_dist_reliability_score_ml, verbose=True)
 total_time_model = time + classifier_and_regressor_feature_matching_time
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, classifier_and_regressor_feature_matching_time))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))

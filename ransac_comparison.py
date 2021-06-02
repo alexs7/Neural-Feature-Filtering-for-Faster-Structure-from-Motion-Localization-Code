@@ -192,17 +192,9 @@ def run_comparison_ml(func, matches, test_images, intrinsics, val_idx = None):
             if(val_idx >= 0):
                 matches_for_image = sort_matches(matches_for_image, val_idx)
 
-            # These below are for RANSAC + dist versions
-            if(val_idx == RANSACParameters.use_ransac_dist_heatmap_val):
+            # These below are for RANSAC + dist versions (ml predicted score)
+            if (val_idx == RANSACParameters.use_ransac_dist_reliability_score_ml):
                 sub_dist = get_sub_distribution(matches_for_image, 7)
-                matches_for_image = np.hstack((matches_for_image, sub_dist))
-
-            if (val_idx == RANSACParameters.use_ransac_dist_reliability_score):
-                sub_dist = get_sub_distribution(matches_for_image, 9)
-                matches_for_image = np.hstack((matches_for_image, sub_dist))
-
-            if (val_idx == RANSACParameters.use_ransac_dist_visibility_score):
-                sub_dist = get_sub_distribution(matches_for_image, 11)
                 matches_for_image = np.hstack((matches_for_image, sub_dist))
 
         start = time.time()
