@@ -18,7 +18,7 @@ def get_keypoints_xy(db, image_id):
     query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
     return query_image_keypoints_data_xy
 
-# indexing is the same as points3D indexing for trainDescriptors
+# indexing is the same as points3D indexing for trainDescriptors - NOTE: This does not normalised the descriptors!
 def get_queryDescriptors(db, image_id):
     query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
     query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
