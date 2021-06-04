@@ -62,13 +62,11 @@ def prepare_data_for_training(db_path_all, db_path_train, db_path_test, test_siz
     # "_class" = classification
     # "_reg" = regression
     db_train = COLMAPDatabase.create_db_for_training_data(db_path_train)
-    db_test = COLMAPDatabase.create_db_for_test_data(db_path_test)
 
     all_data = db_all.execute("SELECT sift, score, matched FROM data ORDER BY image_id DESC").fetchall()
 
     # begin transactions
     db_train.execute("BEGIN")
-    db_test.execute("BEGIN")
 
     all_sifts = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in all_data)
     all_sifts = np.array(list(all_sifts))
@@ -82,7 +80,6 @@ def prepare_data_for_training(db_path_all, db_path_train, db_path_test, test_siz
     indices = np.arange(len(all_data))
 
     print("Splitting data into test/train..")
-    # classification
     X_train, X_test, y_train, y_test, idx_train, idx_test = train_test_split(all_sifts, all_targets, indices, test_size=test_size, shuffle=shuffle, random_state=random_state)
 
     print("Data Info...")
@@ -97,16 +94,11 @@ def prepare_data_for_training(db_path_all, db_path_train, db_path_test, test_siz
         curr_index = idx_train[i]
         print("Inserting entry " + str(i) + "/" + str(X_train.shape[0]), end="\r")
         db_train.execute("INSERT INTO data VALUES (?, ?, ?)", (COLMAPDatabase.array_to_blob(all_sifts[curr_index,:]),) + (all_scores[curr_index],) + (int(all_targets[curr_index]),))
-    for i in range(len(idx_test)):
-        curr_index = idx_test[i]
-        print("Inserting entry " + str(i) + "/" + str(X_test.shape[0]), end="\r")
-        db_test.execute("INSERT INTO data VALUES (?, ?, ?)", (COLMAPDatabase.array_to_blob(all_sifts[curr_index,:]),) + (all_scores[curr_index],) + (int(all_targets[curr_index]),))
 
     print()
     print("Committing..")
 
     db_train.execute("COMMIT")
-    db_test.execute("COMMIT")
     print("Done!")
 
     return
@@ -168,6 +160,7 @@ live_model_images = read_images_binary(parameters.live_model_images_path)
 live_model_points3D = read_points3d_default(parameters.live_model_points3D_path)
 
 points3D_per_image_decay_scores = np.load(parameters.per_image_decay_matrix_path) #switch this to session scores if needed
+# TODO: add the scores here!
 points3D_per_image_decay_scores = points3D_per_image_decay_scores.sum(axis=0)
 points3D_id_index = index_dict_reverse(live_model_points3D)
 
@@ -178,6 +171,7 @@ db_path_train = sys.argv[3] #colmap_data/Coop_data/slice1/ML_data/ml_database_tr
 db_path_test = sys.argv[4] #colmap_data/Coop_data/slice1/ML_data/ml_database_test.db
 
 print("Creating all data..")
+# this was create to simplify process, create a db with all the data then create a test and train database (as of 04/05/2021, test db is not used)
 create_all_data(ml_db_path, live_model_points3D, points3D_id_index, points3D_per_image_decay_scores, live_model_images, db_live)
 print("Preparing all data for training..")
 prepare_data_for_training(ml_db_path, db_path_train, db_path_test, test_size = 0.1, shuffle = True, random_state = 42)

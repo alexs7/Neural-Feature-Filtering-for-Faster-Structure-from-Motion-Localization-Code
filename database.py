@@ -49,25 +49,6 @@ class COLMAPDatabase(sqlite3.Connection):
         except Error as e:
             print(e)
 
-    @staticmethod
-    def create_db_for_test_data(db_file):
-        sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
-        sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
-                                                sift BLOB NOT NULL,
-                                                score FLOAT NOT NULL,
-                                                matched INTEGER NOT NULL
-                                            );"""
-        conn = None
-        try:
-            conn = sqlite3.connect(db_file)
-            conn.execute(sql_drop_table_if_exists)
-            conn.commit()
-            conn.execute(sql_create_data_table)
-            conn.commit()
-            return conn
-        except Error as e:
-            print(e)
-
     # xyz -> np.float64, xy -> np.float64, score,pred_score -> as it is (I think you may be able to use np.float64/32)
     # sift -> np.uint8
     @staticmethod
@@ -77,7 +58,9 @@ class COLMAPDatabase(sqlite3.Connection):
                                                 image_id INTEGER NOT NULL,
                                                 name TEXT NOT NULL,
                                                 sift BLOB NOT NULL,
-                                                score FLOAT NOT NULL,
+                                                score_per_image FLOAT NOT NULL,
+                                                score_per_session FLOAT NOT NULL,
+                                                score_visibility FLOAT NOT NULL,
                                                 xyz BLOB NOT NULL,
                                                 xy BLOB NOT NULL,
                                                 matched INTEGER NOT NULL
