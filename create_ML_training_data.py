@@ -15,12 +15,10 @@ from sklearn.model_selection import train_test_split
 # run, create_ML_training_data.py (see below)
 # then run any model such as regression.py, regression_rf.py, using docker on weatherwax or ogg cs.bath.ac.uk.
 # (Note the docker command to run is (and before run this "hare reserve 20000" to reserve a port , change to "fullpipeline dir first" ):
-# hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0,1 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -p 20000:80 -ti bath:2020-gpu
+# hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0,1 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -p 20000:80 -ti bath:2020-gpu (the old interactive command)
 # (Note, you will need docker to run the models because it uses gpus, the venv uses python3.6 for some reason - it's ok I think)
-# then run, view_ML_model_results.py, to evaluate the model on unseen data!
-# then run, create_ML_visualization_data.py, to create data from unseen images to evaluate visually the models!
 
-# for docker you might also need to run these for "cv2" and "cvxpnpl"
+# for docker you might also need to run these for "cv2" and "cvxpnpl" (or add to Dockerfiles)
 # might need this too: pip install tensorflow (not for bath:2020-gpu image)
 # apt-get update && apt-get install ffmpeg libsm6 libxext6 libblas-dev liblapack-dev -y && pip install opencv-contrib-python && pip install scs && pip install cvxpnpl
 
@@ -42,22 +40,22 @@ from sklearn.model_selection import train_test_split
 # use git locally on your laptop - the cloud does not like git
 # get IP of container with "hare inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container name>"
 
-# Mine not needed
-def split_data(features, target, test_percentage, randomize = False):
-    if(randomize):
-        print("Randomizing data")
-        union = np.c_[features, target]
-        np.random.shuffle(union)
-        features = union[:, 0:128]
-        target = union[:, 128]
-    rows_no = features.shape[0] #or test , same thing
-    train_percentage = 1 - test_percentage
-    train_max_idx = int(np.floor(rows_no * train_percentage))
-    X_train = features[0 :  train_max_idx , :]
-    y_train = target[0 : train_max_idx]
-    X_test = features[train_max_idx : , :]
-    y_test = target[train_max_idx :]
-    return X_train, y_train, X_test, y_test
+# Mine not needed anymore
+# def split_data(features, target, test_percentage, randomize = False):
+#     if(randomize):
+#         print("Randomizing data")
+#         union = np.c_[features, target]
+#         np.random.shuffle(union)
+#         features = union[:, 0:128]
+#         target = union[:, 128]
+#     rows_no = features.shape[0] #or test , same thing
+#     train_percentage = 1 - test_percentage
+#     train_max_idx = int(np.floor(rows_no * train_percentage))
+#     X_train = features[0 :  train_max_idx , :]
+#     y_train = target[0 : train_max_idx]
+#     X_test = features[train_max_idx : , :]
+#     y_test = target[train_max_idx :]
+#     return X_train, y_train, X_test, y_test
 
 def prepare_data_for_training(db_path_all, db_path_train, db_path_test, test_size = 0.1, shuffle = True, random_state = 42):
     db_all = COLMAPDatabase.connect_ML_db(db_path_all)

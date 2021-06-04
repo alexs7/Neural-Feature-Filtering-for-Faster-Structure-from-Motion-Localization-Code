@@ -9,6 +9,8 @@ from parameters import Parameters
 from query_image import get_image_id, get_keypoints_xy, get_queryDescriptors
 from point3D_loader import read_points3d_default, index_dict_reverse
 
+# UPDATE: as of 04/06/2021 This is not used any more , but kept around if needed to quickly visualise things in ThreeJS
+
 # This file will create the visualization data to view in threejs or any other viewer you create.
 # For images and pointclouds
 # Even though it is called visual.db, it is not used for testing ML models as unseen data.
