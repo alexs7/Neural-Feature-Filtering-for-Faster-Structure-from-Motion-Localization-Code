@@ -152,7 +152,6 @@ points3D_id_index = index_dict_reverse(live_model_points3D)
 # i.e /home/alex/fullpipeline/colmap_data/alfa_mega/slice1/ML_data/database.db / or ml_database.db / or coop/alfa_mega
 # make sure you delete the databases (.db) file first!
 ml_db_path = sys.argv[2] #colmap_data/Coop_data/slice1/ML_data/ml_database_all.db
-db_path_train = sys.argv[3] #colmap_data/Coop_data/slice1/ML_data/ml_database_train.db
 
 print("Creating all training data..")
 # this was create to simplify process, create a db with all the data then create a test and train database (as of 04/05/2021, test db is not used)
