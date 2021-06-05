@@ -97,8 +97,10 @@ def create_all_data(ml_db_path, points3D, points3D_id_index, points3D_reliabilit
             xy = img_data.xys[i] #np.float64, same as xyz
             img_name = img_data.name
 
-            ml_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (img_id,) + (img_name,) + (COLMAPDatabase.array_to_blob(desc),) + (per_image_score,) + (per_session_score,) + (visibility_score,) + (COLMAPDatabase.array_to_blob(xyz),) + (COLMAPDatabase.array_to_blob(xy),) + (matched,))
+            ml_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                          (img_id,) + (img_name,) + (COLMAPDatabase.array_to_blob(desc),) +
+                          (per_image_score,) + (per_session_score,) + (visibility_score,) +
+                          (COLMAPDatabase.array_to_blob(xyz),) + (COLMAPDatabase.array_to_blob(xy),) + (matched,))
         img_index +=1
 
     print()
@@ -150,7 +152,7 @@ points3D_visibility_vals = points3D_visibility_matrix.sum(axis=0)
 points3D_id_index = index_dict_reverse(live_model_points3D)
 
 # i.e /home/alex/fullpipeline/colmap_data/alfa_mega/slice1/ML_data/database.db / or ml_database.db / or coop/alfa_mega
-# make sure you delete the databases (.db) file first!
+# make sure you delete the databases (.db) file first! and "ML_data" folder has to be created manually!
 ml_db_path = sys.argv[2] #colmap_data/Coop_data/slice1/ML_data/ml_database_all.db
 
 print("Creating all training data..")
