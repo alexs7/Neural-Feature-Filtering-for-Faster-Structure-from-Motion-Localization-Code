@@ -57,52 +57,6 @@ from sklearn.model_selection import train_test_split
 #     y_test = target[train_max_idx :]
 #     return X_train, y_train, X_test, y_test
 
-def prepare_data_for_training(db_path_all, db_path_train, db_path_test, test_size = 0.1, shuffle = True, random_state = 42):
-    db_all = COLMAPDatabase.connect_ML_db(db_path_all)
-    # "_class" = classification
-    # "_reg" = regression
-    db_train = COLMAPDatabase.create_db_for_training_data(db_path_train)
-
-    all_data = db_all.execute("SELECT sift, score, matched FROM data ORDER BY image_id DESC").fetchall()
-
-    # begin transactions
-    db_train.execute("BEGIN")
-
-    all_sifts = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in all_data)
-    all_sifts = np.array(list(all_sifts))
-
-    all_scores = (row[1] for row in all_data)  # continuous values
-    all_scores = np.array(list(all_scores))
-
-    all_targets = (row[2] for row in all_data)  # binary values
-    all_targets = np.array(list(all_targets))
-
-    indices = np.arange(len(all_data))
-
-    print("Splitting data into test/train..")
-    X_train, X_test, y_train, y_test, idx_train, idx_test = train_test_split(all_sifts, all_targets, indices, test_size=test_size, shuffle=shuffle, random_state=random_state)
-
-    print("Data Info...")
-    print(" Total Training Size: " + str(idx_train.shape[0]))
-    print(" Total Test Size: " + str(idx_test.shape[0]))
-    print(" values_train mean: " + str(all_scores[idx_train].mean())) #negative mean because of -99 values
-    print(" values_test mean: " + str(all_scores[idx_test].mean()))
-    print(" classes_train mean: " + str(all_targets[idx_train].mean()))
-    print(" classes_test mean: " + str(all_targets[idx_test].mean()))
-
-    for i in range(len(idx_train)):
-        curr_index = idx_train[i]
-        print("Inserting entry " + str(i) + "/" + str(X_train.shape[0]), end="\r")
-        db_train.execute("INSERT INTO data VALUES (?, ?, ?)", (COLMAPDatabase.array_to_blob(all_sifts[curr_index,:]),) + (all_scores[curr_index],) + (int(all_targets[curr_index]),))
-
-    print()
-    print("Committing..")
-
-    db_train.execute("COMMIT")
-    print("Done!")
-
-    return
-
 def get_image_decs(db, image_id): #not to be confused with get_queryDescriptors() in feature_matching_generator.py - that one normalises descriptors.
     data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
     data = COLMAPDatabase.blob_to_array(data.fetchone()[0], np.uint8)
@@ -115,7 +69,7 @@ def get_point3D_score(points3D_scores, current_point3D_id, points3D_id_index):
     point_score = points3D_scores[point_index]
     return point_score
 
-def create_all_data(ml_db_path, points3D, points3D_id_index, points3D_scores, images, db):
+def create_all_data(ml_db_path, points3D, points3D_id_index, points3D_reliability_scores, points3D_heatmap_vals, points3D_visibility_vals, images, db):
     ml_db = COLMAPDatabase.create_db_for_all_data(ml_db_path) #returns a connection
     img_index = 0
     ml_db.execute("BEGIN")
@@ -127,29 +81,54 @@ def create_all_data(ml_db_path, points3D, points3D_id_index, points3D_scores, im
             current_point3D_id = img_data.point3D_ids[i]
 
             if(current_point3D_id == -1): # means feature is unmatched
-                score = -99.0 #TODO: This needs to change to 0 - its messes up regression
+                per_image_score = 0
+                per_session_score = 0
+                visibility_score = 0
                 matched = 0
+                xyz = np.array([0, 0, 0])  # safe to use as no image point will ever match to 0,0,0
             else:
-                score = get_point3D_score(points3D_scores, current_point3D_id, points3D_id_index)
+                per_image_score = get_point3D_score(points3D_reliability_scores, current_point3D_id, points3D_id_index)
+                per_session_score = get_point3D_score(points3D_heatmap_vals, current_point3D_id, points3D_id_index)
+                visibility_score = get_point3D_score(points3D_visibility_vals, current_point3D_id, points3D_id_index)
                 matched = 1
-
-            if (current_point3D_id == -1):
-                xyz = np.array([0, 0, 0]) # safe to use as no image point will ever match to 0,0,0
-            else:
-                xyz = points3D[current_point3D_id].xyz #np.float64
+                xyz = points3D[current_point3D_id].xyz  # np.float64
 
             desc = descs[i] # np.uint8
             xy = img_data.xys[i] #np.float64, same as xyz
             img_name = img_data.name
 
             ml_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (img_id,) + (img_name,) + (COLMAPDatabase.array_to_blob(desc),) + (score,) +
-                              (COLMAPDatabase.array_to_blob(xyz),) + (COLMAPDatabase.array_to_blob(xy),) + (matched,))
+                            (img_id,) + (img_name,) + (COLMAPDatabase.array_to_blob(desc),) + (per_image_score,) + (per_session_score,) + (visibility_score,) + (COLMAPDatabase.array_to_blob(xyz),) + (COLMAPDatabase.array_to_blob(xy),) + (matched,))
         img_index +=1
 
     print()
     print('Done!')
     ml_db.commit()
+
+    print("Generating Data Info...")
+    all_data = ml_db.execute("SELECT * FROM data ORDER BY image_id DESC").fetchall()
+
+    all_sifts = (COLMAPDatabase.blob_to_array(row[2], np.uint8) for row in all_data)
+    all_sifts = np.array(list(all_sifts))
+
+    per_image_scores = (row[3] for row in all_data)  # continuous values
+    per_image_scores = np.array(list(per_image_scores))
+
+    per_session_scores = (row[4] for row in all_data)  # continuous values
+    per_session_scores = np.array(list(per_session_scores))
+
+    visibility_scores = (row[5] for row in all_data)  # continuous values
+    visibility_scores = np.array(list(visibility_scores))
+
+    all_classes = (row[8] for row in all_data)  # binary values
+    all_classes = np.array(list(all_classes))
+
+    print(" Total Training Size: " + str(all_sifts.shape[0]))
+    print(" per_image_scores mean: " + str(per_image_scores.mean()))
+    print(" per_session_scores mean: " + str(per_session_scores.mean()))
+    print(" visibility_scores mean: " + str(visibility_scores.mean()))
+    ratio = np.where(all_classes == 1)[0].shape[0] / np.where(all_classes == 0)[0].shape[0]
+    print("Ratio of Positives to Negatives Classes: " + str(ratio))
 
 base_path = sys.argv[1] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice1/" #trailing "/"
 parameters = Parameters(base_path)
@@ -159,19 +138,24 @@ db_live = COLMAPDatabase.connect(parameters.live_db_path)
 live_model_images = read_images_binary(parameters.live_model_images_path)
 live_model_points3D = read_points3d_default(parameters.live_model_points3D_path)
 
-points3D_per_image_decay_scores = np.load(parameters.per_image_decay_matrix_path) #switch this to session scores if needed
-# TODO: add the scores here!
-points3D_per_image_decay_scores = points3D_per_image_decay_scores.sum(axis=0)
+# Getting the scores
+points3D_reliability_scores_matrix= np.load(parameters.per_image_decay_matrix_path)
+points3D_heatmap_vals_matrix = np.load(parameters.per_session_decay_matrix_path)
+points3D_visibility_matrix = np.load(parameters.binary_visibility_matrix_path)
+
+points3D_reliability_scores = points3D_reliability_scores_matrix.sum(axis=0)
+points3D_heatmap_vals = points3D_heatmap_vals_matrix.sum(axis=0)
+points3D_visibility_vals = points3D_visibility_matrix.sum(axis=0)
+
 points3D_id_index = index_dict_reverse(live_model_points3D)
 
 # i.e /home/alex/fullpipeline/colmap_data/alfa_mega/slice1/ML_data/database.db / or ml_database.db / or coop/alfa_mega
 # make sure you delete the databases (.db) file first!
 ml_db_path = sys.argv[2] #colmap_data/Coop_data/slice1/ML_data/ml_database_all.db
 db_path_train = sys.argv[3] #colmap_data/Coop_data/slice1/ML_data/ml_database_train.db
-db_path_test = sys.argv[4] #colmap_data/Coop_data/slice1/ML_data/ml_database_test.db
 
-print("Creating all data..")
+print("Creating all training data..")
 # this was create to simplify process, create a db with all the data then create a test and train database (as of 04/05/2021, test db is not used)
-create_all_data(ml_db_path, live_model_points3D, points3D_id_index, points3D_per_image_decay_scores, live_model_images, db_live)
-print("Preparing all data for training..")
-prepare_data_for_training(ml_db_path, db_path_train, db_path_test, test_size = 0.1, shuffle = True, random_state = 42)
+create_all_data(ml_db_path, live_model_points3D, points3D_id_index,
+                points3D_reliability_scores, points3D_heatmap_vals, points3D_visibility_vals,
+                live_model_images, db_live)
