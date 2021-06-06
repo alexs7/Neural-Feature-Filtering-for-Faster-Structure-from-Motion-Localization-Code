@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split
 # Tensorboard Notes:
 # https://chadrick-kwag.net/how-to-manually-write-to-tensorboard-from-tf-keras-callback-useful-trick-when-writing-a-handful-of-validation-metrics-at-once/
 # You need 2 terminals
-# 1 - to run tensorboard, you ssh with "ssh -L 9999:localhost:20000 ar2056@weatherwax.cs.bath.ac.uk", and run this too "source ~/venv_basic/bin/activate"
+# 1 - to run tensorboard, you ssh with "ssh -L 9999:localhost:20000 ar2056@weatherwax.cs.bath.ac.uk", and run this too "source ~/venv_basic/bin/activate" (the latter might not be needed)
 # then run "tensorboard --logdir colmap_data/Coop_data/slice1/ML_data/results/ --port 20000" inside fullpipeline/ (might need to reserve a port with hare)
 # the you visit "http://localhost:9999" on your local machine.
 # 2 - the terminal you usually run the hare command from above and Tensorflow will read from the dir you store the results.
