@@ -129,6 +129,9 @@ def create_all_data(ml_db_path, points3D, points3D_id_index, points3D_reliabilit
     print(" per_image_scores mean: " + str(per_image_scores.mean()))
     print(" per_session_scores mean: " + str(per_session_scores.mean()))
     print(" visibility_scores mean: " + str(visibility_scores.mean()))
+    print(" per_image_scores std: " + str(per_image_scores.std()))
+    print(" per_session_scores std: " + str(per_session_scores.std()))
+    print(" visibility_scores std: " + str(visibility_scores.std()))
     ratio = np.where(all_classes == 1)[0].shape[0] / np.where(all_classes == 0)[0].shape[0]
     print("Ratio of Positives to Negatives Classes: " + str(ratio))
 

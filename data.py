@@ -14,8 +14,6 @@ def getRegressionData(db_path):
     scores = (row[1] for row in data)  # continuous values
     scores = np.array(list(scores))
 
-    scores[scores == -99] = 0  # This is a temp fix. 'Check create_ML_training_data.py' fo proper fix
-
     print("Total Training Size: " + str(sift_vecs.shape[0]))
 
     # standard scaling - mean normalization
@@ -27,3 +25,18 @@ def getRegressionData(db_path):
     scores = min_max_scaler.fit_transform(scores.reshape(-1, 1))
 
     return sift_vecs, scores
+
+def getClassificationData(db_path):
+    ml_db = COLMAPDatabase.connect_ML_db(db_path)
+
+    data = ml_db.execute("SELECT sift, matched FROM data").fetchall()  # guarantees same order - maybe ?
+
+    sift_vecs = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in data)
+    sift_vecs = np.array(list(sift_vecs))
+
+    classes = (row[1] for row in data)  # binary values
+    classes = np.array(list(classes))
+
+    print("Total Training Size: " + str(sift_vecs.shape[0]))
+
+    return sift_vecs, classes

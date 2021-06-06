@@ -2,6 +2,9 @@ import os
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+
+from data import getClassificationData
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 import tensorflow as tf
 from tensorflow import keras
@@ -59,24 +62,7 @@ print("Batch_size: " + str(batch_size))
 print("Epochs: " + str(epochs))
 
 print("Loading data..")
-ml_db = COLMAPDatabase.connect_ML_db(db_path)
-
-data = ml_db.execute("SELECT sift, matched FROM data").fetchall() #guarantees same order - maybe ?
-
-sift_vecs = (COLMAPDatabase.blob_to_array(row[0] , np.uint8) for row in data)
-sift_vecs = np.array(list(sift_vecs))
-
-classes = (row[1] for row in data) #binary values
-classes = np.array(list(classes))
-
-ratio = np.where(classes == 1)[0].shape[0] / np.where(classes == 0)[0].shape[0]
-print("Ratio of Positives to Negatives: " + str(ratio))
-
-print("Total Training Size: " + str(sift_vecs.shape[0]))
-
-# standard scaling - mean normalization
-# scaler = StandardScaler()
-# sift_vecs = scaler.fit_transform(sift_vecs)
+sift_vecs, classes = getClassificationData(db_path)
 
 # Create model
 print("Creating model")
