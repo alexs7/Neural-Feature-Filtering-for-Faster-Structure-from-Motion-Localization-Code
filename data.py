@@ -3,10 +3,11 @@ from sklearn import preprocessing
 from database import COLMAPDatabase
 import numpy as np
 
-def getRegressionData(db_path):
+def getRegressionData(db_path, score_name):
+    # score_name is either score_per_image, score_per_session, score_visibility
     ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
-    data = ml_db.execute("SELECT sift, score FROM data WHERE matched = 1").fetchall()  # guarantees same order - maybe ?
+    data = ml_db.execute("SELECT sift, "+score_name+" FROM data WHERE matched = 1").fetchall()  # guarantees same order - maybe ?
 
     sift_vecs = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in data)
     sift_vecs = np.array(list(sift_vecs))

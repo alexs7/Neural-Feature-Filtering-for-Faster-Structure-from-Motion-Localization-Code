@@ -33,17 +33,20 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 regression_4.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 900 ManyManyNodesLayersEarlyStopping
+# python3 regression_4.py colmap_data/Coop_data/slice1/ 32768 900 ManyManyNodesLayersEarlyStopping (or CMU slices path)
 
-db_path = sys.argv[1]
+base_path = sys.argv[1]
+db_path = os.path.join(base_path, "ML_data/ml_database_all.db")
 batch_size = int(sys.argv[2])
 epochs = int(sys.argv[3])
 name = sys.argv[4]
 
 MODEL_NAME = "Regression-{}-{}".format( name, time.ctime())
 
-log_dir = "colmap_data/Coop_data/slice1/ML_data/results/{}".format(MODEL_NAME)
+model_results_dir = "ML_data/results/{}".format(MODEL_NAME)
+log_dir = os.path.join(base_path, model_results_dir)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
+model_save_dir = os.path.join(log_dir, "model")
 
 print("TensorBoard log_dir: " + log_dir)
 tensorboard_cb = TensorBoard(log_dir=log_dir)
@@ -59,14 +62,14 @@ print("Batch_size: " + str(batch_size))
 print("Epochs: " + str(epochs))
 
 print("Loading data..")
-sift_vecs, scores = getRegressionData(db_path)
+sift_vecs, scores = getRegressionData(db_path, score_name = "score_per_image")
 
 # Create model
 print("Creating model")
 
 model = Sequential()
 # in keras the first layer is a hidden layer too, so input dims is OK here
-model.add(Dense(128, input_dim=128, activation='relu')) #TODO: relu or sigmoid ?
+model.add(Dense(128, input_dim=128, activation='relu')) #Note: 'relu' here will be the same as 'linear' (default as all SIFT values are positive)
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
@@ -75,7 +78,7 @@ model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
-model.add(Dense(1))
+model.add(Dense(1, activation='relu')) # added relu instead of linear because all the values I expect are positive
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, MeanSquaredError
@@ -89,7 +92,7 @@ model.summary()
 X_train = sift_vecs
 y_train = scores
 history = model.fit(X_train, y_train,
-                    validation_split=0.1,
+                    validation_split=0.3,
                     epochs=epochs,
                     shuffle=True,
                     batch_size=batch_size,
@@ -97,11 +100,7 @@ history = model.fit(X_train, y_train,
                     callbacks=[all_callbacks])
 
 # Save model here
-print("Saving model")
-model_save_path = os.path.join("colmap_data/Coop_data/slice1/ML_data/results/", MODEL_NAME, "model")
-model.save(model_save_path) #double check with keras.models.load_model(model_save_path) in debug
-
-import pdb
-pdb.set_trace()
+print("Saving model..")
+model.save(model_save_dir)
 
 print("Done!")

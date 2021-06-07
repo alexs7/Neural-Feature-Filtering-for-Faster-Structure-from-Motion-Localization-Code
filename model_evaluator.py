@@ -13,6 +13,7 @@ from get_scale import calc_scale_COLMAP_ARCORE
 from benchmark import benchmark, benchmark_ml
 import sys
 
+# Need to run "prepare_comparison_data.py" before this file
 # The models here are the best performing for classification and regression as of 28 May
 # example commnad: "python3 model_evaluator.py colmap_data/Coop_data/slice1/ML_data/results/BinaryClassification-ManyManyNodesLayersEarlyStopping-Fri\ May\ 21\ 07\:46\:55\ 2021/early_stop_model/  colmap_data/Coop_data/slice1/ML_data/results/Regression-ManyManyNodesLayersEarlyStopping-Thu\ May\ 27\ 15\:17\:26\ 2021/early_stop_model/"
 # TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.13 (or whatever IP it is)
@@ -27,7 +28,7 @@ regression_model = keras.models.load_model(regression_model_dir)
 db_gt_path = "colmap_data/Coop_data/slice1/ML_data/original_data/gt/database.db"
 db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the query images descs as they do not exist in the live db!
 
-# load data generated from "prepare_comaprison_data.py"
+# load data generated from "prepare_comparison_data.py"
 print("Loading Data..")
 points3D_info = np.load('colmap_data/Coop_data/slice1/ML_data/avg_descs_xyz_ml.npy').astype(np.float32)
 train_descriptors_live = points3D_info[:, 0:128]
