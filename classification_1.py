@@ -1,59 +1,49 @@
 import os
 import time
-import matplotlib.pyplot as plt
-import numpy as np
-
 from data import getClassificationData
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
-import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
-import tensorflow.keras.backend as K
-from tensorflow.keras.regularizers import l2
 from tensorflow.keras.callbacks import TensorBoard
 import sys
-import glob
-import pandas as pd
-from database import COLMAPDatabase
 # from sklearn.model_selection import KFold
-from sklearn import metrics
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from custom_callback import getModelCheckpointBinaryClassification, getEarlyStoppingBinaryClassification
 
 metrics = [
-    keras.metrics.TruePositives(name='tp'),
-    keras.metrics.FalsePositives(name='fp'),
-    keras.metrics.TrueNegatives(name='tn'),
-    keras.metrics.FalseNegatives(name='fn'),
-    keras.metrics.BinaryAccuracy(name='binary_accuracy'),
-    keras.metrics.Precision(name='precision'),
-    keras.metrics.Recall(name='recall'),
-    keras.metrics.AUC(name='auc'),
-    keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
+      keras.metrics.TruePositives(name='tp'),
+      keras.metrics.FalsePositives(name='fp'),
+      keras.metrics.TrueNegatives(name='tn'),
+      keras.metrics.FalseNegatives(name='fn'),
+      keras.metrics.BinaryAccuracy(name='binary_accuracy'),
+      keras.metrics.Precision(name='precision'),
+      keras.metrics.Recall(name='recall'),
+      keras.metrics.AUC(name='auc'),
+      keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 classification_1.py colmap_data/Coop_data/slice1/ML_data/ml_database_train.db 32768 900 ReversePyramidEarlyStopping
+# python3 classification_1.py colmap_data/Coop_data/slice1/ 32768 50 ReversePyramidEarlyStopping (or CMU slices path)
 
-db_path = sys.argv[1]
+base_path = sys.argv[1]
+db_path = os.path.join(base_path, "ML_data/ml_database_all.db")
 batch_size = int(sys.argv[2])
 epochs = int(sys.argv[3])
 name = sys.argv[4]
 
 MODEL_NAME = "BinaryClassification-{}-{}".format( name, time.ctime())
 
-log_dir = "colmap_data/Coop_data/slice1/ML_data/results/{}".format(MODEL_NAME)
+model_results_dir = "ML_data/results/{}".format(MODEL_NAME)
+log_dir = os.path.join(base_path, model_results_dir)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
+model_save_dir = os.path.join(log_dir, "model")
 
 print("TensorBoard log_dir: " + log_dir)
 tensorboard_cb = TensorBoard(log_dir=log_dir)
 print("Early_stop_model_save_dir log_dir: " + early_stop_model_save_dir)
 mc_callback = getModelCheckpointBinaryClassification(early_stop_model_save_dir)
 es_callback = getEarlyStoppingBinaryClassification()
-all_callbacks = [tensorboard_cb, mc_callback, es_callback]
+all_callbacks = [tensorboard_cb]
 
 print("Running Script..!")
 print(MODEL_NAME)
@@ -96,12 +86,7 @@ history = model.fit(X_train, y_train,
                     callbacks=all_callbacks)
 
 # Save model here
-print("Saving model")
-model_save_path = os.path.join("colmap_data/Coop_data/slice1/ML_data/results/", MODEL_NAME, "model")
-model.save(model_save_path) #double check with keras.models.load_model(model_save_path) in debug
-
-import pdb
-pdb.set_trace()
+print("Saving model..")
+model.save(model_save_dir)
 
 print("Done!")
-

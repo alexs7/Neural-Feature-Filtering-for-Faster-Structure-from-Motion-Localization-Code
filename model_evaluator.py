@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 from tensorflow import keras
 
@@ -14,30 +16,33 @@ from benchmark import benchmark, benchmark_ml
 import sys
 
 # Need to run "prepare_comparison_data.py" before this file
-# The models here are the best performing for classification and regression as of 28 May
-# example commnad: "python3 model_evaluator.py colmap_data/Coop_data/slice1/ML_data/results/BinaryClassification-ManyManyNodesLayersEarlyStopping-Fri\ May\ 21\ 07\:46\:55\ 2021/early_stop_model/  colmap_data/Coop_data/slice1/ML_data/results/Regression-ManyManyNodesLayersEarlyStopping-Thu\ May\ 27\ 15\:17\:26\ 2021/early_stop_model/"
+# The models here are the best performing for classification and regression as of 28 May, ManyManyNodesLayersEarlyStopping, and ReversePyramidEarlyStopping
+# use CMU_data dir or Coop_data
+# example commnad: "python3 model_evaluator.py colmap_data/CMU_data/slice3/ BinaryClassification-ManyManyNodesLayersEarlyStopping-Sun\ Jun\ \ 6\ 18\:27\:22\ 2021/early_stop_model/ Regression-ManyManyNodesLayersEarlyStopping-Sun\ Jun\ \ 6\ 18\:29\:12\ 2021/early_stop_model/
 # TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.13 (or whatever IP it is)
 # This is because the method predict_on_batch() needs the GPUs for speed
-class_model_dir = sys.argv[1]
-regression_model_dir = sys.argv[2]
+base_path = sys.argv[1]
+ml_path = os.path.join(base_path, "ML_data")
+class_model_dir = os.path.join(os.path.join(base_path, "ML_data/results"), sys.argv[2])
+regression_model_dir = os.path.join(os.path.join(base_path, "ML_data/results"), sys.argv[3])
 
 print("Loading Model..")
 class_model = keras.models.load_model(class_model_dir)
 regression_model = keras.models.load_model(regression_model_dir)
 
-db_gt_path = "colmap_data/Coop_data/slice1/ML_data/original_data/gt/database.db"
-db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the query images descs as they do not exist in the live db!
+db_gt_path = os.path.join(base_path, "gt/database.db")
+db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the query images descs as they do NOT exist in the LIVE db, only in GT db!
 
 # load data generated from "prepare_comparison_data.py"
 print("Loading Data..")
 points3D_info = np.load('colmap_data/Coop_data/slice1/ML_data/avg_descs_xyz_ml.npy').astype(np.float32)
 train_descriptors_live = points3D_info[:, 0:128]
-query_images_ground_truth_poses = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/query_images_ground_truth_poses.npy", allow_pickle=True).item()
-localised_query_images_names = np.ndarray.tolist(np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/localised_query_images_names.npy"))
-points3D_xyz_live = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/points3D_xyz_live.npy")  # can also pick them up from points3D_info
-K = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/K.npy")
-scale = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/scale.npy")
-# these are not needed now here
+query_images_ground_truth_poses = np.load(os.path.join(ml_path, "prepared_data/query_images_ground_truth_poses.npy"), allow_pickle=True).item()
+localised_query_images_names = np.ndarray.tolist(np.load(os.path.join(ml_path, "prepared_data/localised_query_images_names.npy")))
+points3D_xyz_live = np.load(os.path.join(ml_path, "prepared_data/points3D_xyz_live.npy")) # can also pick them up from points3D_info
+K = np.load(os.path.join(ml_path, "prepared_data/K.npy"))
+scale = np.load(os.path.join(ml_path, "prepared_data/scale.npy"))
+# these are not needed now here - paths need updating 07/06/2021
 # random_matches = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/random_matches.npy", allow_pickle=True).item()
 # vanillia_matches = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/vanillia_matches.npy", allow_pickle=True).item()
 # random_matches_data = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/random_matches_data.npy")
@@ -48,7 +53,7 @@ print("Feature matching using model..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 # top 80 ones - why 80 ?
-first_top = -1  # top or random - here it is top, because I am using the models (run a loop, 400, 80, 40)
+first_top = -1  # -1 will use all the outputs from the classifier, anything else positive will be used , i.e 80, pick top 80 matchable ones
 second_top = 80 # used for regression
 
 print("Getting matches using classifier only..")

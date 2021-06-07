@@ -1,15 +1,14 @@
-# The difference form get_points_3D_mean_desc_single_model.py as it returns the SIFT descs and coordinate x,y,z points.
+# The difference form "get_points_3D_mean_desc_single_model.py" or "get_points_3D_mean_descs.py" as it returns the SIFT descs and coordinate x,y,z points.
 # And also I do not normalise the descs here.
 
 # one liner (for weatherwax server, ogg etc, or the docker in them)
-# using relative paths here
+# using relative paths here (CMU or Coop)
 #  arguments
 # 1 - live db
 # 2 - live images
 # 3 - live points3D
 # 4 - output filename
-# "after_epoch_data" - not relevant was deleted but you get the idea for the paths
-# python3 get_points_3D_mean_desc_single_model_ml.py colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/database.db colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/model/images.bin colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/model/points3D.bin colmap_data/Coop_data/slice1/ML_data/after_epoch_data/original_live_data/avg_descs_xyz.npy
+# python3 get_points_3D_mean_desc_single_model_ml.py colmap_data/CMU_data/slice3/live/database.db colmap_data/CMU_data/slice3/live/model/images.bin colmap_data/CMU_data/slice3/live/model/points3D.bin colmap_data/CMU_data/slice3/ML_data/avg_descs_xyz_ml.npy
 
 import sys
 import numpy as np

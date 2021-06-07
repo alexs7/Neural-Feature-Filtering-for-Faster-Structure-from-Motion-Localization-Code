@@ -1,3 +1,6 @@
+import os
+import sys
+
 from database import COLMAPDatabase
 import numpy as np
 from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
@@ -9,18 +12,22 @@ from benchmark import benchmark, benchmark_ml
 from parameters import Parameters
 
 # sample commnad to run
-# python3 prepare_comparison_data.py (Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py")
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice3/ (Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py")
 
 # The data generated here will be then later used for evaluating ML models in the model_evaluator.py
 # Will also save the random matches and the full (800) mathces for all the query images - no need to infer at every evaluation.
 
+base_path = sys.argv[1]
+using_CMU_data = "CMU_data" in base_path
+ml_path = os.path.join(base_path, "ML_data")
+
 print("Setting up...")
 # the "gt" here means ground truth (also used as query)
-# Instead or "ML_data/original_data/" you could use the "gt" folder form the previous publication folder, but I add more data now such as the arcore poses folder.
-db_gt_path = "colmap_data/Coop_data/slice1/ML_data/original_data/gt/database.db"
-query_images_bin_path = "colmap_data/Coop_data/slice1/ML_data/original_data/gt/model/images.bin"
-query_images_path = "colmap_data/Coop_data/slice1/ML_data/original_data/gt/query_name.txt"
-query_cameras_bin_path = "colmap_data/Coop_data/slice1/ML_data/original_data/gt/model/cameras.bin"
+# use the "gt" folder form the previous publication folder, but I add more data now such as the arcore poses folder for retail and the GT poses for CMU.
+db_gt_path = os.path.join(base_path, "gt/database.db")
+query_images_bin_path = os.path.join(base_path, "gt/model/images.bin")
+query_images_path = os.path.join(base_path, "gt/query_name.txt")
+query_cameras_bin_path = os.path.join(base_path, "gt/model/cameras.bin")
 
 db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the query images descs as they do not exist in the live db!
 query_images = read_images_binary(query_images_bin_path)
@@ -30,20 +37,24 @@ query_images_ground_truth_poses = get_query_images_pose_from_images(localised_qu
 
 # live points
 # Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py" - to get the 3D points avg descs, and corresponding xyz coordinates (128 + 3) from the LIVE model.
-# use the folder original_live_data/ otherwise you will be using the query image/3D point descriptors if you use the new_model
-# also you will need the scale between the colmap poses and the ARCore poses (for example the 2020-06-22 the 392 images are from morning run - or whatever you use)
-# Matching will happen from the query images (query images) on the live model, otherwise if you use the query (gt) model it will be "cheating"
-# as the descriptors from the query images that you are trying to match will already be in the query model. Just use the query model for ground truth pose errors comparisons.
-points3D_info = np.load('colmap_data/Coop_data/slice1/ML_data/avg_descs_xyz_ml.npy').astype(np.float32)
-points3D_xyz_live = points3D_info[:,128:131] # in my publication I used to get the points seperately from the LIVE model, but here get_points_3D_mean_desc_single_model_ml.py already returns them
+# also you will need the scale between the colmap poses and the ARCore poses (for example the 2020-06-22 the 392 images are from morning run - or whatever you use) - ONLY if you use the Coop_data
+# Matching will happen from the query (or gt) images, on the live model, otherwise if you use the query (gt) model it will be "cheating"
+# as the descriptors from the query images that you are trying to match will already be in the query (or gt) model.
+# Only use the query model for ground truth pose errors comparisons.
+points3D_info = np.load(os.path.join(ml_path, "avg_descs_xyz_ml.npy")).astype(np.float32)
+points3D_xyz_live = points3D_info[:,128:131] # in my publication I used to get the points (x,y,z) seperately from the LIVE model, but here get_points_3D_mean_desc_single_model_ml.py already returns them
 train_descriptors_live = points3D_info[:, 0:128]
 
 K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3)  # 3 because 1 -base, 2 -live, 3 -query images
-# for ar_core data
-ar_core_poses_path = 'colmap_data/Coop_data/slice1/ML_data/original_data/gt/arcore_data/data_all/'
-colmap_poses_path = query_images_bin_path  # just for clarity purposes
-scale = calc_scale_COLMAP_ARCORE(ar_core_poses_path, colmap_poses_path)
-print("Scale: " + str(scale))
+if(using_CMU_data):
+    scale = 1
+    print("CMU Scale: " + str(scale))
+else:
+    # for ar_core data
+    ar_core_poses_path =  os.path.join(ml_path, "arcore_data/data_all/") #these poses here need to match the frames from the gt images of course
+    colmap_poses_path = query_images_bin_path  # just for clarity purposes
+    scale = calc_scale_COLMAP_ARCORE(ar_core_poses_path, colmap_poses_path)
+    print("ARCore Scale: " + str(scale))
 
 print("Feature matching random and vanillia descs..")
 # db_gt, again because we need the descs from the query images
@@ -59,7 +70,7 @@ print("Feature Matching time for vanillia samples: " + str(featm_time_vanillia))
 
 print()
 # get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
-benchmarks_iters = 15 #same as first publication
+benchmarks_iters = 1 #same as first publication
 
 print("Benchmarking Random..")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
@@ -79,12 +90,14 @@ print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_error
 print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f " % (inlers_no, outliers, iterations, time, featm_time_vanillia, total_time_vanil, trans_errors_overall, rot_errors_overall))
 vanillia_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall])
 
-np.save("colmap_data/Coop_data/slice1/ML_data/prepared_data/query_images_ground_truth_poses.npy", query_images_ground_truth_poses)
-np.save("colmap_data/Coop_data/slice1/ML_data/prepared_data/localised_query_images_names.npy", localised_query_images_names)
-np.save("colmap_data/Coop_data/slice1/ML_data/prepared_data/points3D_xyz_live.npy", points3D_xyz_live)
-np.save("colmap_data/Coop_data/slice1/ML_data/prepared_data/K.npy", K)
-np.save("colmap_data/Coop_data/slice1/ML_data/prepared_data/scale.npy", scale)
-np.save("colmap_data/Coop_data/slice1/ML_data/prepared_data/random_matches.npy", random_matches)
-np.save("colmap_data/Coop_data/slice1/ML_data/prepared_data/vanillia_matches.npy", vanillia_matches)
-np.save("colmap_data/Coop_data/slice1/ML_data/prepared_data/random_matches_data.npy", random_matches_data)
-np.save("colmap_data/Coop_data/slice1/ML_data/prepared_data/vanillia_matches_data.npy", vanillia_matches_data)
+prepared_data_path = os.path.join(ml_path, "prepared_data")
+os.makedirs(prepared_data_path, exist_ok=True)
+np.save(os.path.join(prepared_data_path, "query_images_ground_truth_poses.npy"), query_images_ground_truth_poses)
+np.save(os.path.join(prepared_data_path, "localised_query_images_names.npy"), localised_query_images_names)
+np.save(os.path.join(prepared_data_path, "points3D_xyz_live.npy"), points3D_xyz_live)
+np.save(os.path.join(prepared_data_path, "K.npy"), K)
+np.save(os.path.join(prepared_data_path, "scale.npy"), scale)
+np.save(os.path.join(prepared_data_path, "random_matches.npy"), random_matches)
+np.save(os.path.join(prepared_data_path, "vanillia_matches.npy"), vanillia_matches)
+np.save(os.path.join(prepared_data_path, "random_matches_data.npy"), random_matches_data)
+np.save(os.path.join(prepared_data_path, "vanillia_matches_data.npy"), vanillia_matches_data)

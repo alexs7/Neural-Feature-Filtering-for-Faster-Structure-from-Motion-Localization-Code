@@ -1,27 +1,15 @@
 import os
 import time
-import matplotlib.pyplot as plt
-import numpy as np
-from keras.callbacks import EarlyStopping
 
 from data import getRegressionData
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
-import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
-import tensorflow.keras.backend as K
-from tensorflow.keras.regularizers import l2
 from tensorflow.keras.callbacks import TensorBoard
 import sys
-import glob
-import pandas as pd
-from database import COLMAPDatabase
 # from sklearn.model_selection import KFold
-from sklearn import metrics
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from custom_callback import getModelCheckpointRegression, getEarlyStoppingRegression
 
 metrics = [
@@ -53,7 +41,7 @@ tensorboard_cb = TensorBoard(log_dir=log_dir)
 print("Early_stop_model_save_dir log_dir: " + early_stop_model_save_dir)
 mc_callback = getModelCheckpointRegression(early_stop_model_save_dir)
 es_callback = getEarlyStoppingRegression()
-all_callbacks = [tensorboard_cb, mc_callback, es_callback]
+all_callbacks = [tensorboard_cb]
 
 print("Running Script..!")
 print(MODEL_NAME)
@@ -78,7 +66,7 @@ model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
-model.add(Dense(1, activation='relu')) # added relu instead of linear because all the values I expect are positive
+model.add(Dense(1, activation='sigmoid')) # added relu instead of linear because all the values I expect are positive
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, MeanSquaredError
@@ -92,7 +80,7 @@ model.summary()
 X_train = sift_vecs
 y_train = scores
 history = model.fit(X_train, y_train,
-                    validation_split=0.3,
+                    validation_split=0.1,
                     epochs=epochs,
                     shuffle=True,
                     batch_size=batch_size,
