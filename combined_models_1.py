@@ -1,5 +1,8 @@
 import os
 import time
+
+from tensorboard_config import get_Tensorboard_dir
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 from tensorflow import keras
 from tensorflow.keras.layers import Dense
@@ -26,18 +29,15 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 combined_models.py colmap_data/Coop_data/slice1/ 32768 900 ManyManyNodesLayersEarlyStoppingCombinedModel ( or colmap_data/CMU_data/slice3/ )
+# python3 combined_models_1.py colmap_data/Coop_data/slice1/ 32768 900 ReversePyramidEarlyStoppingCombinedModel ( or colmap_data/CMU_data/slice3/ )
 
 base_path = sys.argv[1]
 db_path = os.path.join(base_path, "ML_data/ml_database_all.db")
 batch_size = int(sys.argv[2])
 epochs = int(sys.argv[3])
-name = sys.argv[4]
+name = "combined_"+sys.argv[4]
 
-MODEL_NAME = "CombinedModels-{}-{}".format( name, time.ctime())
-
-model_results_dir = "ML_data/results/{}".format(MODEL_NAME)
-log_dir = os.path.join(base_path, model_results_dir)
+log_dir = get_Tensorboard_dir(name)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
 model_save_dir = os.path.join(log_dir, "model")
 
@@ -49,7 +49,7 @@ es_callback = getEarlyStoppingCombined()
 all_callbacks = [tensorboard_cb, mc_callback, es_callback]
 
 print("Running Script..!")
-print(MODEL_NAME)
+print(name)
 
 print("Batch_size: " + str(batch_size))
 print("Epochs: " + str(epochs))
@@ -87,7 +87,7 @@ X_train = sift_vecs
 y_train = classes
 history = model.fit(X_train,
                     {"regression": scores, "classifier": classes}, #training data
-                    validation_split=0.3,
+                    validation_split=0.2,
                     epochs=epochs,
                     shuffle=True,
                     batch_size=batch_size,

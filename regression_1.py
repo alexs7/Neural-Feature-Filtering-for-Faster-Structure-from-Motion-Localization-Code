@@ -1,6 +1,8 @@
 import os
 import time
 from data import getRegressionData
+from tensorboard_config import get_Tensorboard_dir
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 from tensorflow import keras
 from tensorflow.keras import Sequential
@@ -25,12 +27,9 @@ base_path = sys.argv[1]
 db_path = os.path.join(base_path, "ML_data/ml_database_all.db")
 batch_size = int(sys.argv[2])
 epochs = int(sys.argv[3])
-name = sys.argv[4]
+name = "regression_"+sys.argv[4]
 
-MODEL_NAME = "Regression-{}-{}".format( name, time.ctime())
-
-model_results_dir = "ML_data/results/{}".format(MODEL_NAME)
-log_dir = os.path.join(base_path, model_results_dir)
+log_dir = get_Tensorboard_dir(name)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
 model_save_dir = os.path.join(log_dir, "model")
 
@@ -42,7 +41,7 @@ es_callback = getEarlyStoppingRegression()
 all_callbacks = [tensorboard_cb, mc_callback, es_callback]
 
 print("Running Script..!")
-print(MODEL_NAME)
+print(name)
 
 print("Batch_size: " + str(batch_size))
 print("Epochs: " + str(epochs))
@@ -61,7 +60,7 @@ model.add(Dense(32, activation='relu'))
 model.add(Dense(16, activation='relu'))
 model.add(Dense(4, activation='relu'))
 model.add(Dense(2, activation='relu'))
-model.add(Dense(1, activation='sigmoid')) # added relu instead of linear because all the values I expect are positive
+model.add(Dense(1)) # added relu instead of linear because all the values I expect are positive
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, MeanSquaredError

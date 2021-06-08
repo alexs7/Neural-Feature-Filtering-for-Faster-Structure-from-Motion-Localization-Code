@@ -1,3 +1,4 @@
+import os
 import pdb
 import sys
 from collections import defaultdict
@@ -12,11 +13,9 @@ from sklearn.model_selection import train_test_split
 # This file will use data from previous publication (live model + all sessions) and the live database. You can run this on your alienware or ogg/weatherwax
 # You run these in order:
 # (Note, load the python venv: source venv/bin/activate (not in docker!))
-# run, python3 create_ML_training_data.py  /home/fullpipeline/colmap_data/Coop_data/slice1/ /home/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_all.db.py (or CMU)
-# then run any model such as regression.py, regression_rf.py, using docker on weatherwax or ogg cs.bath.ac.uk.
-# (Note the docker command to run is (and before run this "hare reserve 20000" to reserve a port , change to "fullpipeline dir first" ):
-# hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0,1 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -p 20000:80 -ti bath:2020-gpu (the old interactive command)
-# (Note, you will need docker to run the models because it uses gpus, the venv uses python3.6 for some reason - it's ok I think)
+# run, python3 create_ML_training_data.py  /home/fullpipeline/colmap_data/Coop_data/slice1/  (or CMU)
+# then run any model such as regression).py, regression_rf.py, or classification.py whatever, using docker on weatherwax or ogg cs.bath.ac.uk.
+# The run get_points_3D_mean_desc_single_model_ml.py before prepare_comparison_data.py, then model_evaluator.py
 
 # for docker you might also need to run these for "cv2" and "cvxpnpl" (or add to Dockerfiles)
 # might need this too: pip install tensorflow (not for bath:2020-gpu image)
@@ -33,8 +32,8 @@ from sklearn.model_selection import train_test_split
 
 # Docker Notes:
 # create an image using the docker file under "/homes/ar2056/docker"
-# hare build -t ar2056/basic . (whatever name you prefer)
-# hare run -dit --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --workdir /home -v /homes/ar2056/:/home/ --name ar2056_basic ar2056/basic:latest (build container)
+# hare build -t ar2056/bath2020ssh . (whatever name you prefer, use bath2020ssh docker image from Tom, should work on all machines)
+# hare run -dit --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --workdir /home -v /homes/ar2056/:/home/ --name ar2056_trainNN ar2056/bath2020ssh:latest (build container)
 # run this first (from laptop), then launch Pycharm for remote dev
 # ssh -L 6000:172.17.0.5:22 ar2056@weatherwax.cs.bath.ac.uk (make sure the IP points to a full-working docker, and the docker has to have the ip of 172.17.0.5 or same)
 # use git locally on your laptop - the cloud does not like git
@@ -155,7 +154,9 @@ points3D_visibility_vals = points3D_visibility_matrix.sum(axis=0)
 points3D_id_index = index_dict_reverse(live_model_points3D)
 
 # make sure you delete the databases (.db) file first! and "ML_data" folder has to be created manually!
-ml_db_path = sys.argv[2] #colmap_data/Coop_data/slice1/ML_data/ml_database_all.db
+ml_db_dir = os.path.join(base_path, "ML_data/")
+os.mkdir(ml_db_dir)
+ml_db_path = os.path.join(ml_db_dir, "ml_database_all.db")
 
 print("Creating all training data..")
 # this was create to simplify process, create a db with all the data then create a test and train database (as of 04/05/2021, test db is not used)
