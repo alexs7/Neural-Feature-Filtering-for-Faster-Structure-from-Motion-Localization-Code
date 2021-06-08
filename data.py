@@ -15,6 +15,10 @@ def getRegressionData(db_path, score_name):
     scores = (row[1] for row in data)  # continuous values
     scores = np.array(list(scores))
 
+    shuffled_idxs = np.random.permutation(sift_vecs.shape[0])
+    sift_vecs = sift_vecs[shuffled_idxs]
+    scores = scores[shuffled_idxs]
+
     print("Total Training Size: " + str(sift_vecs.shape[0]))
 
     # standard scaling - mean normalization
@@ -38,6 +42,10 @@ def getClassificationData(db_path):
     classes = (row[1] for row in data)  # binary values
     classes = np.array(list(classes))
 
+    shuffled_idxs = np.random.permutation(sift_vecs.shape[0])
+    sift_vecs = sift_vecs[shuffled_idxs]
+    classes = classes[shuffled_idxs]
+
     print("Total Training Size: " + str(sift_vecs.shape[0]))
 
     return sift_vecs, classes
@@ -57,6 +65,11 @@ def getCombinedData(db_path, score_name):
 
     classes = (row[2] for row in data)  # binary values
     classes = np.array(list(classes))
+
+    shuffled_idxs = np.random.permutation(sift_vecs.shape[0])
+    sift_vecs = sift_vecs[shuffled_idxs]
+    scores = scores[shuffled_idxs]
+    classes = classes[shuffled_idxs]
 
     print("Total Training Size: " + str(sift_vecs.shape[0]))
 

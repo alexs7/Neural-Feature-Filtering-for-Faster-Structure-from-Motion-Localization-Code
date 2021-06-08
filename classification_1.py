@@ -23,7 +23,7 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 classification_1.py colmap_data/Coop_data/slice1/ 32768 50 ReversePyramidEarlyStopping (or CMU slices path)
+# python3 classification_1.py colmap_data/Coop_data/slice1/ 32768 50 ReversePyramidEarlyStoppingNew (or CMU slices path)
 
 base_path = sys.argv[1]
 db_path = os.path.join(base_path, "ML_data/ml_database_all.db")
@@ -43,7 +43,7 @@ tensorboard_cb = TensorBoard(log_dir=log_dir)
 print("Early_stop_model_save_dir log_dir: " + early_stop_model_save_dir)
 mc_callback = getModelCheckpointBinaryClassification(early_stop_model_save_dir)
 es_callback = getEarlyStoppingBinaryClassification()
-all_callbacks = [tensorboard_cb]
+all_callbacks = [tensorboard_cb, mc_callback, es_callback]
 
 print("Running Script..!")
 print(MODEL_NAME)
@@ -78,7 +78,7 @@ model.summary()
 X_train = sift_vecs
 y_train = classes
 history = model.fit(X_train, y_train,
-                    validation_split=0.1,
+                    validation_split=0.2,
                     epochs=epochs,
                     shuffle=True,
                     batch_size=batch_size,

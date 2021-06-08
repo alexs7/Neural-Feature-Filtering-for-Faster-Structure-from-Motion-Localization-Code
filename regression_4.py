@@ -41,7 +41,7 @@ tensorboard_cb = TensorBoard(log_dir=log_dir)
 print("Early_stop_model_save_dir log_dir: " + early_stop_model_save_dir)
 mc_callback = getModelCheckpointRegression(early_stop_model_save_dir)
 es_callback = getEarlyStoppingRegression()
-all_callbacks = [tensorboard_cb]
+all_callbacks = [tensorboard_cb, mc_callback, es_callback]
 
 print("Running Script..!")
 print(MODEL_NAME)
@@ -80,7 +80,7 @@ model.summary()
 X_train = sift_vecs
 y_train = scores
 history = model.fit(X_train, y_train,
-                    validation_split=0.1,
+                    validation_split=0.2,
                     epochs=epochs,
                     shuffle=True,
                     batch_size=batch_size,

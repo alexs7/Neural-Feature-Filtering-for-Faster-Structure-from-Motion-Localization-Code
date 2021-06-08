@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 # This file will use data from previous publication (live model + all sessions) and the live database. You can run this on your alienware or ogg/weatherwax
 # You run these in order:
 # (Note, load the python venv: source venv/bin/activate (not in docker!))
-# run, create_ML_training_data.py (see below)
+# run, python3 create_ML_training_data.py  /home/fullpipeline/colmap_data/Coop_data/slice1/ /home/fullpipeline/colmap_data/Coop_data/slice1/ML_data/ml_database_all.db.py (or CMU)
 # then run any model such as regression.py, regression_rf.py, using docker on weatherwax or ogg cs.bath.ac.uk.
 # (Note the docker command to run is (and before run this "hare reserve 20000" to reserve a port , change to "fullpipeline dir first" ):
 # hare run --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0,1 -v "$(pwd)":/fullpipeline --workdir /fullpipeline -e COLUMNS="`tput cols`" -e LINES="`tput lines`" -p 20000:80 -ti bath:2020-gpu (the old interactive command)
@@ -135,7 +135,7 @@ def create_all_data(ml_db_path, points3D, points3D_id_index, points3D_reliabilit
     ratio = np.where(all_classes == 1)[0].shape[0] / np.where(all_classes == 0)[0].shape[0]
     print("Ratio of Positives to Negatives Classes: " + str(ratio))
 
-base_path = sys.argv[1] # example: "/home/alex/fullpipeline/colmap_data/CMU_data/slice1/" #trailing "/"
+base_path = sys.argv[1]
 parameters = Parameters(base_path)
 
 db_live = COLMAPDatabase.connect(parameters.live_db_path)
@@ -154,7 +154,6 @@ points3D_visibility_vals = points3D_visibility_matrix.sum(axis=0)
 
 points3D_id_index = index_dict_reverse(live_model_points3D)
 
-# i.e /home/alex/fullpipeline/colmap_data/alfa_mega/slice1/ML_data/database.db / or ml_database.db / or coop/alfa_mega
 # make sure you delete the databases (.db) file first! and "ML_data" folder has to be created manually!
 ml_db_path = sys.argv[2] #colmap_data/Coop_data/slice1/ML_data/ml_database_all.db
 

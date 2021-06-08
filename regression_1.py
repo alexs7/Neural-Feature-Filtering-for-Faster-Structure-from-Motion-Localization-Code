@@ -39,7 +39,7 @@ tensorboard_cb = TensorBoard(log_dir=log_dir)
 print("Early_stop_model_save_dir log_dir: " + early_stop_model_save_dir)
 mc_callback = getModelCheckpointRegression(early_stop_model_save_dir)
 es_callback = getEarlyStoppingRegression()
-all_callbacks = [tensorboard_cb]
+all_callbacks = [tensorboard_cb, mc_callback, es_callback]
 
 print("Running Script..!")
 print(MODEL_NAME)
@@ -61,7 +61,7 @@ model.add(Dense(32, activation='relu'))
 model.add(Dense(16, activation='relu'))
 model.add(Dense(4, activation='relu'))
 model.add(Dense(2, activation='relu'))
-model.add(Dense(1)) # added relu instead of linear because all the values I expect are positive
+model.add(Dense(1, activation='sigmoid')) # added relu instead of linear because all the values I expect are positive
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, MeanSquaredError
@@ -75,7 +75,7 @@ model.summary()
 X_train = sift_vecs
 y_train = scores
 history = model.fit(X_train, y_train,
-                    validation_split=0.1,
+                    validation_split=0.2,
                     epochs=epochs,
                     shuffle=True,
                     batch_size=batch_size,
