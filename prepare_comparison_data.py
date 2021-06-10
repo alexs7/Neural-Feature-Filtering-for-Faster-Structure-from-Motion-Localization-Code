@@ -22,6 +22,7 @@ using_CMU_data = "CMU_data" in base_path
 ml_path = os.path.join(base_path, "ML_data")
 
 print("Setting up...")
+print("using_CMU_data: " + str(using_CMU_data))
 # the "gt" here means ground truth (also used as query)
 # use the "gt" folder form the previous publication folder, but I add more data now such as the arcore poses folder for retail and the GT poses for CMU.
 db_gt_path = os.path.join(base_path, "gt/database.db")
@@ -58,7 +59,7 @@ else:
 
 print("Feature matching random and vanillia descs..")
 # db_gt, again because we need the descs from the query images
-ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
+ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 # random 80 ones - why 80 ?
 random_no = 80  # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
 # db_gt is only used to get the SIFT features from the query images, nothing to do with the train_descriptors_live and points3D_xyz_live order. That latter order needs to be corresponding btw.

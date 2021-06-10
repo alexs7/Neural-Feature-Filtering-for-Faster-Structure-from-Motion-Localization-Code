@@ -155,7 +155,7 @@ points3D_id_index = index_dict_reverse(live_model_points3D)
 
 # make sure you delete the databases (.db) file first! and "ML_data" folder has to be created manually!
 ml_db_dir = os.path.join(base_path, "ML_data/")
-os.mkdir(ml_db_dir)
+os.makedirs(ml_db_dir, exist_ok = True)
 ml_db_path = os.path.join(ml_db_dir, "ml_database_all.db")
 
 print("Creating all training data..")

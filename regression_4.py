@@ -29,6 +29,7 @@ db_path = os.path.join(base_path, "ML_data/ml_database_all.db")
 batch_size = int(sys.argv[2])
 epochs = int(sys.argv[3])
 name = "regression_"+sys.argv[4]
+train_on_matched_only = bool(sys.argv[5])
 
 log_dir = get_Tensorboard_dir(name)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
@@ -48,7 +49,8 @@ print("Batch_size: " + str(batch_size))
 print("Epochs: " + str(epochs))
 
 print("Loading data..")
-sift_vecs, scores = getRegressionData(db_path, score_name = "score_per_image")
+
+sift_vecs, scores = getRegressionData(db_path, score_name = "score_per_image", train_on_matched_only = train_on_matched_only)
 
 # Create model
 print("Creating model")

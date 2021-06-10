@@ -47,7 +47,7 @@ print("Batch_size: " + str(batch_size))
 print("Epochs: " + str(epochs))
 
 print("Loading data..")
-sift_vecs, scores = getRegressionData(db_path, score_name = "score_per_image")
+sift_vecs, scores = getRegressionData(db_path, score_name = "score_per_image", train_on_matched_only = False)
 
 # Create model
 print("Creating model")

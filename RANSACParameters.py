@@ -29,7 +29,6 @@ class RANSACParameters(object):
     use_ransac_dist_heatmap_val = -1
     use_ransac_dist_reliability_score = -2
     use_ransac_dist_visibility_score = -3
-    use_ransac_dist_reliability_score_ml = -4 #the predicted "decay per image score"
 
     ransac_base = "ransac_base"
     prosac_base = "prosac_base"

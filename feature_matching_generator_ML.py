@@ -107,18 +107,21 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
 
     return matches, total_time
 
-# This is used for benchmarking a ML model
-# It will predict if a desc if matchable or not first, then pick "class_top" (sorted) matchable descs to do the feature matching
-def feature_matcher_wrapper_model(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor = None, verbose = False, points_scores_array=None, class_top = -1, regres_top = -1, pick_top_ones = False):
-    assert(classifier is not None)
-    # TODO: multiply classification and regression output to get a value from 0 to 1 - change that to be your cost function
+# These will be used for benchmarking a ML model
+# There are several cases here that wil be tested:
+# classification - cl
+# classification -> regression (latter, trained on matched only) - cl_rg
+# regression (trained on all) - rg
+# combined - cb
+# For each of the above cases there is a seperate method, sadly loads of duplicate code at least it is clear to understand
+# Depending on the case, It will predict if a desc if matchable or not first, then pick "class_top" (sorted) matchable descs to do the feature matching
+def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, top_no = None, verbose= True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     total_time = 0
     matchable_threshold = 0.5
-    keypoints_xy_descs_pred = np.empty([0, 131]) #(xy + SIFT + prediction val)
-    using_regressor = (regres_top != -1 and regressor is not None)
+    percentage_reduction_total = 0
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -141,54 +144,23 @@ def feature_matcher_wrapper_model(db, query_images, trainDescriptors, points3D_x
         matchable_desc_indices = np.where(classifier_predictions > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/classifier_predictions
         matchable_desc_indices_length = matchable_desc_indices.shape[0]
 
-        if(verbose):
-            print("From " + str(queryDescriptors.shape[0]) + " matches, matchable are now: " + str(matchable_desc_indices_length))
+        percentage_reduction_total = percentage_reduction_total + (100 - matchable_desc_indices_length * 100 / queryDescriptors.shape[0])
 
         keypoints_xy = keypoints_xy[matchable_desc_indices]
         queryDescriptors = queryDescriptors[matchable_desc_indices]
         classifier_predictions = classifier_predictions[matchable_desc_indices]
         matchable_desc_indices = np.arange(matchable_desc_indices_length) # this used to index the above 'new' arrays after predictions
 
-        # if pick_top_ones is set to True then it will sort by predicted value and pick the top ones (random_limit)
-        # if not then it will pick random ones from a pool of only matchable descs
-        if(pick_top_ones):
+        if(top_no != None):
             start = time.time()
             classification_sorted_indices = classifier_predictions[:, 0].argsort()[::-1]
             end = time.time()
             elapsed_time = end - start
             total_time += elapsed_time
-
             keypoints_xy = keypoints_xy[classification_sorted_indices]
             queryDescriptors = queryDescriptors[classification_sorted_indices]
-            # pick the top ones, otherwise use all
-            if(class_top != -1):
-                keypoints_xy = keypoints_xy[0:class_top, :]
-                queryDescriptors = queryDescriptors[0:class_top, :]
-        else:
-            if(matchable_desc_indices_length > class_top): #if the network predicts more than 80 as matchable then pick random matchable 80.
-                random_matchable_idx = np.random.choice(matchable_desc_indices, class_top, replace=False)
-                keypoints_xy = keypoints_xy[random_matchable_idx]
-                queryDescriptors = queryDescriptors[random_matchable_idx]
-            else:
-                keypoints_xy = keypoints_xy[matchable_desc_indices]
-                queryDescriptors = queryDescriptors[matchable_desc_indices]
-
-        # further processing if we want to use the regressor too
-        if (using_regressor):
-            start = time.time()
-            regression_predictions = regressor.predict_on_batch(queryDescriptors)  # matchable only at this point
-            regression_sorted_indices = regression_predictions[:, 0].argsort()[::-1]
-            end = time.time()
-            elapsed_time = end - start
-            total_time += elapsed_time
-            keypoints_xy = keypoints_xy[regression_sorted_indices]
-            queryDescriptors = queryDescriptors[regression_sorted_indices]
-            sorted_regression_predictions = regression_predictions[regression_sorted_indices]
-
-            # pick the top ones
-            keypoints_xy = keypoints_xy[0:regres_top, :]
-            queryDescriptors = queryDescriptors[0:regres_top, :]
-            sorted_regression_predictions = sorted_regression_predictions[0:regres_top, :]
+            keypoints_xy = keypoints_xy[0:top_no, :]
+            queryDescriptors = queryDescriptors[0:top_no, :]
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -212,12 +184,266 @@ def feature_matcher_wrapper_model(db, query_images, trainDescriptors, points3D_x
                 xy2D = keypoints_xy[m.queryIdx, :].tolist()
                 xyz3D = points3D_xyz[m.trainIdx, :].tolist()
 
-                if (using_regressor): #TODO: replace with old code that used scores arrays for both decay score per image and session (so here you will have 2 models regressors each trained on each score)
-                    assert(sorted_regression_predictions is not None)
-                    scores.append(sorted_regression_predictions[m.queryIdx, 0])
-
                 # TODO: add a flag and predict a score for each match to use later in PROSAC
                 match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
+                match_data = list(chain(*match_data))
+                good_matches.append(match_data)
+
+        # sanity check
+        if (ratio_test_val == 1.0):
+            assert len(good_matches) == len(temp_matches)
+
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
+
+        matches[query_image] = np.array(good_matches)
+        matches_sum.append(len(good_matches))
+
+    if(verbose):
+        print()
+        total_all_images = np.sum(matches_sum)
+        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
+        matches_all_avg = total_all_images / len(matches_sum)
+        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
+        percentage_reduction_avg = percentage_reduction_total / len(query_images)
+        print("Average matches percentage reduction per image (regardless of top_no): " + str(percentage_reduction_avg) + "%")
+
+    return matches, total_time
+
+def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor, top_no = 80, verbose = True):
+    # create image_name <-> matches, dict - easier to work with
+    matches = {}
+    matches_sum = []
+    total_time = 0
+    matchable_threshold = 0.5
+
+    #  go through all the test images and match their descs to the 3d points avg descs
+    for i in range(len(query_images)):
+        query_image = query_images[i]
+        if(verbose):
+            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
+
+        image_id = get_image_id(db,query_image)
+        # keypoints data (first keypoint correspond to the first descriptor etc etc)
+        keypoints_xy = get_keypoints_xy(db, image_id)
+        queryDescriptors = get_queryDescriptors(db, image_id)
+
+        start = time.time()
+        classifier_predictions = classifier.predict_on_batch(queryDescriptors) #, use_multiprocessing=True, workers = 4)
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
+
+        # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than 80!
+        matchable_desc_indices = np.where(classifier_predictions > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/classifier_predictions
+        matchable_desc_indices_length = matchable_desc_indices.shape[0]
+
+        keypoints_xy = keypoints_xy[matchable_desc_indices]
+        queryDescriptors = queryDescriptors[matchable_desc_indices]
+        classifier_predictions = classifier_predictions[matchable_desc_indices]
+        matchable_desc_indices = np.arange(matchable_desc_indices_length) # this used to index the above 'new' arrays after predictions
+
+        start = time.time()
+        regression_predictions = regressor.predict_on_batch(queryDescriptors)  # matchable only at this point
+        regression_sorted_indices = regression_predictions[:, 0].argsort()[::-1]
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
+        keypoints_xy = keypoints_xy[regression_sorted_indices]
+        queryDescriptors = queryDescriptors[regression_sorted_indices]
+        sorted_regression_predictions = regression_predictions[regression_sorted_indices]
+
+        # pick the top ones after regression predictions
+        # all have the same order below
+        keypoints_xy = keypoints_xy[0:top_no, :]
+        queryDescriptors = queryDescriptors[0:top_no, :]
+        sorted_regression_predictions = sorted_regression_predictions[0:top_no, :]
+
+        matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
+        # Matching on trainDescriptors (remember these are the means of the 3D points)
+        start = time.time()
+        temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
+
+        # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
+        # m the closest, n is the second closest
+        good_matches = []
+        for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
+            assert(m.distance <= n.distance) #TODO: maybe count how many pass the ratio test VS how many they dont without the NN ?
+            # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
+            if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
+                if(m.queryIdx >= keypoints_xy.shape[0]): #keypoints_xy.shape[0] always same as classifier_predictions.shape[0]
+                    raise Exception("m.queryIdx error!")
+                if (m.trainIdx >= points3D_xyz.shape[0]):
+                    raise Exception("m.trainIdx error!")
+                # idx1.append(m.queryIdx)
+                # idx2.append(m.trainIdx)
+                xy2D = keypoints_xy[m.queryIdx, :].tolist()
+                xyz3D = points3D_xyz[m.trainIdx, :].tolist()
+                regression_prediction = sorted_regression_predictions[m.queryIdx, 0]
+
+                # TODO: add a flag and predict a score for each match to use later in PROSAC
+                match_data = [xy2D, xyz3D, [m.distance, n.distance], regression_prediction]
+                match_data = list(chain(*match_data))
+                good_matches.append(match_data)
+
+        # sanity check
+        if (ratio_test_val == 1.0):
+            assert len(good_matches) == len(temp_matches)
+
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
+
+        matches[query_image] = np.array(good_matches)
+        matches_sum.append(len(good_matches))
+
+    if(verbose):
+        print()
+        total_all_images = np.sum(matches_sum)
+        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
+        matches_all_avg = total_all_images / len(matches_sum)
+        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
+
+    return matches, total_time
+
+def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, top_no = 80, verbose = True):
+    # create image_name <-> matches, dict - easier to work with
+    matches = {}
+    matches_sum = []
+    total_time = 0
+
+    #  go through all the test images and match their descs to the 3d points avg descs
+    for i in range(len(query_images)):
+        query_image = query_images[i]
+        if(verbose):
+            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
+
+        image_id = get_image_id(db,query_image)
+        # keypoints data (first keypoint correspond to the first descriptor etc etc)
+        keypoints_xy = get_keypoints_xy(db, image_id)
+        queryDescriptors = get_queryDescriptors(db, image_id)
+
+        start = time.time()
+        regression_predictions = regressor.predict_on_batch(queryDescriptors)  # matchable only at this point
+        regression_sorted_indices = regression_predictions[:, 0].argsort()[::-1]
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
+        keypoints_xy = keypoints_xy[regression_sorted_indices]
+        queryDescriptors = queryDescriptors[regression_sorted_indices]
+        sorted_regression_predictions = regression_predictions[regression_sorted_indices]
+
+        # pick the top ones after regression predictions
+        # all have the same order below
+        keypoints_xy = keypoints_xy[0:top_no, :]
+        queryDescriptors = queryDescriptors[0:top_no, :]
+        sorted_regression_predictions = sorted_regression_predictions[0:top_no, :]
+
+        matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
+        # Matching on trainDescriptors (remember these are the means of the 3D points)
+        start = time.time()
+        temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
+
+        # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
+        # m the closest, n is the second closest
+        good_matches = []
+        for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
+            assert(m.distance <= n.distance) #TODO: maybe count how many pass the ratio test VS how many they dont without the NN ?
+            # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
+            if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
+                if(m.queryIdx >= keypoints_xy.shape[0]): #keypoints_xy.shape[0] always same as classifier_predictions.shape[0]
+                    raise Exception("m.queryIdx error!")
+                if (m.trainIdx >= points3D_xyz.shape[0]):
+                    raise Exception("m.trainIdx error!")
+                # idx1.append(m.queryIdx)
+                # idx2.append(m.trainIdx)
+                xy2D = keypoints_xy[m.queryIdx, :].tolist()
+                xyz3D = points3D_xyz[m.trainIdx, :].tolist()
+                regression_prediction = sorted_regression_predictions[m.queryIdx, 0]
+
+                # TODO: add a flag and predict a score for each match to use later in PROSAC
+                match_data = [xy2D, xyz3D, [m.distance, n.distance], regression_prediction]
+                match_data = list(chain(*match_data))
+                good_matches.append(match_data)
+
+        # sanity check
+        if (ratio_test_val == 1.0):
+            assert len(good_matches) == len(temp_matches)
+
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
+
+        matches[query_image] = np.array(good_matches)
+        matches_sum.append(len(good_matches))
+
+    if(verbose):
+        print()
+        total_all_images = np.sum(matches_sum)
+        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
+        matches_all_avg = total_all_images / len(matches_sum)
+        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
+
+    return matches, total_time
+
+def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, top_no = 80, verbose = True):
+    # create image_name <-> matches, dict - easier to work with
+    matches = {}
+    matches_sum = []
+    total_time = 0
+
+    #  go through all the test images and match their descs to the 3d points avg descs
+    for i in range(len(query_images)):
+        query_image = query_images[i]
+        if(verbose):
+            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
+
+        image_id = get_image_id(db,query_image)
+        # keypoints data (first keypoint correspond to the first descriptor etc etc)
+        keypoints_xy = get_keypoints_xy(db, image_id)
+        queryDescriptors = get_queryDescriptors(db, image_id)
+
+        start = time.time()
+        regression_predictions = combined_model.predict_on_batch(queryDescriptors)  # matchable only at this point
+        regression_sorted_indices = regression_predictions[:, 0].argsort()[::-1]
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
+        keypoints_xy = keypoints_xy[regression_sorted_indices]
+        queryDescriptors = queryDescriptors[regression_sorted_indices]
+        sorted_regression_predictions = regression_predictions[regression_sorted_indices]
+
+        # pick the top ones after combined_model predictions
+        # all have the same order below
+        keypoints_xy = keypoints_xy[0:top_no, :]
+        queryDescriptors = queryDescriptors[0:top_no, :]
+        sorted_regression_predictions = sorted_regression_predictions[0:top_no, :]
+
+        matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
+        # Matching on trainDescriptors (remember these are the means of the 3D points)
+        start = time.time()
+        temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
+
+        # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
+        # m the closest, n is the second closest
+        good_matches = []
+        for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
+            assert(m.distance <= n.distance) #TODO: maybe count how many pass the ratio test VS how many they dont without the NN ?
+            # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
+            if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
+                if(m.queryIdx >= keypoints_xy.shape[0]): #keypoints_xy.shape[0] always same as classifier_predictions.shape[0]
+                    raise Exception("m.queryIdx error!")
+                if (m.trainIdx >= points3D_xyz.shape[0]):
+                    raise Exception("m.trainIdx error!")
+                # idx1.append(m.queryIdx)
+                # idx2.append(m.trainIdx)
+                xy2D = keypoints_xy[m.queryIdx, :].tolist()
+                xyz3D = points3D_xyz[m.trainIdx, :].tolist()
+                combined_model_prediction = sorted_regression_predictions[m.queryIdx, 0]
+
+                # TODO: add a flag and predict a score for each match to use later in PROSAC
+                match_data = [xy2D, xyz3D, [m.distance, n.distance], combined_model_prediction]
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
 

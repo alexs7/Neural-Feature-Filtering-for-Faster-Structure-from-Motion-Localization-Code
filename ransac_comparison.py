@@ -177,25 +177,23 @@ def run_comparison_ml(func, matches, test_images, intrinsics, val_idx = None):
     data = np.empty([0, 4])
     images_poses = {}
 
+
     for i in range(len(test_images)):
         image = test_images[i]
         matches_for_image = matches[image]
         # print("Doing image " + str(i+1) + "/" + str(len(test_images)) + ", " + image , end="\r")
 
         # this was added because for the ML case the random matches are set to a low number and after the ratio test you might get less than 4
-        if(len(matches_for_image) < 4):
+        if (len(matches_for_image) < 4):
             print("ransac_comparison.py: Less than 4 matches..")
             data = np.r_[data, np.array([0, 0, 0, 0]).reshape([1, 4])]
             continue
 
+        assert(len(matches_for_image) >= 4)
+
         if(val_idx is not None):
             if(val_idx >= 0):
                 matches_for_image = sort_matches(matches_for_image, val_idx)
-
-            # These below are for RANSAC + dist versions (ml predicted score)
-            if (val_idx == RANSACParameters.use_ransac_dist_reliability_score_ml):
-                sub_dist = get_sub_distribution(matches_for_image, 7)
-                matches_for_image = np.hstack((matches_for_image, sub_dist))
 
         start = time.time()
         best_model = func(matches_for_image, intrinsics)
