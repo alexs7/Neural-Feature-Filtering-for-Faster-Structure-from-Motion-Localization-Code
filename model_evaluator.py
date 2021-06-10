@@ -20,13 +20,13 @@ import sys
 # use CMU_data dir or Coop_data
 # example commnad: "python3 model_evaluator.py colmap_data/CMU_data/slice3/ BinaryClassification-ManyManyNodesLayersEarlyStopping-Sun\ Jun\ \ 6\ 18\:27\:22\ 2021/early_stop_model/ Regression-ManyManyNodesLayersEarlyStopping-Sun\ Jun\ \ 6\ 18\:29\:12\ 2021/early_stop_model/
 # TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.13 (or whatever IP it is)
-# This is because the method predict_on_batch() needs the GPUs for speed
+# This is because the method predict_on_batch() needs the GPUs for speed - make sure they are free too.
 base_path = sys.argv[1]
 ml_path = os.path.join(base_path, "ML_data")
-class_model_dir = os.path.join(os.path.join(base_path, "ML_data/results"), sys.argv[2])
-regression_model_dir = os.path.join(os.path.join(base_path, "ML_data/results"), sys.argv[3])
+class_model_dir = sys.argv[2]
+regression_model_dir = sys.argv[3]
 
-print("Loading Model..")
+print("Loading Model(s)..")
 class_model = keras.models.load_model(class_model_dir)
 regression_model = keras.models.load_model(regression_model_dir)
 
@@ -35,7 +35,7 @@ db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the 
 
 # load data generated from "prepare_comparison_data.py"
 print("Loading Data..")
-points3D_info = np.load('colmap_data/Coop_data/slice1/ML_data/avg_descs_xyz_ml.npy').astype(np.float32)
+points3D_info = np.load(os.path.join(ml_path, "avg_descs_xyz_ml.npy")).astype(np.float32)
 train_descriptors_live = points3D_info[:, 0:128]
 query_images_ground_truth_poses = np.load(os.path.join(ml_path, "prepared_data/query_images_ground_truth_poses.npy"), allow_pickle=True).item()
 localised_query_images_names = np.ndarray.tolist(np.load(os.path.join(ml_path, "prepared_data/localised_query_images_names.npy")))
