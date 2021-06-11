@@ -126,8 +126,8 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
         query_image = query_images[i]
-        if(verbose):
-            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
+        # if(verbose):
+        #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
@@ -149,7 +149,6 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
         keypoints_xy = keypoints_xy[matchable_desc_indices]
         queryDescriptors = queryDescriptors[matchable_desc_indices]
         classifier_predictions = classifier_predictions[matchable_desc_indices]
-        matchable_desc_indices = np.arange(matchable_desc_indices_length) # this used to index the above 'new' arrays after predictions
 
         if(top_no != None):
             start = time.time()
@@ -221,8 +220,8 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
         query_image = query_images[i]
-        if(verbose):
-            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
+        # if(verbose):
+        #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
@@ -241,8 +240,6 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
 
         keypoints_xy = keypoints_xy[matchable_desc_indices]
         queryDescriptors = queryDescriptors[matchable_desc_indices]
-        classifier_predictions = classifier_predictions[matchable_desc_indices]
-        matchable_desc_indices = np.arange(matchable_desc_indices_length) # this used to index the above 'new' arrays after predictions
 
         start = time.time()
         regression_predictions = regressor.predict_on_batch(queryDescriptors)  # matchable only at this point
@@ -283,7 +280,7 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
                 regression_prediction = sorted_regression_predictions[m.queryIdx, 0]
 
                 # TODO: add a flag and predict a score for each match to use later in PROSAC
-                match_data = [xy2D, xyz3D, [m.distance, n.distance], regression_prediction]
+                match_data = [xy2D, xyz3D, [m.distance, n.distance], [regression_prediction]]
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
 
@@ -316,8 +313,8 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
         query_image = query_images[i]
-        if(verbose):
-            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
+        # if(verbose):
+        #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
@@ -363,7 +360,7 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
                 regression_prediction = sorted_regression_predictions[m.queryIdx, 0]
 
                 # TODO: add a flag and predict a score for each match to use later in PROSAC
-                match_data = [xy2D, xyz3D, [m.distance, n.distance], regression_prediction]
+                match_data = [xy2D, xyz3D, [m.distance, n.distance], [regression_prediction]]
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
 
@@ -396,8 +393,8 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
         query_image = query_images[i]
-        if(verbose):
-            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
+        # if(verbose):
+        #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
@@ -406,10 +403,12 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
 
         start = time.time()
         regression_predictions = combined_model.predict_on_batch(queryDescriptors)  # matchable only at this point
+        regression_predictions = np.multiply(regression_predictions[0], regression_predictions[1]) #multiple outputs
         regression_sorted_indices = regression_predictions[:, 0].argsort()[::-1]
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
+        
         keypoints_xy = keypoints_xy[regression_sorted_indices]
         queryDescriptors = queryDescriptors[regression_sorted_indices]
         sorted_regression_predictions = regression_predictions[regression_sorted_indices]
@@ -443,7 +442,7 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
                 combined_model_prediction = sorted_regression_predictions[m.queryIdx, 0]
 
                 # TODO: add a flag and predict a score for each match to use later in PROSAC
-                match_data = [xy2D, xyz3D, [m.distance, n.distance], combined_model_prediction]
+                match_data = [xy2D, xyz3D, [m.distance, n.distance], [combined_model_prediction]]
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
 

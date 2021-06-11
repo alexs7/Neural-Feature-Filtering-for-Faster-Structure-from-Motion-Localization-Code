@@ -16,14 +16,14 @@ name_of_model = sys.argv[2] #for example "Extended_CMU_slice3" , name of network
 # Run baseline random features and baseline all features (system commands)
 combined_model_command = "python3 combined_models_4.py "+data_path+" 32768 1000 " + name_of_model
 classification_model_command = "python3 classification_4.py "+data_path+" 32768 1000 " + name_of_model
-regression_model_command = "python3 regression_4.py "+data_path+" 32768 1000 " + name_of_model
-regression_on_all_model_command = "python3 regression_4.py "+data_path+" 32768 1000 " + name_of_model + " 0"
+regression_model_command = "python3 regression_4.py "+data_path+" 32768 1000 " + name_of_model + " 1"
+regression_on_all_model_command = "python3 regression_4.py "+data_path+" 32768 1000 All" + name_of_model + " 0"
 
 print("Commands to run:")
 print(combined_model_command)
 print(classification_model_command)
 print(regression_model_command)
-print(regression_model_command)
+print(regression_on_all_model_command)
 
 print("Training started..")
 os.system(combined_model_command)

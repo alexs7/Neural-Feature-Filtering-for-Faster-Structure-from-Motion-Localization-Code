@@ -1,11 +1,10 @@
 import os
-
-import tensorflow as tf
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 from tensorflow import keras
-
 from RANSACParameters import RANSACParameters
 from database import COLMAPDatabase
-from feature_matching_generator_ML import feature_matcher_wrapper_model_cl, feature_matcher_wrapper_model_cl_rg, feature_matcher_wrapper_model_rg
+from feature_matching_generator_ML import feature_matcher_wrapper_model_cl, feature_matcher_wrapper_model_cl_rg, feature_matcher_wrapper_model_rg, \
+    feature_matcher_wrapper_model_cb
 from parameters import Parameters
 import numpy as np
 from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
@@ -18,18 +17,26 @@ import sys
 # Need to run "prepare_comparison_data.py" before this file
 # The models here are the best performing for classification and regression as of 28 May, ManyManyNodesLayersEarlyStopping, and ReversePyramidEarlyStopping
 # use CMU_data dir or Coop_data
-# example command: "python3 model_evaluator.py colmap_data/CMU_data/slice10/ colmap_data/tensorboard_results/classification_MNMNLCMUsl10/early_stop_model/ colmap_data/tensorboard_results/regression_MNMNLCMUsl10/early_stop_model/ colmap_data/tensorboard_results/combined_MNMNLCMUsl10/early_stop_model/ (or Coop)
+# example command (comment and uncomment):
+# python3 model_evaluator.py \
+# colmap_data/CMU_data/slice3/ \
+# colmap_data/tensorboard_results/classification_Extended_CMU_slice3/early_stop_model/ \
+# colmap_data/tensorboard_results/regression_Extended_CMU_slice3/early_stop_model/ \
+# colmap_data/tensorboard_results/regression_AllExtended_CMU_slice3/early_stop_model/ \
+# colmap_data/tensorboard_results/combined_Extended_CMU_slice3/early_stop_model/
 # TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.13 (or whatever IP it is)
 # This is because the method predict_on_batch() needs the GPUs for speed - make sure they are free too.
 base_path = sys.argv[1]
 ml_path = os.path.join(base_path, "ML_data")
 class_model_dir = sys.argv[2]
 regression_model_dir = sys.argv[3]
-combined_model_dir = sys.argv[4]
+regression_all_model_dir = sys.argv[4]
+combined_model_dir = sys.argv[5]
 
 print("Loading Model(s)..")
 classifier_model = keras.models.load_model(class_model_dir)
 regression_model = keras.models.load_model(regression_model_dir)
+regression_all_model = keras.models.load_model(regression_all_model_dir) #trained on all descs matched/unmatched
 combined_model = keras.models.load_model(combined_model_dir)
 
 db_gt_path = os.path.join(base_path, "gt/database.db")
@@ -44,7 +51,7 @@ localised_query_images_names = np.ndarray.tolist(np.load(os.path.join(ml_path, "
 points3D_xyz_live = np.load(os.path.join(ml_path, "prepared_data/points3D_xyz_live.npy")) # can also pick them up from points3D_info
 K = np.load(os.path.join(ml_path, "prepared_data/K.npy"))
 scale = np.load(os.path.join(ml_path, "prepared_data/scale.npy"))
-# these are not needed now here - paths need updating 07/06/2021
+# these are not needed now here - paths need updating 07/06/2021, TODO: maybe load the baselines here and then compare / save to a csv?
 # random_matches = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/random_matches.npy", allow_pickle=True).item()
 # vanillia_matches = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/vanillia_matches.npy", allow_pickle=True).item()
 # random_matches_data = np.load("colmap_data/Coop_data/slice1/ML_data/prepared_data/random_matches_data.npy")
@@ -67,12 +74,12 @@ matches_cl_rg, matching_time_cl_rg = feature_matcher_wrapper_model_cl_rg(db_gt,l
 print("Feature Matching time: " + str(matching_time_cl_rg))
 
 print("Getting matches using regressor only..")
-matches_rg, matching_time_rg = feature_matcher_wrapper_model_rg(db_gt,localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_model, top_no)
+matches_rg, matching_time_rg = feature_matcher_wrapper_model_rg(db_gt,localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_all_model, top_no)
 print("Feature Matching time: " + str(matching_time_rg))
 print()
 
 print("Getting matches using combined NN only..")
-matches_combined, matching_time_combined = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model, top_no)
+matches_combined, matching_time_combined = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model, top_no)
 print("Feature Matching time: " + str(matching_time_combined))
 print()
 
