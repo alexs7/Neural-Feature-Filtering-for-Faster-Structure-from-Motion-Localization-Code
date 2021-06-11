@@ -11,8 +11,16 @@ from get_scale import calc_scale_COLMAP_ARCORE
 from benchmark import benchmark, benchmark_ml
 from parameters import Parameters
 
-# sample commnad to run
+# sample command to run
 # python3 prepare_comparison_data.py colmap_data/CMU_data/slice3/ (Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py")
+
+# multiple ones (uncomment and comment):
+# python3 prepare_comparison_data.py colmap_data/Coop_data/slice1 & disown
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice3 & disown
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice4 & disown
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice6 & disown
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice10 & disown
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice11 & disown
 
 # The data generated here will be then later used for evaluating ML models in the model_evaluator.py
 # Will also save the random matches and the full (800) mathces for all the query images - no need to infer at every evaluation.
