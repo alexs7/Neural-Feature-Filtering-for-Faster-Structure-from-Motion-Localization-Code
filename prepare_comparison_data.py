@@ -71,15 +71,15 @@ print("Feature Matching time for vanillia samples: " + str(featm_time_vanillia))
 
 print()
 # get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
-benchmarks_iters = 1 #same as first publication
+benchmarks_iters = 15 #same as first publication
 
-print("Benchmarking Random..")
+print("Benchmarking Random, iterations: " + str(benchmarks_iters))
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
 total_time_rand = time + featm_time_random
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_rand, time, featm_time_random ))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f " % (inlers_no, outliers, iterations, time, featm_time_random, total_time_rand, trans_errors_overall, rot_errors_overall))
-random_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall])
+random_matches_data = np.array([inlers_no, outliers, iterations, time, featm_time_random, total_time_rand, trans_errors_overall, rot_errors_overall])
 
 print()
 
@@ -89,7 +89,7 @@ total_time_vanil = time + featm_time_vanillia
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_vanil, time, featm_time_vanillia ))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f " % (inlers_no, outliers, iterations, time, featm_time_vanillia, total_time_vanil, trans_errors_overall, rot_errors_overall))
-vanillia_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall])
+vanillia_matches_data = np.array([inlers_no, outliers, iterations, time, featm_time_vanillia, total_time_vanil, trans_errors_overall, rot_errors_overall])
 
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 os.makedirs(prepared_data_path, exist_ok=True)

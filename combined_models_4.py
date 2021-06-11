@@ -29,7 +29,7 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 combined_models_4.py colmap_data/Coop_data/slice1/ 32768 1000 ManyManyNodesLayersEarlyStoppingCombinedModel ( or colmap_data/CMU_data/slice3/ )
+# python3 combined_models_4.py colmap_data/Coop_data/slice1/ 32768 1000 Extended_CMU_slice3 ( or colmap_data/CMU_data/slice3/ )
 
 base_path = sys.argv[1]
 db_path = os.path.join(base_path, "ML_data/ml_database_all.db")
