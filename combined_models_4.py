@@ -77,7 +77,7 @@ model = Model(inputs=inputs, outputs=[regression, classifier])
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, binary_crossentropy
-model.compile(optimizer=opt, loss={"regression": keras.losses.MeanAbsoluteError(), "classifier": keras.losses.BinaryCrossentropy()}, loss_weights=[0.5, 0.5], metrics=metrics)
+model.compile(optimizer=opt, loss={"regression": keras.losses.MeanSquaredError(), "classifier": keras.losses.BinaryCrossentropy()}, loss_weights=[0.5, 0.5], metrics=metrics)
 model.summary()
 # keras.utils.plot_model(model, os.path.join(log_dir, "model_drawing.png"), show_shapes=True) #must run pip install pydot, https://graphviz.gitlab.io/download
 

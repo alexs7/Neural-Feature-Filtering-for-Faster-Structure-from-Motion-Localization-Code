@@ -66,11 +66,11 @@ model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
-model.add(Dense(1)) # added relu instead of linear because all the values I expect are positive
+model.add(Dense(1, activation='relu')) # added relu instead of linear because all the values I expect are positive
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, MeanSquaredError
-model.compile(optimizer=opt, loss=keras.losses.MeanAbsoluteError(), metrics=metrics)
+model.compile(optimizer=opt, loss=keras.losses.MeanSquaredError(), metrics=metrics)
 model.summary()
 
 # Before training you should use a baseline model

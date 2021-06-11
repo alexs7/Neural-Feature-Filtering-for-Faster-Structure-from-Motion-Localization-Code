@@ -10,7 +10,8 @@ def getEarlyStoppingBinaryClassification():
 
 def getModelCheckpointRegression(checkpoint_filepath):
     # https://stackoverflow.com/questions/61505749/tensorflowcan-save-best-model-only-with-val-acc-available-skipping
-    return ModelCheckpoint(filepath=checkpoint_filepath, monitor='val_mean_absolute_error', mode='min', save_best_only=True, verbose=1)
+    # here you can also use "val_mean_absolute_error", "val_mean_squared_error", or "val_loss" - debatable
+    return ModelCheckpoint(filepath=checkpoint_filepath, monitor='val_loss', mode='min', save_best_only=True, verbose=1)
 
 def getEarlyStoppingRegression():
     # why use loss here: https://machinelearningmastery.com/how-to-stop-training-deep-neural-networks-at-the-right-time-using-early-stopping/
