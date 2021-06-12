@@ -90,7 +90,7 @@ print("Feature Matching time: " + str(matching_time_combined))
 print()
 
 print("Benchmarking ML model(s)..")
-benchmarks_iters = 7
+benchmarks_iters = 5
 results = np.array([0,8])
 val_idx = RANSACParameters.heatmap_val_index #Thas happens to work even though the name makes no sense now
 
