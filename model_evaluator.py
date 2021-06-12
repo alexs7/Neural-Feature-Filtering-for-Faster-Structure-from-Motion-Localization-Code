@@ -28,6 +28,7 @@ import sys
 # This is because the method predict_on_batch() needs the GPUs for speed - make sure they are free too.
 base_path = sys.argv[1]
 ml_path = os.path.join(base_path, "ML_data")
+prepared_data_path = os.path.join(ml_path, "prepared_data")
 class_model_dir = sys.argv[2]
 regression_model_dir = sys.argv[3]
 regression_all_model_dir = sys.argv[4]
@@ -64,6 +65,11 @@ ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no 
 # top 80 ones - why 80 ?
 top_no = 80
 
+print("Getting matches using classifier only (with top ones selected)..")
+matches_cl_top, matching_time_cl_top = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classifier= classifier_model, top_no=top_no)
+print("Feature Matching time: " + str(matching_time_cl_top))
+print()
+
 print("Getting matches using classifier only..")
 matches_cl, matching_time_cl = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classifier= classifier_model)
 print("Feature Matching time: " + str(matching_time_cl))
@@ -85,7 +91,17 @@ print()
 
 print("Benchmarking ML model(s)..")
 benchmarks_iters = 1
+results = np.array([0,8])
 val_idx = RANSACParameters.heatmap_val_index #Thas happens to work even though the name makes no sense now
+
+print("RANSAC.. (classifier only, with top matches selected)")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_cl_top, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+total_time_model = time + matching_time_cl_top
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_top))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_cl_top, total_time_model, trans_errors_overall, rot_errors_overall))
+results = np.r_[results, [inlers_no, outliers, iterations, time, matching_time_cl_top, total_time_model, trans_errors_overall, rot_errors_overall]]
+print()
 
 print("RANSAC.. (classifier only)")
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_cl, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
@@ -93,7 +109,25 @@ total_time_model = time + matching_time_cl
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_cl, total_time_model, trans_errors_overall, rot_errors_overall))
-# model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) # do I need this ?
+results = np.r_[results, [inlers_no, outliers, iterations, time, matching_time_cl, total_time_model, trans_errors_overall, rot_errors_overall]]
+print()
+
+print("RANSAC.. (regressor only)")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_rg, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+total_time_model = time + matching_time_rg
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_rg))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_rg, total_time_model, trans_errors_overall, rot_errors_overall))
+results = np.r_[results, [inlers_no, outliers, iterations, time, matching_time_rg, total_time_model, trans_errors_overall, rot_errors_overall]]
+print()
+
+print("RANSAC.. (combined only)")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_combined, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+total_time_model = time + matching_time_combined
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_rg, total_time_model, trans_errors_overall, rot_errors_overall))
+results = np.r_[results, [inlers_no, outliers, iterations, time, matching_time_combined, total_time_model, trans_errors_overall, rot_errors_overall]]
 print()
 
 print("RANSAC.. (classifier and regressor)")
@@ -102,34 +136,45 @@ total_time_model = time + matching_time_cl_rg
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_cl_rg, total_time_model, trans_errors_overall, rot_errors_overall))
-# model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) # do I need this ?
+results = np.r_[results, [inlers_no, outliers, iterations, time, matching_time_cl_rg, total_time_model, trans_errors_overall, rot_errors_overall]]
 print()
 
 print("RANSAC dist.. (classifier and regressor)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac_dist, matches_cl_rg, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=val_idx, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac_dist, matches_cl_rg, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=-1, verbose=True)
 total_time_model = time + matching_time_cl_rg
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_cl_rg, total_time_model, trans_errors_overall, rot_errors_overall))
-# model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) # do I need this ?
+results = np.r_[results, [inlers_no, outliers, iterations, time, matching_time_cl_rg, total_time_model, trans_errors_overall, rot_errors_overall]]
 print()
 
-print("PROSAC - (regressor, using whatever score the NN was trained on)")
+# NOTE: for PROSAC the matches are already sorted so just pass 1, no need to sort them again
+print("PROSAC - (regressor only, using whatever score the NN was trained on)")
 print()
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_rg, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=val_idx, verbose=True) #val_idx is None here so it passes the already sorted matches to PROSAC in 'ransac_comparison.py'
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_rg, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=1, verbose=True)
 total_time_model = time + matching_time_rg
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_rg))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_rg, total_time_model, trans_errors_overall, rot_errors_overall))
-# model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) # do I need this ?
+results = np.r_[results, [inlers_no, outliers, iterations, time, matching_time_rg, total_time_model, trans_errors_overall, rot_errors_overall]]
 print()
 
 print("PROSAC - (combined, using whatever score the NN was trained on)")
 print()
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_combined, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=val_idx, verbose=True) #val_idx is None here so it passes the already sorted matches to PROSAC in 'ransac_comparison.py'
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_combined, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=1, verbose=True)
 total_time_model = time + matching_time_combined
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_combined, total_time_model, trans_errors_overall, rot_errors_overall))
-# model_matches_data = np.array([inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall]) # do I need this ?
+results = np.r_[results, [inlers_no, outliers, iterations, time, matching_time_combined, total_time_model, trans_errors_overall, rot_errors_overall]]
 print()
+
+print("Loading baseline results for comparison..")
+random_matches_data = np.load(os.path.join(prepared_data_path, "random_matches_data.npy"))
+vanillia_matches_data = np.load(os.path.join(prepared_data_path, "vanillia_matches_data.npy"))
+
+results = np.r_[results, random_matches_data]
+results = np.r_[results, vanillia_matches_data]
+results = np.around(results, 2) #format to 2 decimal places
+
+np.savetxt(os.path.join(ml_path, "results_evaluator.csv"), results, delimiter=",")

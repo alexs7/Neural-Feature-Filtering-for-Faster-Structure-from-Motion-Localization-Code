@@ -236,7 +236,6 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
 
         # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than 80!
         matchable_desc_indices = np.where(classifier_predictions > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/classifier_predictions
-        matchable_desc_indices_length = matchable_desc_indices.shape[0]
 
         keypoints_xy = keypoints_xy[matchable_desc_indices]
         queryDescriptors = queryDescriptors[matchable_desc_indices]

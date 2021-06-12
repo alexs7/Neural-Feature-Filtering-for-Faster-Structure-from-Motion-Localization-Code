@@ -50,7 +50,7 @@ print("Epochs: " + str(epochs))
 
 print("Loading data..")
 
-sift_vecs, scores = getRegressionData(db_path, score_name = "score_per_image", train_on_matched_only = train_on_matched_only)
+sift_vecs, scores = getRegressionData(db_path, minmax=True, score_name = "score_per_image", train_on_matched_only = train_on_matched_only)
 
 # Create model
 print("Creating model")

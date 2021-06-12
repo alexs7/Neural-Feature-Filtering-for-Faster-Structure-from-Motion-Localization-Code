@@ -39,22 +39,12 @@ from sklearn.model_selection import train_test_split
 # use git locally on your laptop - the cloud does not like git
 # get IP of container with "hare inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container name>"
 
-# Mine not needed anymore
-# def split_data(features, target, test_percentage, randomize = False):
-#     if(randomize):
-#         print("Randomizing data")
-#         union = np.c_[features, target]
-#         np.random.shuffle(union)
-#         features = union[:, 0:128]
-#         target = union[:, 128]
-#     rows_no = features.shape[0] #or test , same thing
-#     train_percentage = 1 - test_percentage
-#     train_max_idx = int(np.floor(rows_no * train_percentage))
-#     X_train = features[0 :  train_max_idx , :]
-#     y_train = target[0 : train_max_idx]
-#     X_test = features[train_max_idx : , :]
-#     y_test = target[train_max_idx :]
-#     return X_train, y_train, X_test, y_test
+# The order you have to follow to get the final paper results:
+# 1 - create_ML_training_data.py
+# 2 - train_all_networks.py
+# 3 - get_points_3D_mean_desc_single_model_ml.py
+# 4 - prepare_comparison_data.py
+# 5 - model_evaluator.py
 
 def get_image_decs(db, image_id): #not to be confused with get_queryDescriptors() in feature_matching_generator.py - that one normalises descriptors.
     data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
