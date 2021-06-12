@@ -79,7 +79,7 @@ print("Feature Matching time for vanillia samples: " + str(featm_time_vanillia))
 
 print()
 # get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
-benchmarks_iters = 15 #same as first publication
+benchmarks_iters = 5 #15 was in first publication
 
 print("Benchmarking Random, iterations: " + str(benchmarks_iters))
 inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)

@@ -407,7 +407,7 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
-        
+
         keypoints_xy = keypoints_xy[regression_sorted_indices]
         queryDescriptors = queryDescriptors[regression_sorted_indices]
         sorted_regression_predictions = regression_predictions[regression_sorted_indices]
