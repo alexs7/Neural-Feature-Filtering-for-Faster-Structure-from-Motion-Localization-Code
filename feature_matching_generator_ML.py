@@ -208,7 +208,8 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
         percentage_reduction_avg = percentage_reduction_total / len(query_images)
         print("Average matches percentage reduction per image (regardless of top_no): " + str(percentage_reduction_avg) + "%")
 
-    return matches, total_time
+    total_avg_time = total_time / len(query_images)
+    return matches, total_avg_time
 
 def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor, top_no = 80, verbose = True):
     # create image_name <-> matches, dict - easier to work with
@@ -301,7 +302,8 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
         matches_all_avg = total_all_images / len(matches_sum)
         print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
 
-    return matches, total_time
+    total_avg_time = total_time / len(query_images)
+    return matches, total_avg_time
 
 def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, top_no = 80, verbose = True):
     # create image_name <-> matches, dict - easier to work with
@@ -381,7 +383,8 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
         matches_all_avg = total_all_images / len(matches_sum)
         print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
 
-    return matches, total_time
+    total_avg_time = total_time / len(query_images)
+    return matches, total_avg_time
 
 def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, top_no = 80, verbose = True):
     # create image_name <-> matches, dict - easier to work with
@@ -463,4 +466,5 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
         matches_all_avg = total_all_images / len(matches_sum)
         print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
 
-    return matches, total_time
+    total_avg_time = total_time / len(query_images)
+    return matches, total_avg_time
