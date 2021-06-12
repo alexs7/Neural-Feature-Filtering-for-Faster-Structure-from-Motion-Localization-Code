@@ -80,7 +80,7 @@ model.summary()
 X_train = sift_vecs
 y_train = classes
 history = model.fit(X_train, y_train,
-                    validation_split=0.2,
+                    validation_split=0.3,
                     epochs=epochs,
                     shuffle=True,
                     batch_size=batch_size,

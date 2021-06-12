@@ -89,7 +89,7 @@ X_train = sift_vecs
 y_train = classes
 history = model.fit(X_train,
                     {"regression": scores, "classifier": classes}, #training data
-                    validation_split=0.2,
+                    validation_split=0.3,
                     epochs=epochs,
                     shuffle=True,
                     batch_size=batch_size,
