@@ -30,7 +30,8 @@ batch_size = int(sys.argv[2])
 epochs = int(sys.argv[3])
 name = "regression_"+sys.argv[4]
 train_on_matched_only = bool(sys.argv[5])
-score_to_train_on = bool(sys.argv[6]) #score_per_image, score_per_session, score_visibility
+score_to_train_on = sys.argv[6] #score_per_image, score_per_session, score_visibility
+name = name + "_" + score_to_train_on
 
 log_dir = get_Tensorboard_dir(name)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
