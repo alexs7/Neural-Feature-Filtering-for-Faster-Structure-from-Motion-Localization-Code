@@ -190,9 +190,7 @@ def run_comparison_ml(func, matches, test_images, intrinsics, val_idx = None):
 
         assert(len(matches_for_image) >= 4)
 
-        if(val_idx is not None):
-            if(val_idx >= 0): #as the matched are now [x,y,x,y,z,d1,d2,val] (val is at 7) so val_idx = 7 is ok
-                matches_for_image = sort_matches(matches_for_image, val_idx)
+        if(val_idx is not None): #When using prosac the matches are already sorted so val_idx is None
             if(val_idx < 0):
                 sub_dist = get_sub_distribution(matches_for_image, 7)
                 matches_for_image = np.hstack((matches_for_image, sub_dist))
