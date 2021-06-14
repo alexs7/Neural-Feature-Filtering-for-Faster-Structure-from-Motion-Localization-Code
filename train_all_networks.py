@@ -3,7 +3,7 @@ import sys
 import subprocess
 
 # This file is used to train all the required networks
-# it takes as a parameter a directory where the dataset is located
+# it takes as a parameter a directory where the dataset is located (CMU/slice3, Coop/slice1 etc etc)
 # before this you will need to run get_points_3D_mean_desc_single_model_ml.py
 
 # Example command:
@@ -26,7 +26,7 @@ regression_on_all_model_command_score_per_session = "python3 regression_4.py "+d
 regression_on_all_model_command_score_visibility = "python3 regression_4.py "+data_path+" 32768 1000 All" + name_of_model + " 0 " + "score_visibility"
 
 print("Commands to run:")
-print(combined_model_command)
+print(combined_model_command) #TODO: add the other two cases ? score_session ,and score_visibility?
 print(classification_model_command)
 print(regression_model_command_score_per_image)
 print(regression_model_command_score_per_session)
