@@ -115,7 +115,7 @@ print("Feature Matching time: " + str(matching_time_combined))
 print()
 
 print("Benchmarking ML model(s)..")
-benchmarks_iters = 1
+benchmarks_iters = 5
 results = np.empty([0,8])
 
 print("RANSAC.. (classifier only, with top matches selected)")
