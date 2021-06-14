@@ -105,7 +105,8 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
         matches_all_avg = total_all_images / len(matches_sum)
         print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
 
-    return matches, total_time
+    total_avg_time = total_time / len(query_images)
+    return matches, total_avg_time
 
 # These will be used for benchmarking a ML model
 # There are several cases here that wil be tested:
