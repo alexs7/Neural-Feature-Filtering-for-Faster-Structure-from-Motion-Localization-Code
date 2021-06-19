@@ -6,7 +6,7 @@ def getModelCheckpointBinaryClassification(checkpoint_filepath):
 
 def getEarlyStoppingBinaryClassification():
     # why use loss here: https://machinelearningmastery.com/how-to-stop-training-deep-neural-networks-at-the-right-time-using-early-stopping/
-    return EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10)
+    return EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=150)
 
 def getModelCheckpointRegression(checkpoint_filepath):
     # https://stackoverflow.com/questions/61505749/tensorflowcan-save-best-model-only-with-val-acc-available-skipping
@@ -15,7 +15,7 @@ def getModelCheckpointRegression(checkpoint_filepath):
 
 def getEarlyStoppingRegression():
     # why use loss here: https://machinelearningmastery.com/how-to-stop-training-deep-neural-networks-at-the-right-time-using-early-stopping/
-    return EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=500) #can be the same as above if the loss function is the same
+    return EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=150) #can be the same as above if the loss function is the same
 
 # for combined model
 def getModelCheckpointCombined(checkpoint_filepath):
@@ -24,4 +24,4 @@ def getModelCheckpointCombined(checkpoint_filepath):
 
 def getEarlyStoppingCombined():
     # why use loss here: https://machinelearningmastery.com/how-to-stop-training-deep-neural-networks-at-the-right-time-using-early-stopping/
-    return EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=400) #can be the same as above if the loss function is the same
+    return EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=150) #can be the same as above if the loss function is the same

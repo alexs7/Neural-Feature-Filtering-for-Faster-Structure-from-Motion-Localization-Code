@@ -1,5 +1,6 @@
 import os
 import time
+import shutil
 
 from data import getRegressionData
 from tensorboard_config import get_Tensorboard_dir
@@ -29,11 +30,12 @@ db_path = os.path.join(base_path, "ML_data/ml_database_all.db")
 batch_size = int(sys.argv[2])
 epochs = int(sys.argv[3])
 name = "regression_"+sys.argv[4]
-train_on_matched_only = bool(sys.argv[5])
+train_on_matched_only = bool(int(sys.argv[5])) #this needs to be converted into an int otherwise it will read a string and return always True
 score_to_train_on = sys.argv[6] #score_per_image, score_per_session, score_visibility
 name = name + "_" + score_to_train_on
 
 log_dir = get_Tensorboard_dir(name)
+shutil.rmtree(log_dir)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
 model_save_dir = os.path.join(log_dir, "model")
 
@@ -69,7 +71,7 @@ model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
-model.add(Dense(1, activation='relu')) # added relu instead of linear because all the values I expect are positive
+model.add(Dense(1)) # added relu instead of linear because all the values I expect are positive
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)
 # The loss here will be, MeanSquaredError

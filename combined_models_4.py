@@ -1,5 +1,6 @@
 import os
 import time
+import shutil
 
 from tensorboard_config import get_Tensorboard_dir
 
@@ -38,6 +39,7 @@ epochs = int(sys.argv[3])
 name = "combined_"+sys.argv[4]
 
 log_dir = get_Tensorboard_dir(name)
+shutil.rmtree(log_dir)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
 model_save_dir = os.path.join(log_dir, "model")
 
@@ -69,7 +71,7 @@ layer4 = Dense(256, activation='relu')(layer3)
 layer5 = Dense(256, activation='relu')(layer4)
 layer6 = Dense(256, activation='relu')(layer5)
 layer7 = Dense(256, activation='relu')(layer6)
-layer8 = Dense(256, activation='relu')(layer7)
+layer8 = Dense(256)(layer7)
 # multiple outputs
 classifier = Dense(1, activation='sigmoid', name="classifier")(layer8)
 regression = Dense(1, activation='sigmoid', name="regression")(layer8) #sigmoid here can be used since the output is from zero to one (MinMax)
