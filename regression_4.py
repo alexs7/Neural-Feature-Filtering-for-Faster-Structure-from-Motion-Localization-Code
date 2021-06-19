@@ -1,4 +1,5 @@
 import os
+from os import path
 import time
 import shutil
 
@@ -35,7 +36,8 @@ score_to_train_on = sys.argv[6] #score_per_image, score_per_session, score_visib
 name = name + "_" + score_to_train_on
 
 log_dir = get_Tensorboard_dir(name)
-shutil.rmtree(log_dir)
+if(path.exists(log_dir)):
+    shutil.rmtree(log_dir)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
 model_save_dir = os.path.join(log_dir, "model")
 

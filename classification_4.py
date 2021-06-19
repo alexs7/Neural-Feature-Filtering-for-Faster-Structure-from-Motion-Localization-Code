@@ -1,4 +1,5 @@
 import os
+from os import path
 import time
 from data import getClassificationData
 from tensorboard_config import get_Tensorboard_dir
@@ -35,7 +36,8 @@ epochs = int(sys.argv[3])
 name = "classification_"+sys.argv[4]
 
 log_dir = get_Tensorboard_dir(name)
-shutil.rmtree(log_dir)
+if(path.exists(log_dir)):
+    shutil.rmtree(log_dir)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
 model_save_dir = os.path.join(log_dir, "model")
 
