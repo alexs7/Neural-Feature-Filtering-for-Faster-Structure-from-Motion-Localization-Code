@@ -30,13 +30,15 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 combined_models_4.py colmap_data/Coop_data/slice1/ 32768 1000 Extended_CMU_slice3 ( or colmap_data/CMU_data/slice3/ )
+# python3 combined_models_4.py colmap_data/Coop_data/slice1/ 32768 1000 Extended_CMU_slice3 score_per_image ( or colmap_data/CMU_data/slice3/ )
 
 base_path = sys.argv[1]
 db_path = os.path.join(base_path, "ML_data/ml_database_all.db")
 batch_size = int(sys.argv[2])
 epochs = int(sys.argv[3])
 name = "combined_"+sys.argv[4]
+score_to_train_on = sys.argv[5] #score_per_image, score_per_session, score_visibility
+name = name + "_" + score_to_train_on
 
 log_dir = get_Tensorboard_dir(name)
 shutil.rmtree(log_dir)
@@ -57,7 +59,7 @@ print("Batch_size: " + str(batch_size))
 print("Epochs: " + str(epochs))
 
 print("Loading data..")
-sift_vecs, scores, classes = getCombinedData(db_path, score_name = "score_per_image")
+sift_vecs, scores, classes = getCombinedData(db_path, score_name = score_to_train_on)
 
 # Create model
 print("Creating model")
