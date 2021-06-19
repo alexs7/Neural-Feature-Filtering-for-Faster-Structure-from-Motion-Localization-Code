@@ -23,7 +23,7 @@ metrics = [
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
-# python3 regression_4.py colmap_data/Coop_data/slice1/ 32768 900 Extended_CMU_slice3 1 (or 0) (or CMU slices path)
+# python3 regression_4.py colmap_data/Coop_data/slice1/ 32768 900 Extended_CMU_slice3 1 (or 0) score_per_image (or CMU slices path)
 
 base_path = sys.argv[1]
 db_path = os.path.join(base_path, "ML_data/ml_database_all.db")
