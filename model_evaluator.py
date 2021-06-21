@@ -39,7 +39,9 @@ regression_score_per_session_dir = os.path.join(os.path.join(models_dir, "regres
 regression_all_score_per_session_model_dir = os.path.join(os.path.join(models_dir, "regression_AllExtended_"+dataset+"_"+slice+"_score_per_session"), model)
 regression_score_visibility_model_dir = os.path.join(os.path.join(models_dir, "regression_Extended_"+dataset+"_"+slice+"_score_visibility"), model)
 regression_all_visibility_score_visibility_model_dir = os.path.join(os.path.join(models_dir, "regression_AllExtended_"+dataset+"_"+slice+"_score_visibility"), model)
-combined_model_dir = os.path.join(os.path.join(models_dir, "combined_Extended_"+dataset+"_"+slice), model)
+combined_model_score_per_image_dir = os.path.join(os.path.join(models_dir, "combined_Extended_"+dataset+"_"+slice+"_score_per_image"), model)
+combined_model_score_per_session_dir = os.path.join(os.path.join(models_dir, "combined_Extended_"+dataset+"_"+slice+"_score_per_session"), model)
+combined_model_score_visibility_dir = os.path.join(os.path.join(models_dir, "combined_Extended_"+dataset+"_"+slice+"_score_visibility"), model)
 
 print("Loading Model(s)..")
 classification_model = keras.models.load_model(class_model_dir)
@@ -50,7 +52,9 @@ regression_model_score_visibility = keras.models.load_model(regression_score_vis
 regression_on_all_model_score_per_image = keras.models.load_model(regression_all_score_per_image_model_dir)
 regression_on_all_model_score_per_session = keras.models.load_model(regression_all_score_per_session_model_dir)
 regression_on_all_model_score_visibility = keras.models.load_model(regression_all_visibility_score_visibility_model_dir)
-combined_model = keras.models.load_model(combined_model_dir)
+combined_model_score_per_image = keras.models.load_model(combined_model_score_per_image_dir)
+combined_model_score_per_session = keras.models.load_model(combined_model_score_per_session_dir)
+combined_model_score_visibility = keras.models.load_model(combined_model_score_visibility_dir)
 
 db_gt_path = os.path.join(base_path, "gt/database.db")
 db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the query images descs as they do NOT exist in the LIVE db, only in GT db!
@@ -110,8 +114,18 @@ print("Feature Matching time: " + str(matching_time_rg_score_visibility))
 print()
 
 print("Getting matches using combined NN only (trained on score per image)..")
-matches_combined, matching_time_combined = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model, top_no)
-print("Feature Matching time: " + str(matching_time_combined))
+matches_combined_score_per_image, matching_time_combined_score_per_image = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_per_image, top_no)
+print("Feature Matching time: " + str(matching_time_combined_score_per_image))
+print()
+
+print("Getting matches using combined NN only (trained on score per session)..")
+matches_combined_score_per_session, matching_time_combined_score_per_session = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_per_session, top_no)
+print("Feature Matching time: " + str(matching_time_combined_score_per_session))
+print()
+
+print("Getting matches using combined NN only (trained on score visibility)..")
+matches_combined_score_visibility, matching_time_combined_score_visibility = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_visibility, top_no)
+print("Feature Matching time: " + str(matching_time_combined_score_visibility))
 print()
 
 print("Benchmarking ML model(s)..")
@@ -190,13 +204,31 @@ print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (i
 results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_rg_score_visibility, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
 print()
 
-print("RANSAC.. (combined only)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_combined, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
-total_time_model = time + matching_time_combined
-print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined))
+print("RANSAC.. (combined NN per image)")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_combined_score_per_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+total_time_model = time + matching_time_combined_score_per_image
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_per_image))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_combined, total_time_model, trans_errors_overall, rot_errors_overall))
-results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_combined, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_combined_score_per_image, total_time_model, trans_errors_overall, rot_errors_overall))
+results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_combined_score_per_image, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
+print()
+
+print("RANSAC.. (combined NN per session)")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_combined_score_per_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+total_time_model = time + matching_time_combined_score_per_session
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_per_session))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_combined_score_per_session, total_time_model, trans_errors_overall, rot_errors_overall))
+results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_combined_score_per_session, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
+print()
+
+print("RANSAC.. (combined NN on score visibility)")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_combined_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+total_time_model = time + matching_time_combined_score_visibility
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_visibility))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_combined_score_visibility, total_time_model, trans_errors_overall, rot_errors_overall))
+results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_combined_score_visibility, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
 print()
 
 print("RANSAC dist.. (classifier and regressor, score per image)")
@@ -241,12 +273,32 @@ print()
 
 print("PROSAC - (combined, score per image)")
 print()
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_combined, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
-total_time_model = time + matching_time_combined
-print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined))
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_combined_score_per_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+total_time_model = time + matching_time_combined_score_per_image
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_per_image))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_combined, total_time_model, trans_errors_overall, rot_errors_overall))
-results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_combined, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_combined_score_per_image, total_time_model, trans_errors_overall, rot_errors_overall))
+results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_combined_score_per_image, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
+print()
+
+print("PROSAC - (combined, score per session)")
+print()
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_combined_score_per_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+total_time_model = time + matching_time_combined_score_per_session
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_per_session))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_combined_score_per_session, total_time_model, trans_errors_overall, rot_errors_overall))
+results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_combined_score_per_session, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
+print()
+
+print("PROSAC - (combined, score per visibility)")
+print()
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_combined_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+total_time_model = time + matching_time_combined_score_visibility
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_visibility))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_combined_score_visibility, total_time_model, trans_errors_overall, rot_errors_overall))
+results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_combined_score_visibility, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
 print()
 
 print("Loading baseline results for comparison..")
