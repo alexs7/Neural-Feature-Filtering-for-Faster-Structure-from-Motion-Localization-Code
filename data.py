@@ -7,8 +7,10 @@ def getRegressionData(db_path, score_name, minmax = False, train_on_matched_only
     ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
     if(train_on_matched_only):
+        print("Fetching only matched features..")
         data = ml_db.execute("SELECT sift, "+score_name+" FROM data WHERE matched = 1").fetchall()
     else:
+        print("Fetching all features..")
         data = ml_db.execute("SELECT sift, "+score_name+" FROM data").fetchall()
 
     sift_vecs = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in data)
@@ -37,6 +39,7 @@ def getRegressionData(db_path, score_name, minmax = False, train_on_matched_only
 def getClassificationData(db_path):
     ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
+    print(" Running the select query..")
     data = ml_db.execute("SELECT sift, matched FROM data").fetchall()  # guarantees same order - maybe ?
 
     sift_vecs = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in data)
@@ -58,6 +61,7 @@ def getCombinedData(db_path, score_name):
     # score_name is either score_per_image, score_per_session, score_visibility
     ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
+    print(" Running the select query..")
     data = ml_db.execute("SELECT sift, "+score_name+", matched FROM data").fetchall()  # guarantees same order - maybe ?
 
     sift_vecs = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in data)
@@ -78,6 +82,7 @@ def getCombinedData(db_path, score_name):
 
     # I have to use minmax here as the regression output in the combined model is a sigmoid
     # MinMaxScaler() - only for targets, https://stats.stackexchange.com/a/111476/285271
+    print(" Running min_max_scaler..")
     min_max_scaler = preprocessing.MinMaxScaler()
     scores = min_max_scaler.fit_transform(scores.reshape(-1, 1))
 
