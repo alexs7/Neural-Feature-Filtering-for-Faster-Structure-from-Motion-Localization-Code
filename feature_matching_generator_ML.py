@@ -433,7 +433,8 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
         for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
             assert(m.distance <= n.distance) #TODO: maybe count how many pass the ratio test VS how many they dont without the NN ?
             # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
-            if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
+            # if ratio_test_val == 1 was added to just add all the temp matches to good matches - skip the check below
+            if (m.distance < ratio_test_val * n.distance or ratio_test_val == 1.0): #and (score_m > score_n):
                 if(m.queryIdx >= keypoints_xy.shape[0]): #keypoints_xy.shape[0] always same as classifier_predictions.shape[0]
                     raise Exception("m.queryIdx error!")
                 if (m.trainIdx >= points3D_xyz.shape[0]):

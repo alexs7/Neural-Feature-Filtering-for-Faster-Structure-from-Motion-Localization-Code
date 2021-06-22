@@ -12,6 +12,7 @@ from RANSACParameters import RANSACParameters
 
 def get_sub_distribution(matches_for_image, index):
     vals = matches_for_image[:, index]
+    vals[vals < 0] = 0 # some values from NN might be negative
     sub_distribution = vals / np.sum(vals)
     sub_distribution = sub_distribution.reshape([sub_distribution.shape[0], 1])
     return sub_distribution

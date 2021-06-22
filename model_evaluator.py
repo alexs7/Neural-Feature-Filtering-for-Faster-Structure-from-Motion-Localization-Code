@@ -20,7 +20,7 @@ import sys
 # example command (comment and uncomment):
 # python3 model_evaluator.py colmap_data/CMU_data/slice3/ CMU slice3 early_stop_model
 # or for Coop
-# python3 model_evaluator.py colmap_data/Coop/slice1/ Coop slice1 early_stop_model
+# python3 model_evaluator.py colmap_data/Coop_data/slice1/ Coop slice1 early_stop_model
 # TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.13 (or whatever IP it is)
 # This is because the method predict_on_batch() needs the GPUs for speed - make sure they are free too.
 # if you test multiple datasets, slice4, slice3, run the in sequence as prediction time will be slower if ran in parallel
@@ -193,7 +193,6 @@ inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall 
 total_time_model = time + matching_time_rg_score_visibility
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_rg_score_visibility))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f, " % (inlers_no, outliers, iterations, time, matching_time_rg_score_visibility, total_time_model, trans_errors_overall, rot_errors_overall))
 results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_rg_score_visibility, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
 print()
 
@@ -227,6 +226,22 @@ total_time_model = time + matching_time_cl_rg_score_image
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg_score_image))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_cl_rg_score_image, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
+print()
+
+print("RANSAC dist.. (classifier and regressor, score per session)")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac_dist, matches_cl_rg_score_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=-1, verbose=True)
+total_time_model = time + matching_time_cl_rg_score_session
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg_score_session))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_cl_rg_score_session, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
+print()
+
+print("RANSAC dist.. (classifier and regressor, score visibility)")
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac_dist, matches_cl_rg_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=-1, verbose=True)
+total_time_model = time + matching_time_cl_rg_score_visibility
+print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg_score_visibility))
+print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
+results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time_cl_rg_score_visibility, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1,8)]
 print()
 
 # NOTE: for PROSAC the matches are already sorted so just pass 1, no need to sort them again
