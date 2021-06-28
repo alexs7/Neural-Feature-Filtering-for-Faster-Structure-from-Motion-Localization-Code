@@ -22,6 +22,9 @@ from parameters import Parameters
 # python3 prepare_comparison_data.py colmap_data/CMU_data/slice10 & disown
 # python3 prepare_comparison_data.py colmap_data/CMU_data/slice11 & disown
 
+# or run in sequence (if you run them all at the same time the runtime will be slower as the CPU will struggle)
+# python3 prepare_comparison_data.py colmap_data/Coop_data/slice1 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice3 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice4 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice6 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice10 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice11
+
 # The data generated here will be then later used for evaluating ML models in the model_evaluator.py
 # Will also save the random matches and the full (800) mathces for all the query images - no need to infer at every evaluation.
 
@@ -68,14 +71,14 @@ else:
 print("Feature matching random and vanillia descs..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
-# random 80 ones - why 80 ?
-random_no = 80  # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
+# percentage number 10%, 20% etc
+random_percentage = 10  # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
 # db_gt is only used to get the SIFT features from the query images, nothing to do with the train_descriptors_live and points3D_xyz_live order. That latter order needs to be corresponding btw.
-random_matches, featm_time_random = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=random_no)
-print("Feature Matching time for random samples: " + str(featm_time_random))
+random_matches, featm_time_random = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=random_percentage)
+print("Feature Matching time for random samples (avg per image): " + str(featm_time_random))
 # all of them as in first publication (should be around 800 for each image)
 vanillia_matches, featm_time_vanillia = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True)
-print("Feature Matching time for vanillia samples: " + str(featm_time_vanillia))
+print("Feature Matching time for vanillia samples (avg per image): " + str(featm_time_vanillia))
 
 print()
 # get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
@@ -86,7 +89,6 @@ inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall 
 total_time_rand = time + featm_time_random
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_rand, time, featm_time_random ))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f " % (inlers_no, outliers, iterations, time, featm_time_random, total_time_rand, trans_errors_overall, rot_errors_overall))
 random_matches_data = np.array([inlers_no, outliers, iterations, time, featm_time_random, total_time_rand, trans_errors_overall, rot_errors_overall])
 
 print()
@@ -96,7 +98,6 @@ inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall 
 total_time_vanil = time + featm_time_vanillia
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Conc. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_vanil, time, featm_time_vanillia ))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-print(" For Excel %2.1f, %2.1f, %2.1f, %2.2f, %2.2f, %2.2f, %2.2f, %2.2f " % (inlers_no, outliers, iterations, time, featm_time_vanillia, total_time_vanil, trans_errors_overall, rot_errors_overall))
 vanillia_matches_data = np.array([inlers_no, outliers, iterations, time, featm_time_vanillia, total_time_vanil, trans_errors_overall, rot_errors_overall])
 
 prepared_data_path = os.path.join(ml_path, "prepared_data")

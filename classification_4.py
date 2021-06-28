@@ -37,6 +37,7 @@ name = "classification_"+sys.argv[4]
 
 log_dir = get_Tensorboard_dir(name)
 if(path.exists(log_dir)):
+    print("Deleting: " + log_dir)
     shutil.rmtree(log_dir)
 early_stop_model_save_dir = os.path.join(log_dir, "early_stop_model")
 model_save_dir = os.path.join(log_dir, "model")

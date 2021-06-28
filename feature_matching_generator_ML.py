@@ -52,7 +52,9 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
 
         if(random_limit != -1):
             # len(queryDescriptors) or len(keypoints_xy) - should return the number or rows and be the same.
-            random_idxs = np.random.choice(np.arange(len(queryDescriptors)), random_limit, replace=False)
+            len_descs = queryDescriptors.shape[0]
+            percentage_num = int(len_descs * random_limit / 100)
+            random_idxs = np.random.choice(np.arange(len_descs), percentage_num, replace=False)
             keypoints_xy = keypoints_xy[random_idxs]
             queryDescriptors = queryDescriptors[random_idxs]
 
@@ -134,6 +136,8 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+        len_descs = queryDescriptors.shape[0]
+        percentage_num = int(len_descs * top_no / 100)
 
         start = time.time()
         classifier_predictions = classifier.predict_on_batch(queryDescriptors) #, use_multiprocessing=True, workers = 4)
@@ -159,8 +163,9 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
             total_time += elapsed_time
             keypoints_xy = keypoints_xy[classification_sorted_indices]
             queryDescriptors = queryDescriptors[classification_sorted_indices]
-            keypoints_xy = keypoints_xy[0:top_no, :]
-            queryDescriptors = queryDescriptors[0:top_no, :]
+            # here I use the "percentage_num" value because as it was generated from the initial number of "queryDescriptors"
+            keypoints_xy = keypoints_xy[0:percentage_num, :]
+            queryDescriptors = queryDescriptors[0:percentage_num, :]
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -212,7 +217,7 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
     total_avg_time = total_time / len(query_images)
     return matches, total_avg_time
 
-def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor, top_no = 80, verbose = True):
+def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor, top_no = 10, verbose = True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -229,6 +234,8 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+        len_descs = queryDescriptors.shape[0]
+        percentage_num = int(len_descs * top_no / 100)
 
         start = time.time()
         classifier_predictions = classifier.predict_on_batch(queryDescriptors) #, use_multiprocessing=True, workers = 4)
@@ -252,11 +259,11 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
         queryDescriptors = queryDescriptors[regression_sorted_indices]
         sorted_regression_predictions = regression_predictions[regression_sorted_indices]
 
-        # pick the top ones after regression predictions
+        # pick the top ones after regression predictions, using "percentage_num"
         # all have the same order below
-        keypoints_xy = keypoints_xy[0:top_no, :]
-        queryDescriptors = queryDescriptors[0:top_no, :]
-        sorted_regression_predictions = sorted_regression_predictions[0:top_no, :]
+        keypoints_xy = keypoints_xy[0:percentage_num, :]
+        queryDescriptors = queryDescriptors[0:percentage_num, :]
+        sorted_regression_predictions = sorted_regression_predictions[0:percentage_num, :]
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -306,7 +313,7 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
     total_avg_time = total_time / len(query_images)
     return matches, total_avg_time
 
-def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, top_no = 80, verbose = True):
+def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, top_no = 10, verbose = True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -322,6 +329,8 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+        len_descs = queryDescriptors.shape[0]
+        percentage_num = int(len_descs * top_no / 100)
 
         start = time.time()
         regression_predictions = regressor.predict_on_batch(queryDescriptors)  # matchable only at this point
@@ -333,11 +342,11 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
         queryDescriptors = queryDescriptors[regression_sorted_indices]
         sorted_regression_predictions = regression_predictions[regression_sorted_indices]
 
-        # pick the top ones after regression predictions
+        # pick the top ones after regression predictions, using "percentage_num"
         # all have the same order below
-        keypoints_xy = keypoints_xy[0:top_no, :]
-        queryDescriptors = queryDescriptors[0:top_no, :]
-        sorted_regression_predictions = sorted_regression_predictions[0:top_no, :]
+        keypoints_xy = keypoints_xy[0:percentage_num, :]
+        queryDescriptors = queryDescriptors[0:percentage_num, :]
+        sorted_regression_predictions = sorted_regression_predictions[0:percentage_num, :]
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -387,7 +396,7 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
     total_avg_time = total_time / len(query_images)
     return matches, total_avg_time
 
-def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, top_no = 80, verbose = True):
+def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, top_no = 10, verbose = True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -403,6 +412,8 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+        len_descs = queryDescriptors.shape[0]
+        percentage_num = int(len_descs * top_no / 100)
 
         start = time.time()
         regression_predictions = combined_model.predict_on_batch(queryDescriptors)  # matchable only at this point
@@ -416,11 +427,11 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
         queryDescriptors = queryDescriptors[regression_sorted_indices]
         sorted_regression_predictions = regression_predictions[regression_sorted_indices]
 
-        # pick the top ones after combined_model predictions
+        # pick the top ones after combined_model predictions, using "percentage_num"
         # all have the same order below
-        keypoints_xy = keypoints_xy[0:top_no, :]
-        queryDescriptors = queryDescriptors[0:top_no, :]
-        sorted_regression_predictions = sorted_regression_predictions[0:top_no, :]
+        keypoints_xy = keypoints_xy[0:percentage_num, :]
+        queryDescriptors = queryDescriptors[0:percentage_num, :]
+        sorted_regression_predictions = sorted_regression_predictions[0:percentage_num, :]
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)

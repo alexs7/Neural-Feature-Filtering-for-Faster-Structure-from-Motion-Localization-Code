@@ -73,8 +73,8 @@ scale = np.load(os.path.join(ml_path, "prepared_data/scale.npy"))
 print("Feature matching using model..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
-# top 80 ones - why 80 ?
-top_no = 80
+# percentage number 10%, 20% etc
+top_no = 10
 
 print("Getting matches using classifier only (with top ones selected)..")
 matches_cl_top, matching_time_cl_top = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classifier= classification_model, top_no=top_no)
@@ -305,6 +305,6 @@ vanillia_matches_data = np.load(os.path.join(prepared_data_path, "vanillia_match
 
 results = np.r_[results, random_matches_data]
 results = np.r_[results, vanillia_matches_data]
-results = np.around(results, 2) #format to 2 decimal places
+# results = np.around(results, 2) #format to 2 decimal places (28/06/2021 - removed rounding)
 
 np.savetxt(os.path.join(ml_path, "results_evaluator.csv"), results, delimiter=",")

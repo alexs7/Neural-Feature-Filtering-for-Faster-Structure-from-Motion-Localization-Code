@@ -4,7 +4,7 @@ import subprocess
 
 # This file is used to train all the required networks
 # it takes as a parameter a directory where the dataset is located (CMU/slice3, Coop/slice1 etc etc)
-# before this you will need to run get_points_3D_mean_desc_single_model_ml.py
+# before this you will need to run get_points_3D_mean_desc_single_model_ml.py - just a reminder for later on when you run the evaluator
 
 # Example command:
 # maybe disown the proccess when running it ?
