@@ -137,7 +137,6 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
         len_descs = queryDescriptors.shape[0]
-        percentage_num = int(len_descs * top_no / 100)
 
         start = time.time()
         classifier_predictions = classifier.predict_on_batch(queryDescriptors) #, use_multiprocessing=True, workers = 4)
@@ -156,6 +155,7 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
         classifier_predictions = classifier_predictions[matchable_desc_indices]
 
         if(top_no != None):
+            percentage_num = int(len_descs * top_no / 100)
             start = time.time()
             classification_sorted_indices = classifier_predictions[:, 0].argsort()[::-1]
             end = time.time()

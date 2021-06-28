@@ -23,7 +23,11 @@ import sys
 # python3 model_evaluator.py colmap_data/Coop_data/slice1/ Coop slice1 early_stop_model
 # TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.13 (or whatever IP it is)
 # This is because the method predict_on_batch() needs the GPUs for speed - make sure they are free too.
-# if you test multiple datasets, slice4, slice3, run the in sequence as prediction time will be slower if ran in parallel
+# If you test multiple datasets, slice4, slice3, run the in sequence as prediction time will be slower if ran in parallel
+# Look at the command below:
+# you can run this on any GPU machine as long as it is free:  ar2056_trainNN_GPU_5 etc etc...
+# python3 model_evaluator.py colmap_data/CMU_data/slice3/ CMU slice3 early_stop_model && python3 model_evaluator.py colmap_data/CMU_data/slice4/ CMU slice4 early_stop_model && python3 model_evaluator.py colmap_data/CMU_data/slice6/ CMU slice6 early_stop_model && python3 model_evaluator.py colmap_data/CMU_data/slice10/ CMU slice10 early_stop_model && python3 model_evaluator.py colmap_data/CMU_data/slice11/ CMU slice11 early_stop_model && python3 model_evaluator.py colmap_data/Coop_data/slice1/ Coop slice1 early_stop_model
+
 base_path = sys.argv[1]
 models_dir = "colmap_data/tensorboard_results"
 dataset = sys.argv[2]
