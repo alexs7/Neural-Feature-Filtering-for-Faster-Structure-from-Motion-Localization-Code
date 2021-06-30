@@ -417,7 +417,7 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
 
         start = time.time()
         regression_predictions = combined_model.predict_on_batch(queryDescriptors)  # matchable only at this point
-        regression_predictions = np.multiply(regression_predictions[0], regression_predictions[1]) #multiple outputs
+        regression_predictions = np.add(regression_predictions[0], regression_predictions[1]) #add outputs
         regression_sorted_indices = regression_predictions[:, 0].argsort()[::-1]
         end = time.time()
         elapsed_time = end - start
