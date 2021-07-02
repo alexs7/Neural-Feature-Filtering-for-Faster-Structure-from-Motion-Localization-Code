@@ -36,6 +36,8 @@ model = sys.argv[4]
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 
+print("Base path: " + base_path)
+
 class_model_dir =  os.path.join(os.path.join(models_dir, "classification_Extended_"+dataset+"_"+slice), model)
 regression_score_per_image_dir = os.path.join(os.path.join(models_dir, "regression_Extended_"+dataset+"_"+slice+"_score_per_image"), model)
 regression_all_score_per_image_model_dir = os.path.join(os.path.join(models_dir, "regression_AllExtended_"+dataset+"_"+slice+"_score_per_image"), model)
