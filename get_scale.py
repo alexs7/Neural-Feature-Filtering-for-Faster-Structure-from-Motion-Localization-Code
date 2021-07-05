@@ -1,5 +1,6 @@
 # This file is just to get scales between COLMAP and ARCORE, or COLMAP and COLMAP.
 # this file was copied from the newer branch (as I got the scale using another way before submission), with some minor changes
+# 02/07/2021: Also check this as a new way to get the scale: https://youtu.be/sgLOU7vyz3g?t=258
 import glob
 import sys
 
