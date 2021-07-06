@@ -34,7 +34,7 @@ dataset = sys.argv[2]
 slice = sys.argv[3]
 model = sys.argv[4]
 # percentage number 5%, 10%, 20% etc
-random_percentage = sys.argv[5]
+random_percentage = int(sys.argv[5])
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 

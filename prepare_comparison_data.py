@@ -30,7 +30,7 @@ from parameters import Parameters
 
 base_path = sys.argv[1]
 # percentage number 5%, 10%, 20% etc
-random_percentage = sys.argv[2]  # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
+random_percentage = int(sys.argv[2])  # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
 using_CMU_data = "CMU_data" in base_path
 ml_path = os.path.join(base_path, "ML_data")
 
