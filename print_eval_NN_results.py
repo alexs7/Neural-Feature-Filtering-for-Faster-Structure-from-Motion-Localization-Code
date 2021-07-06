@@ -1,4 +1,6 @@
+# example command: python3 print_eval_NN_results.py NN_results_excel.txt
 import os
+import sys
 
 cmu_slice3 = "colmap_data/CMU_data/slice3/ML_data/results_evaluator.csv"
 cmu_slice4 = "colmap_data/CMU_data/slice4/ML_data/results_evaluator.csv"
@@ -9,7 +11,9 @@ coop_slice1 = "colmap_data/Coop_data/slice1/ML_data/results_evaluator.csv"
 
 results  = [cmu_slice3, cmu_slice4, cmu_slice6, cmu_slice10, cmu_slice11, coop_slice1]
 
+file = sys.argv[1]
+
 for result in results:
-    os.system("cat " + result)
-    print()
-    print()
+    os.system("cat " + result + " >> " + " " + file)
+    os.system("echo " + "" + " >> " + " " + file)
+    os.system("echo " + "" + " >> " + " " + file)
