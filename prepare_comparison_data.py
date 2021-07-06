@@ -12,23 +12,25 @@ from benchmark import benchmark, benchmark_ml
 from parameters import Parameters
 
 # sample command to run
-# python3 prepare_comparison_data.py colmap_data/CMU_data/slice3/ (Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py")
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice3/ 5 (Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py")
 
 # multiple ones (uncomment, copy and comment):
-# python3 prepare_comparison_data.py colmap_data/Coop_data/slice1 & disown
-# python3 prepare_comparison_data.py colmap_data/CMU_data/slice3 & disown
-# python3 prepare_comparison_data.py colmap_data/CMU_data/slice4 & disown
-# python3 prepare_comparison_data.py colmap_data/CMU_data/slice6 & disown
-# python3 prepare_comparison_data.py colmap_data/CMU_data/slice10 & disown
-# python3 prepare_comparison_data.py colmap_data/CMU_data/slice11 & disown
+# python3 prepare_comparison_data.py colmap_data/Coop_data/slice1 5 & disown
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice3 5 & disown
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice4 5 & disown
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice6 5 & disown
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice10 5 & disown
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice11 5 & disown
 
 # or run in sequence (if you run them all at the same time the runtime will be slower as the CPU will struggle)
-# python3 prepare_comparison_data.py colmap_data/Coop_data/slice1 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice3 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice4 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice6 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice10 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice11
+# python3 prepare_comparison_data.py colmap_data/Coop_data/slice1 5 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice3 5 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice4 5 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice6 5 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice10 5 && python3 prepare_comparison_data.py colmap_data/CMU_data/slice11 5
 
 # The data generated here will be then later used for evaluating ML models in the model_evaluator.py
 # Will also save the random matches and the full (800) mathces for all the query images - no need to infer at every evaluation.
 
 base_path = sys.argv[1]
+# percentage number 5%, 10%, 20% etc
+random_percentage = sys.argv[2]  # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
 using_CMU_data = "CMU_data" in base_path
 ml_path = os.path.join(base_path, "ML_data")
 
@@ -71,8 +73,7 @@ else:
 print("Feature matching random and vanillia descs..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
-# percentage number 10%, 20% etc
-random_percentage = 10  # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
+
 # db_gt is only used to get the SIFT features from the query images, nothing to do with the train_descriptors_live and points3D_xyz_live order. That latter order needs to be corresponding btw.
 random_matches, featm_time_random = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=random_percentage)
 print("Feature Matching time for random samples (avg per image): " + str(featm_time_random))
@@ -109,5 +110,6 @@ np.save(os.path.join(prepared_data_path, "K.npy"), K)
 np.save(os.path.join(prepared_data_path, "scale.npy"), scale)
 np.save(os.path.join(prepared_data_path, "random_matches.npy"), random_matches)
 np.save(os.path.join(prepared_data_path, "vanillia_matches.npy"), vanillia_matches)
-np.save(os.path.join(prepared_data_path, "random_matches_data.npy"), random_matches_data)
-np.save(os.path.join(prepared_data_path, "vanillia_matches_data.npy"), vanillia_matches_data)
+# these below are the files used later in model_evaluator to aggregate all results in one file
+np.save(os.path.join(prepared_data_path, "random_matches_data_"+str(random_percentage)+".npy"), random_matches_data)
+np.save(os.path.join(prepared_data_path, "vanillia_matches_data_"+str(random_percentage)+".npy"), vanillia_matches_data)

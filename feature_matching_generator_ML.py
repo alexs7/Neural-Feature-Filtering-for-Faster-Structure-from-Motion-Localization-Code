@@ -33,7 +33,7 @@ def get_image_id(db, query_image):
     image_id = str(image_id.fetchone()[0])
     return image_id
 
-# Will use raw descs not normalised
+# Will use raw descs not normalised, used in prepare_comparison_data.py
 def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose = False, points_scores_array=None, random_limit = -1):
     # create image_name <-> matches, dict - easier to work with
     matches = {}

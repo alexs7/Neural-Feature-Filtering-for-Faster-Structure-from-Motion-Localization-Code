@@ -33,6 +33,8 @@ models_dir = "colmap_data/tensorboard_results"
 dataset = sys.argv[2]
 slice = sys.argv[3]
 model = sys.argv[4]
+# percentage number 5%, 10%, 20% etc
+random_percentage = sys.argv[5]
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 
@@ -79,11 +81,9 @@ scale = np.load(os.path.join(ml_path, "prepared_data/scale.npy"))
 print("Feature matching using model..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
-# percentage number 10%, 20% etc
-top_no = 10
 
 print("Getting matches using classifier only (with top ones selected)..")
-matches_cl_top, matching_time_cl_top = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classifier= classification_model, top_no=top_no)
+matches_cl_top, matching_time_cl_top = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classifier= classification_model, top_no=random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_top))
 print()
 
@@ -93,44 +93,44 @@ print("Feature Matching time: " + str(matching_time_cl))
 print()
 
 print("Getting matches using classifier and regressor (score per images)..")
-matches_cl_rg_score_image, matching_time_cl_rg_score_image = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_per_image, top_no)
+matches_cl_rg_score_image, matching_time_cl_rg_score_image = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_per_image, random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_rg_score_image))
 
 print("Getting matches using classifier and regressor (score per session)..")
-matches_cl_rg_score_session, matching_time_cl_rg_score_session = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_per_session, top_no)
+matches_cl_rg_score_session, matching_time_cl_rg_score_session = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_per_session, random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_rg_score_session))
 
 print("Getting matches using classifier and regressor (score visibility)..")
-matches_cl_rg_score_visibility, matching_time_cl_rg_score_visibility = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_visibility, top_no)
+matches_cl_rg_score_visibility, matching_time_cl_rg_score_visibility = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_visibility, random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_rg_score_visibility))
 
 print("Getting matches using regressor (all) only (score per images)..")
-matches_rg_score_image, matching_time_rg_score_image = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_per_image, top_no)
+matches_rg_score_image, matching_time_rg_score_image = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_per_image, random_percentage)
 print("Feature Matching time: " + str(matching_time_rg_score_image))
 print()
 
 print("Getting matches using regressor (all) only (score per session)..")
-matches_rg_score_session, matching_time_rg_score_session = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_per_session, top_no)
+matches_rg_score_session, matching_time_rg_score_session = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_per_session, random_percentage)
 print("Feature Matching time: " + str(matching_time_rg_score_session))
 print()
 
 print("Getting matches using regressor (all) only (score visibility)..")
-matches_rg_score_visibility, matching_time_rg_score_visibility = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_visibility, top_no)
+matches_rg_score_visibility, matching_time_rg_score_visibility = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_visibility, random_percentage)
 print("Feature Matching time: " + str(matching_time_rg_score_visibility))
 print()
 
 print("Getting matches using combined NN only (trained on score per image)..")
-matches_combined_score_per_image, matching_time_combined_score_per_image = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_per_image, top_no)
+matches_combined_score_per_image, matching_time_combined_score_per_image = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_per_image, random_percentage)
 print("Feature Matching time: " + str(matching_time_combined_score_per_image))
 print()
 
 print("Getting matches using combined NN only (trained on score per session)..")
-matches_combined_score_per_session, matching_time_combined_score_per_session = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_per_session, top_no)
+matches_combined_score_per_session, matching_time_combined_score_per_session = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_per_session, random_percentage)
 print("Feature Matching time: " + str(matching_time_combined_score_per_session))
 print()
 
 print("Getting matches using combined NN only (trained on score visibility)..")
-matches_combined_score_visibility, matching_time_combined_score_visibility = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_visibility, top_no)
+matches_combined_score_visibility, matching_time_combined_score_visibility = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_visibility, random_percentage)
 print("Feature Matching time: " + str(matching_time_combined_score_visibility))
 print()
 
@@ -306,11 +306,11 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("Loading baseline results for comparison..")
-random_matches_data = np.load(os.path.join(prepared_data_path, "random_matches_data.npy")).reshape(1,8)
-vanillia_matches_data = np.load(os.path.join(prepared_data_path, "vanillia_matches_data.npy")).reshape(1,8)
+random_matches_data = np.load(os.path.join(prepared_data_path, "random_matches_data_"+str(random_percentage)+".npy")).reshape(1,8)
+vanillia_matches_data = np.load(os.path.join(prepared_data_path, "vanillia_matches_data_"+str(random_percentage)+".npy")).reshape(1,8)
 
 results = np.r_[results, random_matches_data]
 results = np.r_[results, vanillia_matches_data]
 # results = np.around(results, 2) #format to 2 decimal places (28/06/2021 - removed rounding)
 
-np.savetxt(os.path.join(ml_path, "results_evaluator.csv"), results, delimiter=",")
+np.savetxt(os.path.join(ml_path, "results_evaluator_"+str(random_percentage)+".csv"), results, delimiter=",")
