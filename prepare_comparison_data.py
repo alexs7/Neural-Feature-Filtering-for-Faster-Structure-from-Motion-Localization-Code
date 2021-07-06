@@ -29,6 +29,7 @@ from parameters import Parameters
 # Will also save the random matches and the full (800) mathces for all the query images - no need to infer at every evaluation.
 
 base_path = sys.argv[1]
+print("Doing.. " + base_path)
 # percentage number 5%, 10%, 20% etc
 random_percentage = int(sys.argv[2])  # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
 using_CMU_data = "CMU_data" in base_path

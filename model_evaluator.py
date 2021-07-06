@@ -26,7 +26,7 @@ import sys
 # If you test multiple datasets, slice4, slice3, run the in sequence as prediction time will be slower if ran in parallel
 # Look at the command below:
 # you can run this on any GPU machine as long as it is free:  ar2056_trainNN_GPU_5 etc etc...
-# python3 model_evaluator.py colmap_data/CMU_data/slice3/ CMU slice3 early_stop_model 5 && python3 model_evaluator.py colmap_data/CMU_data/slice4/ CMU slice4 early_stop_model 5 && python3 model_evaluator.py colmap_data/CMU_data/slice6/ CMU slice6 early_stop_model 5 && python3 model_evaluator.py colmap_data/CMU_data/slice10/ CMU slice10 early_stop_model 5 && python3 model_evaluator.py colmap_data/CMU_data/slice11/ CMU slice11 early_stop_model 5 && python3 model_evaluator.py colmap_data/Coop_data/slice1/ Coop slice1 early_stop_model
+# python3 model_evaluator.py colmap_data/CMU_data/slice3/ CMU slice3 early_stop_model 5 && python3 model_evaluator.py colmap_data/CMU_data/slice4/ CMU slice4 early_stop_model 5 && python3 model_evaluator.py colmap_data/CMU_data/slice6/ CMU slice6 early_stop_model 5 && python3 model_evaluator.py colmap_data/CMU_data/slice10/ CMU slice10 early_stop_model 5 && python3 model_evaluator.py colmap_data/CMU_data/slice11/ CMU slice11 early_stop_model 5 && python3 model_evaluator.py colmap_data/Coop_data/slice1/ Coop slice1 early_stop_model 5
 
 base_path = sys.argv[1]
 models_dir = "colmap_data/tensorboard_results"
