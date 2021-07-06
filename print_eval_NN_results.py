@@ -1,4 +1,5 @@
 # example command: python3 print_eval_NN_results.py NN_results_excel.txt
+# This script will generate a .txt that you copy in Excel, then export to .csv and run plots/plots.py with the .csv
 import os
 import sys
 
