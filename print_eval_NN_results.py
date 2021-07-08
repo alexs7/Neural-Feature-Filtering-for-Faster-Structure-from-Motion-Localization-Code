@@ -1,10 +1,16 @@
 # example command: python3 print_eval_NN_results.py 5 NN_results_excel.txt
+# you will run this after, model_evaluator.py
+# Note that for the 5% case many images did NOT localise, so there is not pose
 # This script will generate a .txt that you copy in Excel, then export to .csv and run plots/plots.py with the .csv
 import os
 import sys
 
 percent = sys.argv[1]
-file = sys.argv[2]
+file = "NN_results_excel_"+str(percent)+".txt"
+
+if(os.path.isfile(file)):
+    print("Removing old file..")
+    os.remove(file)
 
 cmu_slice3 = "colmap_data/CMU_data/slice3/ML_data/results_evaluator_"+str(percent)+".csv"
 cmu_slice4 = "colmap_data/CMU_data/slice4/ML_data/results_evaluator_"+str(percent)+".csv"
