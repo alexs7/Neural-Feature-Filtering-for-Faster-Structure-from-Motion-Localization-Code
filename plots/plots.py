@@ -1,8 +1,8 @@
 # 05/07/2021 - re-used file for plots for the ML part of the project, run as: python3 plots/plots.py results.csv
 # This script can run on my local laptop as it only needs a .csv file exported by excel.
 # The data in the excel is first copy pasted from running: python3 print_eval_NN_results.py 5/10/..
-# The data is imported in excel and each worksheet exported as .csv. The .csv is transferred to the server, scp /Users/alex/Desktop/results_20.csv ar2056@weatherwax.cs.bath.ac.uk:/homes/ar2056/fullpipeline/,
-# and then used here
+# The data is imported in excel, from print_eval_NN_results.py, and each worksheet exported as .csv.
+# The .csv is transferred to the server, scp /Users/alex/Desktop/results_20.csv ar2056@weatherwax.cs.bath.ac.uk:/homes/ar2056/fullpipeline/, and then used here
 import sys
 import os
 import pandas as pd
