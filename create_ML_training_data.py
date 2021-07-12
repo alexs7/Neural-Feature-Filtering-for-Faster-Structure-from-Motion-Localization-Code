@@ -45,6 +45,8 @@ from sklearn.model_selection import train_test_split
 # 3 - get_points_3D_mean_desc_single_model_ml.py
 # 4 - prepare_comparison_data.py
 # 5 - model_evaluator.py
+# 6 - print_eval_NN_results.py
+# 7 - plots.py
 
 def get_image_decs(db, image_id): #not to be confused with get_queryDescriptors() in feature_matching_generator.py - that one normalises descriptors.
     data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
