@@ -73,12 +73,14 @@ else:
 
 print("Feature matching random and vanillia descs..")
 # db_gt, again because we need the descs from the query images
-ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 
 # db_gt is only used to get the SIFT features from the query images, nothing to do with the train_descriptors_live and points3D_xyz_live order. That latter order needs to be corresponding btw.
+ratio_test_val = 1 #because we use only random features here, if we use a percentage and a ratio test then features will be to few to get a pose (TODO: debug this!)
 random_matches, featm_time_random = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=random_percentage)
 print("Feature Matching time for random samples (avg per image): " + str(featm_time_random))
+
 # all of them as in first publication (should be around 800 for each image)
+ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 vanillia_matches, featm_time_vanillia = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True)
 print("Feature Matching time for vanillia samples (avg per image): " + str(featm_time_vanillia))
 

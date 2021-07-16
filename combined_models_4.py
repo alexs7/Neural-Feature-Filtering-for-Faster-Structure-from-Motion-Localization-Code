@@ -69,13 +69,17 @@ print("Creating model")
 
 # in keras the first layer is a hidden layer too, so input dims is OK here
 inputs = Input(shape=(128,))
-layer1 = Dense(128, activation='relu')(inputs)
+layer1 = Dense(256, activation='relu')(inputs)
 layer2 = Dense(256, activation='relu')(layer1)
 layer3 = Dense(256, activation='relu')(layer2)
-layer4 = Dense(128, activation='relu')(layer3)
+layer4 = Dense(256, activation='relu')(layer3)
+layer5 = Dense(256, activation='relu')(layer4)
+layer6 = Dense(256, activation='relu')(layer5)
+layer7 = Dense(256, activation='relu')(layer6)
+layer8 = Dense(256)(layer3) #default is linear
 # multiple outputs
-classifier = Dense(1, activation='sigmoid', name="classifier")(layer3)
-regression = Dense(1, activation='sigmoid', name="regression")(layer3) #sigmoid here can be used since the output is from zero to one (MinMax)
+classifier = Dense(1, activation='sigmoid', name="classifier")(layer8)
+regression = Dense(1, activation='sigmoid', name="regression")(layer8) #sigmoid here can be used since the output is from zero to one (MinMax)
 model = Model(inputs=inputs, outputs=[regression, classifier])
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=3e-4)

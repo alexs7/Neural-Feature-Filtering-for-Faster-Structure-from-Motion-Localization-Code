@@ -2,13 +2,12 @@ import os
 import sys
 import subprocess
 
-# This file is used to train all the required networks
-# it takes as a parameter a directory where the dataset is located (CMU/slice3, Coop/slice1 etc etc)
+# This file is used to train all the required networks, byt using all the CMU session's data
+# it takes as a parameter a directory where the dataset is located (CMU_data/)
 # before this you will need to run get_points_3D_mean_desc_single_model_ml.py - just a reminder for later on when you run the evaluator
 
 # Example command:
-# maybe disown the proccess when running it ? - (16/07/2021 - do not need to I use screen now)
-# python3 train_all_networks.py colmap_data/CMU_data/slice3/ Extended_CMU_slice3 & disown
+# python3 train_all_networks_CMU_all.py colmap_data/CMU_data/ Rhombus_CMU_all
 
 data_path = sys.argv[1] #for example "colmap_data/CMU_data/slice3/"
 name_of_model = sys.argv[2] #for example "Extended_CMU_slice3" , name of network architecture and dataset used
@@ -51,7 +50,3 @@ os.system(regression_on_all_model_command_score_per_image)
 os.system(regression_on_all_model_command_score_per_session)
 os.system(regression_on_all_model_command_score_visibility)
 print("Training done!")
-
-
-
-
