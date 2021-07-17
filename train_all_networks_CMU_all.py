@@ -9,8 +9,8 @@ import subprocess
 # Example command:
 # python3 train_all_networks_CMU_all.py colmap_data/CMU_data/ Rhombus_CMU_all
 
-data_path = sys.argv[1] #for example "colmap_data/CMU_data/slice3/"
-name_of_model = sys.argv[2] #for example "Extended_CMU_slice3" , name of network architecture and dataset used
+data_path = sys.argv[1] #for example "colmap_data/CMU_data/"
+name_of_model = sys.argv[2] #for example "Extended" , name of network architecture
 
 # Run baseline random features and baseline all features (system commands)
 combined_model_command_score_per_image = "python3 combined_models_4.py "+data_path+" 32768 1000 " + name_of_model  + " score_per_image"

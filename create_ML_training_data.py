@@ -49,6 +49,8 @@ from sklearn.model_selection import train_test_split
 # 6 - print_eval_NN_results.py
 # 7 - plots.py
 
+# 16/07/2021 - now using ssds, but need to extend every 28 days os use, hare extend /mnt/faster0/ar2056/
+
 def get_image_decs(db, image_id): #not to be confused with get_queryDescriptors() in feature_matching_generator.py - that one normalises descriptors.
     data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
     data = COLMAPDatabase.blob_to_array(data.fetchone()[0], np.uint8)
