@@ -7,7 +7,7 @@ import subprocess
 # before this you will need to run get_points_3D_mean_desc_single_model_ml.py - just a reminder for later on when you run the evaluator
 
 # Example command:
-# python3 train_all_networks_CMU_all.py colmap_data/CMU_data/ Rhombus_CMU_all
+# python3 train_all_networks_CMU_all.py colmap_data/CMU_data/ Extended_CMU_all
 
 data_path = sys.argv[1] #for example "colmap_data/CMU_data/"
 name_of_model = sys.argv[2] #for example "Extended" , name of network architecture
