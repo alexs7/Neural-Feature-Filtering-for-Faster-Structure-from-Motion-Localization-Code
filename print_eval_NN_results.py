@@ -1,4 +1,4 @@
-# example command: python3 print_eval_NN_results.py 5 NN_results_excel.txt
+# example command: python3 print_eval_NN_results.py 5
 # you will run this after, model_evaluator.py
 # Note that for the 5% case many images did NOT localise, so there is not pose
 # This script will generate a .txt that you copy in Excel, then export to .csv and run plots/plots.py with the .csv

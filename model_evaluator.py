@@ -15,7 +15,10 @@ from benchmark import benchmark, benchmark_ml
 import sys
 
 # Need to run "prepare_comparison_data.py" before this file, and that the "random_percentage" matches the one from "prepare_comparison_data.py" results
-# The models here are the best performing for classification and regression as of 28 May, ManyManyNodesLayersEarlyStopping, and ReversePyramidEarlyStopping
+
+# This script will read anything that has "Extended" in it's name. This was the best performing model name and I kept it. So when you train another model
+# with a different name make sure before you run this script the name is changed to "Extended" - (18/07/2021), TODO: this needs to fixed
+
 # use CMU_data dir or Coop_data
 # example command (comment and uncomment):
 # python3 model_evaluator.py colmap_data/CMU_data/slice3/ CMU slice3 early_stop_model 5
