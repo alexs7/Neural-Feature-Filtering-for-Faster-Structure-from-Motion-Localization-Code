@@ -1,4 +1,4 @@
-# This script will generate 3 images per query images from session folders.
+# This script will generate 4 images per query images from session folders.
 # original one, one with all the features, and the one with the selected features.
 # this evaluates the NNs visually
 # as of now it only works for the classifier all, it needs to be adjusted for the regressor model
