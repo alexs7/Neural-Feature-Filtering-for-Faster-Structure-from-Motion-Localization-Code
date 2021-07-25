@@ -110,7 +110,7 @@ def create_all_data(ml_db_path, slices):
 
 ml_db_dir = os.path.join("colmap_data/CMU_data/", "ML_data/")
 os.makedirs(ml_db_dir, exist_ok = True)
-ml_db_path = os.path.join(ml_db_dir, "ml_database_cmu_all.db")
+ml_db_path = os.path.join(ml_db_dir, "ml_database_all.db")
 
 print("Creating all training data for all CMU slices..")
 slices = sys.argv[1:]

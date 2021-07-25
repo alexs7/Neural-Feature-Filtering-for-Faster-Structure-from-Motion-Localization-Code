@@ -27,3 +27,5 @@ relative_poses/
 points3D_AR.txt
 poses_for_debug/
 venv/
+plots/*.pdf
+plots/*.csv
