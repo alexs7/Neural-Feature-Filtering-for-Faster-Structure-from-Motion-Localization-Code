@@ -23,6 +23,8 @@ import sys
 # example command (comment and uncomment):
 # "CMU" and "slice3" are the data used for training
 # python3 model_evaluator.py colmap_data/CMU_data/slice3/ CMU slice3 early_stop_model 5
+# "CMU" and "all" are the data used for training
+# python3 model_evaluator.py colmap_data/CMU_data/slice3/ all slice3 early_stop_model 5 -> This is the case for the network trained on all the CMU data
 # or for Coop
 # python3 model_evaluator.py colmap_data/Coop_data/slice1/ Coop slice1 early_stop_model
 # TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.13 (or whatever IP it is)
