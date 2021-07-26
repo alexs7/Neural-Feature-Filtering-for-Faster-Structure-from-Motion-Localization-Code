@@ -157,9 +157,8 @@ print("Saving Graphs..")
 # Plotting starts here
 plt.figure(figsize=(11,6), dpi=100)
 
-print("Bar Charts..")
-plt.figure(5)
-all_slices_str_idx = 0
+print("Bar Charts CMU..")
+cmu_slices_str_idx = 0
 fm_times_best_model = np.array([])
 t_err_best_model = np.array([])
 rot_err_best_model = np.array([])
@@ -167,9 +166,9 @@ fm_times_baseline = np.array([])
 t_err_baseline = np.array([])
 rot_err_baseline = np.array([])
 
-for dataset in datasets:
-    dataset_name = all_slices_str[all_slices_str_idx]
-    print(" Graphs for " + dataset_name + " best model only")
+for dataset in cmu_only_datasets:
+    dataset_name = all_slices_str[cmu_slices_str_idx]
+    print(" Bar Chart for " + dataset_name + " best model only")
 
     # these will be the same for each percentage - because baseline, and classifier all (best model) always uses all the features
     first_percentage = dataset[0] #doesnt matter which one here (0 is 5%)
@@ -178,29 +177,108 @@ for dataset in datasets:
     t_err_baseline = np.append(t_err_baseline, first_percentage.loc[first_percentage['method'] == baseline_method]['t_err'])
     rot_err_baseline = np.append(rot_err_baseline, first_percentage.loc[first_percentage['method'] == baseline_method]['rot_err'])
 
-    if dataset_name == 'all_coop_slice1':
-        best_method = coop_best_performing_method
-    else:
-        best_method = cmu_all_best_performing_method
+    fm_times_best_model = np.append(fm_times_best_model, first_percentage.loc[first_percentage['method'] == cmu_all_best_performing_method]['fm_time'] * 1000)  # convert to milliseconds
+    t_err_best_model = np.append(t_err_best_model, first_percentage.loc[first_percentage['method'] == cmu_all_best_performing_method]['t_err'])
+    rot_err_best_model = np.append(rot_err_best_model, first_percentage.loc[first_percentage['method'] == cmu_all_best_performing_method]['rot_err'])
 
-    fm_times_best_model = np.append(fm_times_best_model, first_percentage.loc[first_percentage['method'] == best_method]['fm_time'] * 1000)  # convert to milliseconds
-    t_err_best_model = np.append(t_err_best_model, first_percentage.loc[first_percentage['method'] == best_method]['t_err'])
-    rot_err_best_model = np.append(rot_err_best_model, first_percentage.loc[first_percentage['method'] == best_method]['rot_err'])
+    cmu_slices_str_idx += 1
 
-plt.cla()
+#ft matching times for all CMU slices in one bar chart
+plt.figure(5)
 ind = np.arange(0,3*len(fm_times_baseline[0:5]), 3)
-width = 0.8
-plt.bar(ind, fm_times_baseline[0:5], width, label='Feature Matching Tme (Baseline)')
-plt.bar(ind + width, fm_times_best_model[0:5], width, label='Feature Matching Tme (Best model)')
-
-plt.ylabel('Time (ms)', fontsize=20)
-
+width = 0.9
+plt.bar(ind, fm_times_baseline[0:5], width, label='Feature Matching Time (Baseline)')
+plt.bar(ind + width, fm_times_best_model[0:5], width, label='Feature Matching Time (Best model)')
+plt.ylabel('Time (ms)', fontsize=10)
 plt.xticks(ind + width/2, (all_slices_str_readable[0:-1]))
-plt.legend(loc='upper center', framealpha=1, fontsize=16, shadow = True)
-plt.savefig("plots/"+dataset_name+"_fm_times_all_cmu_bar.pdf")
+plt.legend(loc='best', framealpha=1, fontsize=10, shadow = True)
+plt.savefig("plots/fm_times_all_cmu_bar.pdf")
+plt.cla()
 
-import pdb
-pdb.set_trace()
+#t_err times for all CMU slices in one bar chart
+plt.figure(6)
+width = 0.9
+plt.bar(ind, t_err_baseline[0:5], width, label='Translation Error (Baseline)')
+plt.bar(ind + width, t_err_best_model[0:5], width, label='Translation Error (Best model)')
+plt.ylabel('Translation Error (m)', fontsize=10)
+plt.xticks(ind + width/2, (all_slices_str_readable[0:-1]))
+plt.legend(loc='best', framealpha=1, fontsize=10, shadow = True)
+plt.savefig("plots/t_err_all_cmu_bar.pdf")
+plt.cla()
+
+#rot_err times for all CMU slices in one bar chart
+plt.figure(7)
+width = 0.9
+plt.bar(ind, rot_err_baseline[0:5], width, label='Rotation Error (Baseline)')
+plt.bar(ind + width, rot_err_best_model[0:5], width, label='Rotation Error (Best model)')
+plt.ylabel('Rotation Error (degrees)', fontsize=10)
+plt.xticks(ind + width/2, (all_slices_str_readable[0:-1]))
+plt.legend(loc='best', framealpha=1, fontsize=10, shadow = True)
+plt.savefig("plots/rot_err_all_cmu_bar.pdf")
+plt.cla()
+
+print()
+
+print("Bar Charts Coop..")
+fm_times_best_model = np.array([])
+t_err_best_model = np.array([])
+rot_err_best_model = np.array([])
+fm_times_baseline = np.array([])
+t_err_baseline = np.array([])
+rot_err_baseline = np.array([])
+
+for dataset in coop_only_dataset: #only one element but loop makes more sense..
+    dataset_name = "Coop = retail_shop"
+    print(" Bar Chart for " + dataset_name + " best model only")
+
+    # these will be the same for each percentage - because baseline, and classifier all (best model) always uses all the features
+    first_percentage = dataset[0] #doesnt matter which one here (0 is 5%)
+
+    fm_times_baseline = np.append(fm_times_baseline, first_percentage.loc[first_percentage['method'] == baseline_method]['fm_time'] * 1000)  # convert to milliseconds
+    t_err_baseline = np.append(t_err_baseline, first_percentage.loc[first_percentage['method'] == baseline_method]['t_err'])
+    rot_err_baseline = np.append(rot_err_baseline, first_percentage.loc[first_percentage['method'] == baseline_method]['rot_err'])
+
+    fm_times_best_model = np.append(fm_times_best_model, first_percentage.loc[first_percentage['method'] == coop_best_performing_method]['fm_time'] * 1000)  # convert to milliseconds
+    t_err_best_model = np.append(t_err_best_model, first_percentage.loc[first_percentage['method'] == coop_best_performing_method]['t_err'])
+    rot_err_best_model = np.append(rot_err_best_model, first_percentage.loc[first_percentage['method'] == coop_best_performing_method]['rot_err'])
+
+#ft matching times
+plt.figure(8)
+ind = np.array([0])
+width = 0.05
+plt.bar(ind, fm_times_baseline, width, label='Feature Matching Time (Baseline)')
+plt.bar(ind + width+ 0.01, fm_times_best_model, width, label='Feature Matching Time (Best model)')
+plt.ylabel('Time (ms)', fontsize=10)
+plt.xticks(ind + width/2 + 0.01, ([all_slices_str_readable[-1]]))
+plt.legend(loc='best', framealpha=1, fontsize=10, shadow = True)
+plt.savefig("plots/fm_times_coop_bar.pdf")
+plt.cla()
+
+#t_err times
+plt.figure(9)
+ind = np.array([0])
+width = 0.05
+plt.bar(ind, t_err_baseline, width, label='Translation Error (Baseline)')
+plt.bar(ind + width+ 0.01, t_err_best_model, width, label='Translation Error (Best model)')
+plt.ylabel('Translation Error (m)', fontsize=10)
+plt.xticks(ind + width/2 + 0.01, ([all_slices_str_readable[-1]]))
+plt.legend(loc='best', framealpha=1, fontsize=10, shadow = True)
+plt.savefig("plots/t_err_coop_bar.pdf")
+plt.cla()
+
+#rot_err times
+plt.figure(10)
+ind = np.array([0])
+width = 0.05
+plt.bar(ind, rot_err_baseline, width, label='Rotation Error (Baseline)')
+plt.bar(ind + width+ 0.01, rot_err_best_model, width, label='Rotation Error (Best model)')
+plt.ylabel('Rotation Error (degrees)', fontsize=10)
+plt.xticks(ind + width/2 + 0.01, ([all_slices_str_readable[-1]]))
+plt.legend(loc='best', framealpha=1, fontsize=10, shadow = True)
+plt.savefig("plots/rot_err_coop_bar.pdf")
+plt.cla()
+
+print()
 
 # for seperate slices figures.
 # CMU
