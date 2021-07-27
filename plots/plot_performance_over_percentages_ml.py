@@ -406,7 +406,7 @@ plt.savefig("plots/"+dataset_name+"_rot_err_per_percentage.pdf")
 
 print()
 
-# for 1 figure per error, time etc (duplicate code as above)
+# for 1 figure per error, time etc (duplicate code as above), accumulating
 all_slices_str_idx = 0
 for dataset in cmu_only_datasets:
     dataset_name = all_slices_str[all_slices_str_idx]
