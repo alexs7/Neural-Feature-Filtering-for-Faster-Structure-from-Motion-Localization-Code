@@ -470,6 +470,9 @@ for dataset in cmu_only_datasets:
 
     all_slices_str_idx += 1
 
+print("Dots graphs..")
+print("Run plots.py for dots.. troOolling!")
+
 exit()
 
 # Old code here
@@ -564,4 +567,3 @@ ax3.set_xticklabels(xlabels)
 
 fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 plt.savefig('/Users/alex/Projects/EngDLocalProjects/Papers Local - Before iCloud/paper/figures/benchmark_values_prosac.pdf')
-
