@@ -29,3 +29,5 @@ poses_for_debug/
 venv/
 plots/*.pdf
 plots/*.csv
+plots/CMU*
+plots/Coop*
