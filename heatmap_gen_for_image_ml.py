@@ -2,6 +2,8 @@
 # original one, one with all the features, and the one with the selected features.
 # this evaluates the NNs visually
 # as of now it only works for the classifier all, it needs to be adjusted for the regressor model
+# example command:
+# python3 heatmap_gen_for_image_ml.py colmap_data/CMU_data/slice3/ colmap_data/tensorboard_results/classification_Extended_CMU_slice3/early_stop_model/ plots/cmu_slice3_comparison_gt_images session_7
 
 import os
 import shutil
@@ -19,7 +21,7 @@ base_path = sys.argv[1] # i.e colmap_data/CMU_data/slice3/
 model_path = sys.argv[2] # i.e best performing model, colmap_data/tensorboard_results/classification_Extended_CMU_slice3/early_stop_model/
 output_path_path = sys.argv[3] # i.e plots/slice3_comparison_gt_images (this has to be created manually)
 gt_images_folder = sys.argv[4] #i.e session_7
-gt_session_name = sys.argv[4]
+gt_session_name = sys.argv[4] #i.e duplicate as above
 
 if(path.exists(output_path_path)): #cleaning up old files and remaking dir
     print("Deleting: " + output_path_path)
@@ -48,6 +50,7 @@ for name in all_images_names:
         print("Doing image: " + str(counter) + " " + name)
         image_id = get_image_id(db_gt, name)
         keypoints_xy = get_keypoints_xy(db_gt, image_id)
+        print("Size of keypoints before: " + str(len(keypoints_xy)))
         queryDescriptors = get_queryDescriptors(db_gt, image_id)
 
         model_predictions = model.predict_on_batch(queryDescriptors)
@@ -56,13 +59,14 @@ for name in all_images_names:
         matchable_desc_indices_length = matchable_desc_indices.shape[0]
 
         keypoints_xy_pred = keypoints_xy[matchable_desc_indices]
+        print("Size of keypoints after prediction: " + str(len(keypoints_xy_pred)))
 
         filename = name.split("/")[1]
         original_image = os.path.join(query_images_path, filename)
         temp_name = filename.split(".")[0]
-        filename_all_features = temp_name + "_all_features.jpg"
-        filename_predicted_features = temp_name + "_predicted_features.jpg"
-        filename_all_predicted_features = temp_name + "_all_predicted_features.jpg"
+        filename_all_features = temp_name + "_all_features_"+str(len(keypoints_xy))+".jpg"
+        filename_predicted_features = temp_name + "_predicted_features"+str(len(keypoints_xy_pred))+".jpg"
+        filename_all_predicted_features = temp_name + "_all_predicted_features_"+str(len(keypoints_xy))+"_"+str(len(keypoints_xy_pred))+".jpg" #for showing both filtered and all features
 
         raw_output_image_path = os.path.join(output_path_path, filename)
         output_image_path_all_features = os.path.join(output_path_path, filename_all_features)
@@ -86,7 +90,7 @@ for name in all_images_names:
             center = (x, y)
             cv2.circle(image_predicted_features, center, 6, (0, 255, 0), -1)
 
-        # for both in the same image
+        # for both in the same image (showing filtered and all features on same image)
         for i in range(len(keypoints_xy)):
             x = int(keypoints_xy[i][0])
             y = int(keypoints_xy[i][1])
