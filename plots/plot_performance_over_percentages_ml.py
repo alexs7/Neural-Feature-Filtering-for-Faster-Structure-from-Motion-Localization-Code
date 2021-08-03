@@ -82,7 +82,8 @@ all_slices_str = ["all_cmu_slice3", "all_cmu_slice4", "all_cmu_slice6", "all_cmu
 all_slices_str_readable = ["CMU Slice3", "CMU Slice4", "CMU Slice6", "CMU Slice10", "CMU Slice11", "Retail Shop"]
 percentages_str = ["5%", "10%", "15%", "20%", "50%"]
 
-csv_results_arr = np.array(["Dataset", "5%", "10%", "15%", "20%", "50%"])
+results_arr = np.array(["Dataset", "5%", "10%", "15%", "20%", "50%"])
+csv_results_arr = np.array(["Dataset", "5%", "10%", "15%", "20%", "50%"]) #for csv saving
 
 # comment out which on you want to use
 # model_indices = np.delete(np.arange(1,23), [1,21,20]) #remove the classifier trained on all, baseline - do not depend on percentages - DOUBLE check indices
@@ -93,6 +94,7 @@ for dataset in datasets:
     print("Dataset: " + all_slices_str[all_slices_str_idx])
     percentages_str_idx = 0
     percentages_results_arr = np.array([all_slices_str[all_slices_str_idx]])
+    percentages_results_arr_csv = np.array([all_slices_str[all_slices_str_idx]]) #duplicate for csv saving
 
     for percentage in dataset:
         conc_times_all_ml_methods = percentage.iloc[model_indices, 4]
@@ -100,12 +102,12 @@ for dataset in datasets:
         t_err_all_ml_methods = percentage.iloc[model_indices, 7]
         rot_err_all_ml_methods = percentage.iloc[model_indices, 8]
 
-        # conc_times_all_ml_methods_z_transformed = (conc_times_all_ml_methods - conc_times_all_ml_methods.mean() ) / conc_times_all_ml_methods.std()
+        conc_times_all_ml_methods_z_transformed = (conc_times_all_ml_methods - conc_times_all_ml_methods.mean() ) / conc_times_all_ml_methods.std()
         fm_times_all_ml_methods_z_transformed = (fm_times_all_ml_methods - fm_times_all_ml_methods.mean() ) / fm_times_all_ml_methods.std()
         t_err_all_ml_methods_z_transformed = (t_err_all_ml_methods - t_err_all_ml_methods.mean() ) / t_err_all_ml_methods.std()
         rot_err_ml_methods_z_transformed = (rot_err_all_ml_methods - rot_err_all_ml_methods.mean() ) / rot_err_all_ml_methods.std()
 
-        all_metrics_ml_methods_z_transformed = pd.concat([#conc_times_all_ml_methods_z_transformed,
+        all_metrics_ml_methods_z_transformed = pd.concat([conc_times_all_ml_methods_z_transformed,
                                                           fm_times_all_ml_methods_z_transformed,
                                                           t_err_all_ml_methods_z_transformed,
                                                           rot_err_ml_methods_z_transformed], axis=1)
@@ -114,23 +116,27 @@ for dataset in datasets:
         best_method = percentage['method'][min_idx]
 
         print(" percentage: " + percentages_str[percentages_str_idx])
+        best_method_csv = best_method.replace(",","") #remove comma so it doesnt fuck up the csv
         print("  best method: " + best_method)
         percentages_str_idx += 1
         percentages_results_arr = np.append(percentages_results_arr, best_method)
+        percentages_results_arr_csv = np.append(percentages_results_arr_csv, best_method_csv)
 
-    csv_results_arr = np.vstack((csv_results_arr, percentages_results_arr))
+    results_arr = np.vstack((results_arr, percentages_results_arr))
+    csv_results_arr = np.vstack((csv_results_arr, percentages_results_arr_csv)) #for csv saving
+
     all_slices_str_idx += 1
     print()
 
-np.savetxt("plots/best_methods_per_dataset.csv" , csv_results_arr , delimiter="," , fmt='%s')
+np.savetxt("plots/best_methods_per_dataset.csv", csv_results_arr, delimiter=",", fmt='%s')
 
 best_model_each_dataset = {}
-for i in range(len(csv_results_arr)-1):
+for i in range(len(results_arr) - 1):
     i += 1
-    unique, pos = np.unique(csv_results_arr[i,1:],return_inverse=True)
+    unique, pos = np.unique(results_arr[i, 1:], return_inverse=True)
     counts = np.bincount(pos)
     maxpos = counts.argmax()
-    best_model_each_dataset[csv_results_arr[i,0]] = unique[maxpos]
+    best_model_each_dataset[results_arr[i, 0]] = unique[maxpos]
 
 # for Coop
 for k,v in best_model_each_dataset.items():
