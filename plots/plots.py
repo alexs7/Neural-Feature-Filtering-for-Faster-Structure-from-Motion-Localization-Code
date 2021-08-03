@@ -15,6 +15,31 @@ print(plt.style.available)
 
 plt.figure(figsize=(12, 12), dpi=100)
 
+names_dict = {
+"Class, top mtchs" : "Classifier % matches",
+"Class, all mtchs" : "Classifier using all matches",
+"C & R, s.p.i" : "Classifier and Regressor w/ score per image",
+"C & R, s.p.s" : "Classifier and Regressor w/ score per session",
+"C & R, s.p.v" : "Classifier and Regressor w/ visibility score",
+"R, s.p.i" : "Regressor w/ score per image",
+"R, s.p.s" : "Regressor w/ score per session",
+"R, s.p.v" : "Regressor w/ visibility score",
+"CB, s.p.i" : "Combined w/ score per image",
+"CB, s.p.s" : "Combined w/ score per session",
+"CB, s.p.v" : "Combined w/ visibility score",
+"Rd C & R s.p.i" : "Classifier and Regressor w/ score per image, modified RANSAC",
+"Rd C & R s.p.s" : "Classifier and Regressor w/ score per session, modified RANSAC",
+"Rd C & R s.p.v" : "Classifier and Regressor w/ visibility score, modified RANSAC",
+"PRSC R, s.p.i" : "Regressor w/ score per image, PROSAC",
+"PRSC R, s.p.s" : "Regressor w/ score per session, PROSAC",
+"PRSC R, s.p.v" :  "Regressor w/ visibility score, PROSAC",
+"PRSC CB, s.p.i" : "Combined w/ score per image, PROSAC",
+"PRSC CB, s.p.s" : "Combined w/ score per session, PROSAC",
+"PRSC CB, s.p.v" : "Combined w/ visibility score, PROSAC",
+"Rndm 10%" : "Random feature case",
+"All (~800)" : "Baseline using all features"
+}
+
 percentages = [5,10,15,20,50]
 for percentage in percentages:
     results_path_csv = "plots/results_" + str(percentage) + ".csv"
@@ -47,16 +72,18 @@ for percentage in percentages:
         ftm = ftm * 1000
         labels = np.delete(labels,-2)
 
-        plt.suptitle('Error Per Method', fontsize=18)
-        plt.scatter(x, y, c=ftm, cmap='binary', edgecolors='k', s=170, alpha=0.7)
+        plt.title('Error Per Method', fontsize=18)
+        plt.scatter(x, y, c=ftm, cmap='binary', edgecolors='k', s=100, alpha=0.7)
         plt.xlabel('Rotation Error (degrees)', fontsize=16)
         plt.ylabel('Translation Error (meters)', fontsize=16)
         plt.colorbar()
 
-        # plt.xlim([0, 10]) # degrees - rotation
-        # plt.ylim([0, 0.5]) # meters - translation
-        # for i, txt in enumerate(labels):
-        #     plt.annotate(txt, (x[i], y[i]))
+        # limits
+        plt.xlim([0, 3]) # degrees - rotation
+        plt.ylim([0, 0.5]) # meters - translation
+        for i, txt in enumerate(labels):
+            label_key = txt #just for readability
+            plt.annotate(names_dict[label_key], (x[i] + 0.01, y[i] + 0.007), fontsize=14)
 
         save_path = os.path.join("plots/", slice_name+"_"+str(percentage)+".png")
         plt.savefig(save_path)
