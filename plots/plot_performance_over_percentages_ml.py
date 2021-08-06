@@ -155,9 +155,10 @@ maxpos = counts.argmax()
 cmu_all_best_performing_method = unique[maxpos]
 
 baseline_method = 'All (~800)'
-print(f"{coop_best_performing_method=}")
-print(f"{cmu_all_best_performing_method=}")
+print(f"{coop_best_performing_method=}" + " ")
+print(f"{cmu_all_best_performing_method=}" + " ")
 
+print()
 print("Saving Graphs..")
 
 # Plotting starts here
@@ -240,13 +241,18 @@ for dataset in coop_only_dataset: #only one element but loop makes more sense..
     # these will be the same for each percentage - because baseline, and classifier all (best model) always uses all the features
     first_percentage = dataset[0] #doesnt matter which one here (0 is 5%)
 
-    fm_times_baseline = np.append(fm_times_baseline, first_percentage.loc[first_percentage['method'] == baseline_method]['fm_time'] * 1000)  # convert to milliseconds
-    t_err_baseline = np.append(t_err_baseline, first_percentage.loc[first_percentage['method'] == baseline_method]['t_err'])
-    rot_err_baseline = np.append(rot_err_baseline, first_percentage.loc[first_percentage['method'] == baseline_method]['rot_err'])
+    fm_times_baseline = first_percentage.loc[first_percentage['method'] == baseline_method]['fm_time'].item() * 1000  # convert to milliseconds
+    t_err_baseline = first_percentage.loc[first_percentage['method'] == baseline_method]['t_err'].item()
+    rot_err_baseline = first_percentage.loc[first_percentage['method'] == baseline_method]['rot_err'].item()
 
-    fm_times_best_model = np.append(fm_times_best_model, first_percentage.loc[first_percentage['method'] == coop_best_performing_method]['fm_time'] * 1000)  # convert to milliseconds
-    t_err_best_model = np.append(t_err_best_model, first_percentage.loc[first_percentage['method'] == coop_best_performing_method]['t_err'])
-    rot_err_best_model = np.append(rot_err_best_model, first_percentage.loc[first_percentage['method'] == coop_best_performing_method]['rot_err'])
+    fm_times_best_model = first_percentage.loc[first_percentage['method'] == coop_best_performing_method]['fm_time'].item() * 1000  # convert to milliseconds
+    t_err_best_model = first_percentage.loc[first_percentage['method'] == coop_best_performing_method]['t_err'].item()
+    rot_err_best_model = first_percentage.loc[first_percentage['method'] == coop_best_performing_method]['rot_err'].item()
+
+print("Retail Shop Error Baseline VS Best Model:")
+
+print("Baseline (Feature Matching Time/Translation/Rotation): " + str(fm_times_baseline) + " / " + str(t_err_baseline) + " / " + str(rot_err_baseline))
+print("Best Model (Feature Matching Time/Translation/Rotation/): " + str(fm_times_best_model) + " / " + str(t_err_best_model) + " / " + str(rot_err_best_model))
 
 #ft matching times
 plt.figure(8)
