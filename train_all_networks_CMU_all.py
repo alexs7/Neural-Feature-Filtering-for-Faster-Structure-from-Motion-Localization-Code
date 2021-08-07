@@ -11,25 +11,24 @@ import subprocess
 
 data_path = sys.argv[1] #for example "colmap_data/CMU_data/"
 name_of_model = sys.argv[2] #for example "Extended" , name of network architecture
+epochs = "3000"
+batch_size = "65536"
 
 # Run baseline random features and baseline all features (system commands)
-combined_model_command_score_per_image = "python3 combined_models_4.py "+data_path+" 32768 1000 " + name_of_model  + " score_per_image"
-combined_model_command_score_per_session = "python3 combined_models_4.py "+data_path+" 32768 1000 " + name_of_model  + " score_per_session"
-combined_model_command_score_visibility = "python3 combined_models_4.py "+data_path+" 32768 1000 " + name_of_model  + " score_visibility"
-classification_model_command = "python3 classification_4.py "+data_path+" 32768 1000 " + name_of_model
+combined_model_command_score_per_image = "python3 combined_models_main.py " + data_path + " " + batch_size + " " + epochs + " " + name_of_model  + " score_per_image"
+combined_model_command_score_per_session = "python3 combined_models_main.py " + data_path + " " + batch_size + " " + epochs + " " + name_of_model  + " score_per_session"
+combined_model_command_score_visibility = "python3 combined_models_main.py " + data_path + " " + batch_size + " " + epochs + " " + name_of_model  + " score_visibility"
+classification_model_command = "python3 classification_main.py " + data_path + " " + batch_size + " " + epochs + " " + name_of_model
 # on only matched features to be used only with classifier
-regression_model_command_score_per_image = "python3 regression_4.py "+data_path+" 32768 1000 " + name_of_model + " 1 " + "score_per_image"
-regression_model_command_score_per_session = "python3 regression_4.py "+data_path+" 32768 1000 " + name_of_model + " 1 " + "score_per_session"
-regression_model_command_score_visibility = "python3 regression_4.py "+data_path+" 32768 1000 " + name_of_model + " 1 " + "score_visibility"
+regression_model_command_score_per_image = "python3 regression_main.py " + data_path + " " + batch_size + " " + epochs + " " + name_of_model + " 1 " + "score_per_image"
+regression_model_command_score_per_session = "python3 regression_main.py " + data_path + " " + batch_size + " " + epochs + " " + name_of_model + " 1 " + "score_per_session"
+regression_model_command_score_visibility = "python3 regression_main.py " + data_path + " " + batch_size + " " + epochs + " " + name_of_model + " 1 " + "score_visibility"
 # on all features to be used on it's own
-regression_on_all_model_command_score_per_image = "python3 regression_4.py "+data_path+" 32768 1000 All" + name_of_model + " 0 " + "score_per_image"
-regression_on_all_model_command_score_per_session = "python3 regression_4.py "+data_path+" 32768 1000 All" + name_of_model + " 0 " + "score_per_session"
-regression_on_all_model_command_score_visibility = "python3 regression_4.py "+data_path+" 32768 1000 All" + name_of_model + " 0 " + "score_visibility"
+regression_on_all_model_command_score_per_image = "python3 regression_main.py " + data_path + " " + batch_size + " " + epochs + " " + "All" + name_of_model + " 0 " + "score_per_image"
+regression_on_all_model_command_score_per_session = "python3 regression_main.py " + data_path + " " + batch_size + " " + epochs + " " + "All" + name_of_model + " 0 " + "score_per_session"
+regression_on_all_model_command_score_visibility = "python3 regression_main.py " + data_path + " " + batch_size + " " + epochs + " " + "All" + name_of_model + " 0 " + "score_visibility"
 
 print("Commands to run:")
-print(combined_model_command_score_per_image)
-print(combined_model_command_score_per_session)
-print(combined_model_command_score_visibility)
 print(classification_model_command)
 print(regression_model_command_score_per_image)
 print(regression_model_command_score_per_session)
@@ -37,11 +36,11 @@ print(regression_model_command_score_visibility)
 print(regression_on_all_model_command_score_per_image)
 print(regression_on_all_model_command_score_per_session)
 print(regression_on_all_model_command_score_visibility)
+print(combined_model_command_score_per_image)
+print(combined_model_command_score_per_session)
+print(combined_model_command_score_visibility)
 
 print("Training started..")
-os.system(combined_model_command_score_per_image)
-os.system(combined_model_command_score_per_session)
-os.system(combined_model_command_score_visibility)
 os.system(classification_model_command)
 os.system(regression_model_command_score_per_image)
 os.system(regression_model_command_score_per_session)
@@ -49,4 +48,7 @@ os.system(regression_model_command_score_visibility)
 os.system(regression_on_all_model_command_score_per_image)
 os.system(regression_on_all_model_command_score_per_session)
 os.system(regression_on_all_model_command_score_visibility)
+os.system(combined_model_command_score_per_image)
+os.system(combined_model_command_score_per_session)
+os.system(combined_model_command_score_visibility)
 print("Training done!")
