@@ -1,11 +1,11 @@
 import os
 from os import path
-import time
+from pickle import dump
 import shutil
-
+from sklearn.preprocessing import StandardScaler
 from tensorboard_config import get_Tensorboard_dir
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '0' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
+import matplotlib.pyplot as plt
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 from tensorflow import keras
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Input
@@ -64,6 +64,21 @@ print("Epochs: " + str(epochs))
 print("Loading data..")
 sift_vecs, scores, classes = getCombinedData(db_path, score_name = score_to_train_on)
 
+# These will overwrite the plots per dataset - but it is fine, it is the
+# same plots - for classification/regression etc, i.e. it is dataset dependent not network dependent
+print("Saving graphs of the distribution of the mean SIFT vectors - before standard scaler")
+plt.hist(sift_vecs.mean(axis=1), bins=50, density=True, alpha=0.6, color='b')
+plt.savefig(name+'_dist_before_Standard_Scaler.png')
+
+scaler = StandardScaler()
+scaler_transformed = scaler.fit(sift_vecs)
+sift_vecs = scaler_transformed.transform(sift_vecs)
+
+plt.cla()
+print("Saving graphs of the distribution of the mean SIFT vectors - after standard scaler")
+plt.hist(sift_vecs.mean(axis=1), bins=50, density=True, alpha=0.6, color='r')
+plt.savefig(name+'_dist_after_Standard_Scaler.png')
+
 # Create model
 print("Creating model")
 
@@ -105,7 +120,11 @@ history = model.fit(X_train,
 
 # Save model here
 print("Saving model...")
-model.save(model_save_dir) #double check with keras.models.load_model(model_save_path) in debug
+model.save(model_save_dir)
+# This has to happen here because by now "log_dir" will have been created by Tensorboard
+print("Saving Scaler..")
+scaler_save_path = os.path.join(log_dir, "scaler.pkl")
+dump(scaler_transformed, open(scaler_save_path, 'wb'))
 
 print("Done!")
 
