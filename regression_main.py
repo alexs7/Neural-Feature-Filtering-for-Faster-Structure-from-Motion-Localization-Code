@@ -57,7 +57,7 @@ print("Epochs: " + str(epochs))
 
 print("Loading data..")
 # minmax True returns worse results in evaluator
-sift_vecs, scores = getRegressionData(db_path, minmax=False, score_name = score_to_train_on, train_on_matched_only = train_on_matched_only)
+sift_vecs, scores = getRegressionData(db_path, score_name = score_to_train_on, train_on_matched_only = train_on_matched_only)
 
 # These will overwrite the plots per dataset - but it is fine, it is the
 # same plots - for classification/regression etc, i.e. it is dataset dependent not network dependent
