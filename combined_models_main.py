@@ -100,13 +100,13 @@ layer6 = Dense(256, activation='relu')(layer5)
 layer7 = Dense(256, activation='relu')(layer6)
 layer8 = Dense(256, activation='relu')(layer7)
 # multiple outputs
-classifier = Dense(1, activation='sigmoid', name="classifier")(layer8)
 regression = Dense(1, activation='sigmoid', name="regression")(layer8) #sigmoid here can be used since the output is from zero to one (MinMax)
+classifier = Dense(1, activation='sigmoid', name="classifier")(layer8)
 model = Model(inputs=inputs, outputs=[regression, classifier])
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=1e-4)
 # The loss here will be, binary_crossentropy for the binary classsifier
-model.compile(optimizer=opt, loss={"regression": keras.losses.MeanAbsoluteError(), "classifier": keras.losses.BinaryCrossentropy()}, loss_weights=[0.5, 0.5], metrics=metrics)
+model.compile(optimizer=opt, loss={"regression": keras.losses.MeanAbsoluteError(), "classifier": keras.losses.BinaryCrossentropy()}, metrics=metrics)
 model.summary()
 # keras.utils.plot_model(model, os.path.join(log_dir, "model_drawing.png"), show_shapes=True) #must run pip install pydot, https://graphviz.gitlab.io/download
 
