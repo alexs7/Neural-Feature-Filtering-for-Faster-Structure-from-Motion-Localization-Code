@@ -2,7 +2,7 @@ import os
 from os import path
 from pickle import dump
 import shutil
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from data import getRegressionData
 from tensorboard_config import get_Tensorboard_dir
 import matplotlib.pyplot as plt
@@ -18,8 +18,8 @@ from custom_callback import getModelCheckpointRegression, getEarlyStoppingRegres
 metrics = [
       keras.metrics.MeanSquaredError(name="mean_squared_error"),
       keras.metrics.MeanAbsoluteError(name="mean_absolute_error"),
-      keras.metrics.MeanAbsolutePercentageError(name="mean_absolute_percentage_error"),
-      keras.metrics.CosineSimilarity(name="cosine_similarity"),
+      # keras.metrics.MeanAbsolutePercentageError(name="mean_absolute_percentage_error"),
+      # keras.metrics.CosineSimilarity(name="cosine_similarity"),
       keras.metrics.RootMeanSquaredError(name="root_mean_squared_error")
 ]
 
@@ -62,8 +62,8 @@ sift_vecs, scores = getRegressionData(db_path, minmax=False, score_name = score_
 # These will overwrite the plots per dataset - but it is fine, it is the
 # same plots - for classification/regression etc, i.e. it is dataset dependent not network dependent
 print("Saving graphs of the distribution of the mean SIFT vectors - before standard scaler")
-plt.hist(sift_vecs.mean(axis=1), bins=50, density=True, alpha=0.6, color='b')
-plt.savefig(name+'_dist_before_Standard_Scaler.png')
+plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='b')
+plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_before_Standard_Scaler.png'))
 
 scaler = StandardScaler()
 scaler_transformed = scaler.fit(sift_vecs)
@@ -71,8 +71,13 @@ sift_vecs = scaler_transformed.transform(sift_vecs)
 
 plt.cla()
 print("Saving graphs of the distribution of the mean SIFT vectors - after standard scaler")
-plt.hist(sift_vecs.mean(axis=1), bins=50, density=True, alpha=0.6, color='r')
-plt.savefig(name+'_dist_after_Standard_Scaler.png')
+plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='r')
+plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_after_Standard_Scaler.png'))
+
+# minmax scaler
+print("Scaling output to 0 - 1 range") # any score is from 0 - N, so just scale it to 0 - 1 and use a sigmoid
+min_max_scaler = MinMaxScaler()
+scores = min_max_scaler.fit_transform(scores.reshape(-1, 1))
 
 # Create model
 print("Creating model")
@@ -88,11 +93,11 @@ model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
-model.add(Dense(1)) # using default linear
+model.add(Dense(1, activation='sigmoid')) # using sigmoid as outpu has been scaled from 0 - 1
 # Compile model
-opt = keras.optimizers.Adam(learning_rate=3e-4)
+opt = keras.optimizers.Adam(learning_rate=1e-4)
 # The loss here will be, MeanSquaredError
-model.compile(optimizer=opt, loss=keras.losses.MeanSquaredError(), metrics=metrics)
+model.compile(optimizer=opt, loss=keras.losses.MeanAbsoluteError(), metrics=metrics)
 model.summary()
 
 # Before training you should use a baseline model
@@ -113,8 +118,10 @@ history = model.fit(X_train, y_train,
 print("Saving model..")
 model.save(model_save_dir)
 # This has to happen here because by now "log_dir" will have been created by Tensorboard
-print("Saving Scaler..")
+print("Saving Scalers..")
 scaler_save_path = os.path.join(log_dir, "scaler.pkl")
 dump(scaler_transformed, open(scaler_save_path, 'wb'))
+min_max_scaler_save_path = os.path.join(log_dir, "min_max_scaler.pkl")
+dump(min_max_scaler, open(min_max_scaler_save_path, 'wb'))
 
 print("Done!")

@@ -20,11 +20,11 @@ metrics = [
       keras.metrics.FalsePositives(name='fp'),
       keras.metrics.TrueNegatives(name='tn'),
       keras.metrics.FalseNegatives(name='fn'),
-      keras.metrics.BinaryAccuracy(name='binary_accuracy'),
-      keras.metrics.Precision(name='precision'),
-      keras.metrics.Recall(name='recall'),
-      keras.metrics.AUC(name='auc'),
-      keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
+      keras.metrics.BinaryAccuracy(name='binary_accuracy')
+      # keras.metrics.Precision(name='precision'),
+      # keras.metrics.Recall(name='recall'),
+      # keras.metrics.AUC(name='auc'),
+      # keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
 ]
 
 # sample commnad to run on bath cloud servers, ogg .. etc
@@ -62,8 +62,8 @@ sift_vecs, classes = getClassificationData(db_path)
 # These will overwrite the plots per dataset - but it is fine, it is the
 # same plots - for classification/regression etc, i.e. it is dataset dependent not network dependent
 print("Saving graphs of the distribution of the mean SIFT vectors - before standard scaler")
-plt.hist(sift_vecs.mean(axis=1), bins=50, density=True, alpha=0.6, color='b')
-plt.savefig(name+'_dist_before_Standard_Scaler.png')
+plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='b')
+plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_before_Standard_Scaler.png'))
 
 scaler = StandardScaler()
 scaler_transformed = scaler.fit(sift_vecs)
@@ -71,8 +71,8 @@ sift_vecs = scaler_transformed.transform(sift_vecs)
 
 plt.cla()
 print("Saving graphs of the distribution of the mean SIFT vectors - after standard scaler")
-plt.hist(sift_vecs.mean(axis=1), bins=50, density=True, alpha=0.6, color='r')
-plt.savefig(name+'_dist_after_Standard_Scaler.png')
+plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='r')
+plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_after_Standard_Scaler.png'))
 
 # Create model
 print("Creating model")
@@ -89,7 +89,7 @@ model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 # Compile model
-opt = keras.optimizers.Adam(learning_rate=3e-4)
+opt = keras.optimizers.Adam(learning_rate=1e-4)
 # The loss here will be, binary_crossentropy
 model.compile(optimizer=opt, loss=keras.losses.BinaryCrossentropy(), metrics=metrics)
 model.summary()
@@ -97,9 +97,9 @@ model.summary()
 # Before training you should use a baseline model
 
 # Train (or fit() )
-# Just for naming's sake
+# Just for naming's sake, and reshaping classes
 X_train = sift_vecs
-y_train = classes
+y_train = classes.reshape(-1,1)
 history = model.fit(X_train, y_train,
                     validation_split=0.3,
                     epochs=epochs,
