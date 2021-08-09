@@ -2,7 +2,7 @@ from sklearn import preprocessing
 from database import COLMAPDatabase
 import numpy as np
 
-def getRegressionData(db_path, score_name, minmax = False, train_on_matched_only = True):
+def getRegressionData(db_path, score_name, train_on_matched_only = True):
     # score_name is either score_per_image, score_per_session, score_visibility
     ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
@@ -24,15 +24,6 @@ def getRegressionData(db_path, score_name, minmax = False, train_on_matched_only
     scores = scores[shuffled_idxs]
 
     print("Total Training Size: " + str(sift_vecs.shape[0]))
-
-    # standard scaling - mean normalization
-    # scaler = StandardScaler()
-    # sift_vecs = scaler.fit_transform(sift_vecs)
-
-    if(minmax == True):
-        # MinMaxScaler() - only for targets, https://stats.stackexchange.com/a/111476/285271
-        min_max_scaler = preprocessing.MinMaxScaler()
-        scores = min_max_scaler.fit_transform(scores.reshape(-1, 1))
 
     return sift_vecs, scores
 
@@ -79,11 +70,5 @@ def getCombinedData(db_path, score_name):
     classes = classes[shuffled_idxs]
 
     print("Total Training Size: " + str(sift_vecs.shape[0]))
-
-    # I have to use minmax here as the regression output in the combined model is a sigmoid
-    # MinMaxScaler() - only for targets, https://stats.stackexchange.com/a/111476/285271
-    print(" Running min_max_scaler..")
-    min_max_scaler = preprocessing.MinMaxScaler()
-    scores = min_max_scaler.fit_transform(scores.reshape(-1, 1))
 
     return sift_vecs, scores, classes
