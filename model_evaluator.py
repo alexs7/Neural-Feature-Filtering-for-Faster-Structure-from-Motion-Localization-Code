@@ -109,7 +109,7 @@ K = np.load(os.path.join(ml_path, "prepared_data/K.npy"))
 scale = np.load(os.path.join(ml_path, "prepared_data/scale.npy"))
 
 # evaluation starts here
-print("Feature matching using model..")
+print("Feature matching using models..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 
@@ -133,6 +133,7 @@ matches_cl_rg_score_image, matching_time_cl_rg_score_image = feature_matcher_wra
                                                                                                  regression_model_score_per_image, class_model_scalers_dir,
                                                                                                  regression_score_per_image_scalers_dir, random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_rg_score_image))
+print()
 
 print("Getting matches using classifier and regressor (score per session)..")
 matches_cl_rg_score_session, matching_time_cl_rg_score_session = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live,
@@ -140,6 +141,7 @@ matches_cl_rg_score_session, matching_time_cl_rg_score_session = feature_matcher
                                                                                                      regression_model_score_per_session, class_model_scalers_dir,
                                                                                                      regression_score_per_session_scalers_dir, random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_rg_score_session))
+print()
 
 print("Getting matches using classifier and regressor (score visibility)..")
 matches_cl_rg_score_visibility, matching_time_cl_rg_score_visibility = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live,
@@ -147,6 +149,7 @@ matches_cl_rg_score_visibility, matching_time_cl_rg_score_visibility = feature_m
                                                                                                            regression_model_score_visibility, class_model_scalers_dir,
                                                                                                            regression_score_visibility_model_scalers_dir, random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_rg_score_visibility))
+print()
 
 print("Getting matches using regressor (all) only (score per images)..")
 matches_rg_score_image, matching_time_rg_score_image = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live,
