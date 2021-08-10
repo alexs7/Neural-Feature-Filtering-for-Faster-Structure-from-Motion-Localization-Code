@@ -1,12 +1,14 @@
 # This file is copied from my previous publication and using now with minor modification for the ML approach
 #  such as not normalising the descriptors.
+# creates 2d-3d matches data for ransac comparison
+
 import time
 from itertools import chain
+from pickle import load
 import cv2
 import numpy as np
-import sys
+import os
 
-# creates 2d-3d matches data for ransac comparison
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
     query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
@@ -118,13 +120,14 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
 # combined - cb
 # For each of the above cases there is a seperate method, sadly loads of duplicate code at least it is clear to understand
 # Depending on the case, It will predict if a desc if matchable or not first, then pick "class_top" (sorted) matchable descs to do the feature matching
-def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, top_no = None, verbose= True):
+def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, scaler_dir, top_no = None, verbose= True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     total_time = 0
     matchable_threshold = 0.5
     percentage_reduction_total = 0
+    scaler = load(open(os.path.join(scaler_dir,'scaler.pkl'), 'rb')) #from training stage
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -136,6 +139,8 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+        # scaling them using hte mean and std values derived while training
+        queryDescriptors = scaler.transform(queryDescriptors)
         len_descs = queryDescriptors.shape[0]
 
         start = time.time()
@@ -144,7 +149,7 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
         elapsed_time = end - start
         total_time += elapsed_time
 
-        # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than 80!
+        # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than the 10% or whatever percentage!
         matchable_desc_indices = np.where(classifier_predictions > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/classifier_predictions
         matchable_desc_indices_length = matchable_desc_indices.shape[0]
 
@@ -217,12 +222,16 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
     total_avg_time = total_time / len(query_images)
     return matches, total_avg_time
 
-def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor, top_no = 10, verbose = True):
+def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor, class_scalers_dir, reg_scalers_dir, top_no = 10, verbose = True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     total_time = 0
     matchable_threshold = 0.5
+    # from training stage
+    class_feature_scaler = load(open(os.path.join(class_scalers_dir, 'scaler.pkl'), 'rb'))
+    reg_feature_scaler = load(open(os.path.join(reg_scalers_dir, 'scaler.pkl'), 'rb'))
+    reg_minmax_scaler = load(open(os.path.join(reg_scalers_dir, 'min_max_scaler.pkl'), 'rb'))
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -237,27 +246,35 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
         len_descs = queryDescriptors.shape[0]
         percentage_num = int(len_descs * top_no / 100)
 
+        # transform original queryDescriptors, and predict on transformed descs
+        queryDescriptors_class_transformed = class_feature_scaler.transform(queryDescriptors)
         start = time.time()
-        classifier_predictions = classifier.predict_on_batch(queryDescriptors) #, use_multiprocessing=True, workers = 4)
+        classifier_predictions = classifier.predict_on_batch(queryDescriptors_class_transformed) #, use_multiprocessing=True, workers = 4)
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
 
-        # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than 80!
+        # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than the 10% or whatever percentage!
         matchable_desc_indices = np.where(classifier_predictions > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/classifier_predictions
 
         keypoints_xy = keypoints_xy[matchable_desc_indices]
         queryDescriptors = queryDescriptors[matchable_desc_indices]
 
+        # transform original queryDescriptors (result from classifier), and predict on these transformed descs
+        queryDescriptors_reg_transformed = reg_feature_scaler.transform(queryDescriptors)
         start = time.time()
-        regression_predictions = regressor.predict_on_batch(queryDescriptors)  # matchable only at this point
+        regression_predictions = regressor.predict_on_batch(queryDescriptors_reg_transformed)  # matchable only at this point
         regression_sorted_indices = regression_predictions[:, 0].argsort()[::-1]
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
+
         keypoints_xy = keypoints_xy[regression_sorted_indices]
         queryDescriptors = queryDescriptors[regression_sorted_indices]
         sorted_regression_predictions = regression_predictions[regression_sorted_indices]
+
+        # This is just scaling the values not really needed, because I use the larget value I don't care about the actual value. 4,3,1 is the same as 8,6,2  for me
+        sorted_regression_predictions = reg_minmax_scaler.inverse_transform(sorted_regression_predictions)
 
         # pick the top ones after regression predictions, using "percentage_num"
         # all have the same order below
@@ -313,11 +330,15 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
     total_avg_time = total_time / len(query_images)
     return matches, total_avg_time
 
-def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, top_no = 10, verbose = True):
+def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, scalers_dir, top_no = 10, verbose = True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     total_time = 0
+
+    # from training stage
+    reg_feature_scaler = load(open(os.path.join(scalers_dir, 'scaler.pkl'), 'rb'))
+    reg_minmax_scaler = load(open(os.path.join(scalers_dir, 'min_max_scaler.pkl'), 'rb'))
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -329,6 +350,7 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+        queryDescriptors = reg_feature_scaler.transform(queryDescriptors)
         len_descs = queryDescriptors.shape[0]
         percentage_num = int(len_descs * top_no / 100)
 
@@ -341,6 +363,9 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
         keypoints_xy = keypoints_xy[regression_sorted_indices]
         queryDescriptors = queryDescriptors[regression_sorted_indices]
         sorted_regression_predictions = regression_predictions[regression_sorted_indices]
+
+        # This is just scaling the values not really needed, because I use the larget value I don't care about the actual value. 4,3,1 is the same as 8,6,2  for me
+        sorted_regression_predictions = reg_minmax_scaler.inverse_transform(sorted_regression_predictions)
 
         # pick the top ones after regression predictions, using "percentage_num"
         # all have the same order below
@@ -396,11 +421,16 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
     total_avg_time = total_time / len(query_images)
     return matches, total_avg_time
 
-def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, top_no = 10, verbose = True):
+def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, scalers_dir, top_no = 10, verbose = True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     total_time = 0
+
+    # from training stage
+    cb_feature_scaler = load(open(os.path.join(scalers_dir, 'scaler.pkl'), 'rb'))
+    # similary as in regression using the scaler to transform wont make much difference as it is just scaling the values, not changing the dist.
+    cb_minmax_scaler = load(open(os.path.join(scalers_dir, 'min_max_scaler.pkl'), 'rb'))
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -412,20 +442,22 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+        queryDescriptors = cb_feature_scaler.transform(queryDescriptors)
         len_descs = queryDescriptors.shape[0]
         percentage_num = int(len_descs * top_no / 100)
 
         start = time.time()
-        regression_predictions = combined_model.predict_on_batch(queryDescriptors)  # matchable only at this point
-        regression_predictions = np.add(regression_predictions[0], regression_predictions[1]) #add outputs
-        regression_sorted_indices = regression_predictions[:, 0].argsort()[::-1]
+        # model = Model(inputs=inputs, outputs=[regression, classifier]) - from training
+        combined_model_predictions = combined_model.predict_on_batch(queryDescriptors)
+        combined_model_predictions = np.add(combined_model_predictions[0], combined_model_predictions[1]) #add outputs
+        combined_model_sorted_indices = combined_model_predictions[:, 0].argsort()[::-1]
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
 
-        keypoints_xy = keypoints_xy[regression_sorted_indices]
-        queryDescriptors = queryDescriptors[regression_sorted_indices]
-        sorted_regression_predictions = regression_predictions[regression_sorted_indices]
+        keypoints_xy = keypoints_xy[combined_model_sorted_indices]
+        queryDescriptors = queryDescriptors[combined_model_sorted_indices]
+        sorted_regression_predictions = combined_model_predictions[combined_model_sorted_indices]
 
         # pick the top ones after combined_model predictions, using "percentage_num"
         # all have the same order below
