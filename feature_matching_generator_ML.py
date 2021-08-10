@@ -174,6 +174,7 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
+        queryDescriptors = scaler.inverse_transform(queryDescriptors) # scale back to original scale, using inverse_transform so mathcing happens in the same space
         start = time.time()
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
@@ -285,6 +286,7 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()
+        # rescaling here of queryDescriptors using inverse transform is not needed as I am onyl uses indexing on queryDescriptors, not directly transforming them
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
@@ -321,7 +323,6 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
         matches_sum.append(len(good_matches))
 
     if(verbose):
-        print()
         total_all_images = np.sum(matches_sum)
         print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
         matches_all_avg = total_all_images / len(matches_sum)
@@ -375,6 +376,7 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
+        queryDescriptors = reg_feature_scaler.inverse_transform(queryDescriptors)  # scale back to original scale, using inverse_transform so mathcing happens in the same space
         start = time.time()
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
@@ -467,6 +469,7 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
+        queryDescriptors = cb_feature_scaler.inverse_transform(queryDescriptors)  # scale back to original scale, using inverse_transform so mathcing happens in the same space
         start = time.time()
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
