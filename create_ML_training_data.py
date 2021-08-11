@@ -47,7 +47,7 @@ from sklearn.model_selection import train_test_split
 # 4 - prepare_comparison_data.py
 # 5 - model_evaluator.py
 # 6 - print_eval_NN_results.py
-# 7 - plots.py
+# 7 - plots.py / plot_performance_over_percentages_ml.py
 
 # 16/07/2021 - now using ssds, but need to extend every 28 days os use, hare extend /mnt/fast1/ar2056/ (on weatherwax)
 
