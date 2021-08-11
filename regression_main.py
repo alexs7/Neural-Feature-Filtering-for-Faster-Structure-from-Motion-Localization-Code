@@ -93,7 +93,7 @@ model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
-model.add(Dense(1, activation='sigmoid')) # using sigmoid as outpu has been scaled from 0 - 1
+model.add(Dense(1))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=1e-4)
 # The loss here will be, MeanSquaredError
