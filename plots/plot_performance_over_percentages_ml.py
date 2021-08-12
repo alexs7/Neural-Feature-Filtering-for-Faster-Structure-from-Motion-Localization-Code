@@ -8,6 +8,7 @@ from matplotlib.ticker import FormatStrFormatter
 plt.style.use('ggplot')
 print(plt.style.available)
 
+# These are exported files from the excel spreadsheet
 results_5_path_csv = "plots/results_5.csv"
 results_10_path_csv = "plots/results_10.csv"
 results_15_path_csv = "plots/results_15.csv"
@@ -86,8 +87,8 @@ results_arr = np.array(["Dataset", "5%", "10%", "15%", "20%", "50%"])
 csv_results_arr = np.array(["Dataset", "5%", "10%", "15%", "20%", "50%"]) #for csv saving
 
 # comment out which on you want to use
-# model_indices = np.delete(np.arange(1,23), [1,21,20]) #remove the classifier trained on all, baseline - do not depend on percentages - DOUBLE check indices
-model_indices = np.arange(1,23) #all models
+model_indices = np.delete(np.arange(1,23), [1,20]) #remove the classifier trained on all, and random - for paper
+# model_indices = np.arange(1,23) #all models
 
 all_slices_str_idx = 0
 for dataset in datasets:
@@ -130,6 +131,7 @@ for dataset in datasets:
 
 np.savetxt("plots/best_methods_per_dataset.csv", csv_results_arr, delimiter=",", fmt='%s')
 
+# getting the best model OVER all percentages
 best_model_each_dataset = {}
 for i in range(len(results_arr) - 1):
     i += 1
@@ -155,8 +157,14 @@ maxpos = counts.argmax()
 cmu_all_best_performing_method = unique[maxpos]
 
 baseline_method = 'All (~800)'
-print(f"{coop_best_performing_method=}" + " ")
-print(f"{cmu_all_best_performing_method=}" + " ")
+coop_best_performing_method_var_name = f"{coop_best_performing_method=}" + " "
+cmu_all_best_performing_method_var_name = f"{cmu_all_best_performing_method=}" + " "
+
+np.savetxt("plots/coop_best_performing_method_var_name.txt", np.array([coop_best_performing_method_var_name]), fmt='%s')
+np.savetxt("plots/cmu_all_best_performing_method_var_name.txt", np.array([cmu_all_best_performing_method_var_name]), fmt='%s')
+
+print(coop_best_performing_method_var_name)
+print(cmu_all_best_performing_method_var_name)
 
 print()
 print("Saving Graphs..")
