@@ -3,10 +3,15 @@
 # this evaluates the NNs visually
 # as of now it only works for the classifier all, it needs to be adjusted for the regressor model
 # example command:
-# python3 heatmap_gen_for_image_ml.py colmap_data/CMU_data/slice3/ colmap_data/tensorboard_results/classification_Extended_CMU_slice3/early_stop_model/ plots/cmu_slice3_comparison_gt_images session_7
+# CMU
+# python3 heatmap_gen_for_image_ml.py colmap_data/CMU_data/slice3/ colmap_data/tensorboard_results/classification_Extended_CMU_slice3/ plots/cmu_slice3_comparison_gt_images session_7
+# Coop
+# python3 heatmap_gen_for_image_ml.py colmap_data/Coop_data/slice1/ colmap_data/tensorboard_results/classification_Extended_New_Coop_slice1/ plots/coop_slice1_comparison_gt_images session_9
 
 import os
 import shutil
+from pickle import load
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 import sys
 import cv2
@@ -18,7 +23,8 @@ from feature_matching_generator_ML import get_image_id, get_keypoints_xy, get_qu
 from query_image import read_images_binary, get_intrinsics_from_camera_bin, get_images_names_bin
 
 base_path = sys.argv[1] # i.e colmap_data/CMU_data/slice3/
-model_path = sys.argv[2] # i.e best performing model, colmap_data/tensorboard_results/classification_Extended_CMU_slice3/early_stop_model/
+model_path = os.path.join(sys.argv[2], "early_stop_model/") # i.e best performing model, colmap_data/tensorboard_results/classification_Extended_CMU_slice3/early_stop_model/
+scaler_dir = sys.argv[2] #for simpicilty
 output_path_path = sys.argv[3] # i.e plots/slice3_comparison_gt_images (this has to be created manually)
 gt_images_folder = sys.argv[4] #i.e session_7
 gt_session_name = sys.argv[4] #i.e duplicate as above
@@ -42,6 +48,8 @@ all_images_names = get_images_names_bin(images_path) # these are localised image
 K = get_intrinsics_from_camera_bin(cameras_path, 3) # 2 since we are talking about gt pics
 db_gt = COLMAPDatabase.connect(db_query_path) #db_gt, db_query same thing
 matchable_threshold = 0.5
+point_size = 6
+scaler = load(open(os.path.join(scaler_dir,'scaler.pkl'), 'rb')) #from training stage
 
 counter = 0
 print("Total images: " + str(len(all_images_names)))
@@ -52,6 +60,8 @@ for name in all_images_names:
         keypoints_xy = get_keypoints_xy(db_gt, image_id)
         print("Size of keypoints before: " + str(len(keypoints_xy)))
         queryDescriptors = get_queryDescriptors(db_gt, image_id)
+        # load the fucking scaler you retard (if you use the rhombus architecture and not normalize then dont use the scaler) - 12/08/2021
+        queryDescriptors = scaler.transform(queryDescriptors)
 
         model_predictions = model.predict_on_batch(queryDescriptors)
 
@@ -82,26 +92,26 @@ for name in all_images_names:
             x = int(keypoints_xy[i][0])
             y = int(keypoints_xy[i][1])
             center = (x, y)
-            cv2.circle(image_all_features, center, 6, (0, 0, 255), -1)
+            cv2.circle(image_all_features, center, point_size, (0, 0, 255), -1)
 
         for i in range(len(keypoints_xy_pred)):
             x = int(keypoints_xy_pred[i][0])
             y = int(keypoints_xy_pred[i][1])
             center = (x, y)
-            cv2.circle(image_predicted_features, center, 6, (0, 255, 0), -1)
+            cv2.circle(image_predicted_features, center, point_size, (0, 255, 0), -1)
 
         # for both in the same image (showing filtered and all features on same image)
         for i in range(len(keypoints_xy)):
             x = int(keypoints_xy[i][0])
             y = int(keypoints_xy[i][1])
             center = (x, y)
-            cv2.circle(image_all_predicted_features, center, 6, (0, 0, 255), -1)
+            cv2.circle(image_all_predicted_features, center, point_size, (0, 0, 255), -1)
 
         for i in range(len(keypoints_xy_pred)):
             x = int(keypoints_xy_pred[i][0])
             y = int(keypoints_xy_pred[i][1])
             center = (x, y)
-            cv2.circle(image_all_predicted_features, center, 6, (0, 255, 0), -1)
+            cv2.circle(image_all_predicted_features, center, point_size, (0, 255, 0), -1)
 
         cv2.imwrite(raw_output_image_path, raw_image)
         cv2.imwrite(output_image_path_all_features, image_all_features)
