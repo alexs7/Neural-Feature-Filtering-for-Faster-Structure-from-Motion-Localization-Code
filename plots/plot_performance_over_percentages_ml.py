@@ -63,12 +63,12 @@ cmu_slice11_50 = data_50.iloc[96:119, 0:]
 coop_slice1_50 = data_50.iloc[120:143, 0:]
 
 # datasets with percentages in them
-all_cmu_slice3 = [cmu_slice3_5, cmu_slice3_10, cmu_slice3_10, cmu_slice3_20, cmu_slice3_50]
-all_cmu_slice4 = [cmu_slice4_5, cmu_slice4_10, cmu_slice4_10, cmu_slice4_20, cmu_slice4_50]
-all_cmu_slice6 = [cmu_slice6_5, cmu_slice6_10, cmu_slice6_10, cmu_slice6_20, cmu_slice6_50]
-all_cmu_slice10 = [cmu_slice10_5, cmu_slice10_10, cmu_slice10_10, cmu_slice10_20, cmu_slice10_50]
-all_cmu_slice11 = [cmu_slice11_5, cmu_slice3_10, cmu_slice3_10, cmu_slice3_20, cmu_slice3_50]
-all_coop_slice1 = [coop_slice1_5, coop_slice1_10, coop_slice1_10, coop_slice1_20, coop_slice1_50]
+all_cmu_slice3 = [cmu_slice3_5, cmu_slice3_10, cmu_slice3_15, cmu_slice3_20, cmu_slice3_50]
+all_cmu_slice4 = [cmu_slice4_5, cmu_slice4_10, cmu_slice4_15, cmu_slice4_20, cmu_slice4_50]
+all_cmu_slice6 = [cmu_slice6_5, cmu_slice6_10, cmu_slice6_15, cmu_slice6_20, cmu_slice6_50]
+all_cmu_slice10 = [cmu_slice10_5, cmu_slice10_10, cmu_slice10_15, cmu_slice10_20, cmu_slice10_50]
+all_cmu_slice11 = [cmu_slice11_5, cmu_slice3_10, cmu_slice3_15, cmu_slice3_20, cmu_slice3_50]
+all_coop_slice1 = [coop_slice1_5, coop_slice1_10, coop_slice1_15, coop_slice1_20, coop_slice1_50]
 
 #all_datasets
 datasets = [all_cmu_slice3, all_cmu_slice4, all_cmu_slice6, all_cmu_slice10, all_cmu_slice11, all_coop_slice1]
