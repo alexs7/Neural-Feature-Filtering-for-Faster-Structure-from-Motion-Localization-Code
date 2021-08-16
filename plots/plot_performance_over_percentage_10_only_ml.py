@@ -28,7 +28,7 @@ all_cmu_slice3 = [cmu_slice3_10]
 all_cmu_slice4 = [cmu_slice4_10]
 all_cmu_slice6 = [cmu_slice6_10]
 all_cmu_slice10 = [cmu_slice10_10]
-all_cmu_slice11 = [cmu_slice3_10]
+all_cmu_slice11 = [cmu_slice11_10]
 all_coop_slice1 = [coop_slice1_10]
 
 #all_datasets
@@ -45,7 +45,7 @@ all_slices_str_readable = ["CMU Slice3", "CMU Slice4", "CMU Slice6", "CMU Slice1
 percentages_str = ["10%"]
 
 # comment out which on you want to use
-model_indices = np.delete(np.arange(1,23), [1,20]) #remove the classifier trained on all, and random - for paper
+model_indices = np.delete(np.arange(1,23), [1,20, 21]) #remove the classifier trained on all (1), baseline (21) and random (20) - for paper
 # model_indices = np.arange(1,23) #all models
 
 best_methods = {}
@@ -58,23 +58,31 @@ for dataset in datasets:
     percentages_results_arr_csv = np.array([all_slices_str[all_slices_str_idx]]) #duplicate for csv saving
     percentage = dataset[0] #get the 10% case
 
+    # Choose here what to optimise for!
+    # For example if you want to optimise for translation and rotation, comment out the other ones
+    # If you optimise for translation and rotation beware that you have to modify "model_indices" too to remove the baseline, otherwise the baseline always wins
+
     conc_times_all_ml_methods = percentage.iloc[model_indices, 4]
     fm_times_all_ml_methods = percentage.iloc[model_indices, 5]
     t_err_all_ml_methods = percentage.iloc[model_indices, 7]
     rot_err_all_ml_methods = percentage.iloc[model_indices, 8]
 
-    conc_times_all_ml_methods_z_transformed = (conc_times_all_ml_methods - conc_times_all_ml_methods.mean() ) / conc_times_all_ml_methods.std()
-    fm_times_all_ml_methods_z_transformed = (fm_times_all_ml_methods - fm_times_all_ml_methods.mean() ) / fm_times_all_ml_methods.std()
+    # conc_times_all_ml_methods_z_transformed = (conc_times_all_ml_methods - conc_times_all_ml_methods.mean() ) / conc_times_all_ml_methods.std()
+    # fm_times_all_ml_methods_z_transformed = (fm_times_all_ml_methods - fm_times_all_ml_methods.mean() ) / fm_times_all_ml_methods.std()
     t_err_all_ml_methods_z_transformed = (t_err_all_ml_methods - t_err_all_ml_methods.mean() ) / t_err_all_ml_methods.std()
     rot_err_ml_methods_z_transformed = (rot_err_all_ml_methods - rot_err_all_ml_methods.mean() ) / rot_err_all_ml_methods.std()
 
-    all_metrics_ml_methods_z_transformed = pd.concat([conc_times_all_ml_methods_z_transformed,
-                                                      fm_times_all_ml_methods_z_transformed,
+    # pd.concat([t_err_all_ml_methods, rot_err_all_ml_methods], axis=1)
+    all_metrics_ml_methods_z_transformed = pd.concat([#conc_times_all_ml_methods_z_transformed,
+                                                      #fm_times_all_ml_methods_z_transformed,
                                                       t_err_all_ml_methods_z_transformed,
                                                       rot_err_ml_methods_z_transformed], axis=1)
 
     min_idx = all_metrics_ml_methods_z_transformed.mean(axis=1).rank(ascending=True).idxmin()
     best_method = percentage['method'][min_idx]
+
+    import pdb
+    pdb.set_trace()
 
     print(" percentage: " + percentages_str[percentages_str_idx])
     print("  best method: " + best_method)
@@ -84,7 +92,7 @@ for dataset in datasets:
     all_slices_str_idx += 1
     print()
 
-np.save("plots/best_methods_percentage_10.npy", best_methods)
+# np.save("plots/best_methods_percentage_10.npy", best_methods)
 
 print()
 print("Saving Graphs..")
