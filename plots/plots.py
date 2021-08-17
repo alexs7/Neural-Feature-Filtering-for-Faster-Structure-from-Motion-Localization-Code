@@ -12,6 +12,8 @@ from matplotlib import rcParams
 import numpy as np
 import random
 
+fig = plt.figure()
+
 plt.style.use('ggplot')
 print(plt.style.available)
 
@@ -112,17 +114,18 @@ for percentage in percentages:
             #     plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] + 0.01, y[i] + 0.01), fontsize=8)  # for ftm
             # coop
             if(label_key == "Rd C & R s.p.i"):
-                plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.05, y[i] + 0.0005), fontsize=8)  # for ftm
+                plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.05, y[i] + 0.0005), fontsize=9)  # for ftm
                 continue
             if (label_key == "CB, s.p.i"):
-                plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.06, y[i] + 0.0003), fontsize=8)  # for ftm
+                plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.06, y[i] + 0.0003), fontsize=9)  # for ftm
                 continue
 
-            plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] + 0.01, y[i] + 0.0004), fontsize=8)  # for ftm
+            plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] + 0.01, y[i] + 0.0004), fontsize=9)  # for ftm
             # plt.annotate(" idx: " + str(i), (x[i], y[i]), fontsize=8) #for names debug
 
-        plt.tight_layout()
-        save_path = os.path.join("plots/", slice_name+"_"+str(percentage)+".png")
+        # plt.tight_layout()
+        fig.set_tight_layout(True)
+        save_path = os.path.join("plots/", slice_name+"_"+str(percentage)+".pdf")
         plt.savefig(save_path)
         plt.clf()
 
