@@ -79,7 +79,8 @@ for percentage in percentages:
         # This code has to be tweak for each slice. I did for CMU slice 4 and Coop. Same goes for limits, and dots label position.
         # to get the idx_to_use values comment out "plt.annotate(names_dict[labels[i]] + " idx: " + str(i), (x[i] + 0.01, y[i] + 0.007), fontsize=8)"
         # idx_to_use_cmu_slice_4 = [8, 10, 9, 20, 0, 7]
-        idx_to_use_coop = [20,12,7,11,13,8]
+        # idx_to_use_coop = [20,12,7,11,13,8]
+        idx_to_use_coop = [8, 10, 9, 20, 0, 7]
         x = np.array(x)[idx_to_use_coop]
         y = np.array(y)[idx_to_use_coop]
         labels = np.array(labels)[idx_to_use_coop]
@@ -94,7 +95,7 @@ for percentage in percentages:
         plt.xlabel('Rotation Error (degrees)')
         plt.ylabel('Translation Error (meters)')
         # plt.colorbar()
-        plt.legend(loc='best', framealpha=1, shadow=True)
+        plt.legend(loc='lower right', framealpha=1, shadow=True)
 
         if(slice_name == 'Coop Data'): # need to use different limits
             # limits
@@ -108,19 +109,21 @@ for percentage in percentages:
         for i, txt in enumerate(labels):
             label_key = txt #just for readability
             # cmu slice 4
-            # if(label_key == 'CB, s.p.v'): #manually positing them
-            #     plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.09, y[i] + 0.01), fontsize=8) #for ftm
-            # else:
-            #     plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] + 0.01, y[i] + 0.01), fontsize=8)  # for ftm
+            if(label_key == 'CB, s.p.v'): #manually positing them
+                plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.09, y[i] + 0.01), fontsize=9) #for ftm
+            else:
+                plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] + 0.01, y[i] + 0.01), fontsize=9)  # for ftm
             # coop
-            if(label_key == "Rd C & R s.p.i"):
-                plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.05, y[i] + 0.0005), fontsize=9)  # for ftm
-                continue
-            if (label_key == "CB, s.p.i"):
-                plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.06, y[i] + 0.0003), fontsize=9)  # for ftm
-                continue
+            # if(label_key == "Rd C & R s.p.i"):
+            #     plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.05, y[i] + 0.0005), fontsize=9)  # for ftm
+            #     continue
+            # if (label_key == "CB, s.p.i"):
+            #     plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.06, y[i] + 0.0003), fontsize=9)  # for ftm
+            #     continue
 
-            plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] + 0.01, y[i] + 0.0004), fontsize=9)  # for ftm
+            # coop
+            # plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] + 0.01, y[i] + 0.0004), fontsize=9)  # for ftm
+
             # plt.annotate(" idx: " + str(i), (x[i], y[i]), fontsize=8) #for names debug
 
         # plt.tight_layout()
