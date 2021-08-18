@@ -81,12 +81,7 @@ model = Sequential()
 model.add(Dense(128, input_dim=128, activation='relu')) #Note: 'relu' here will be the same as 'linear' (default as all SIFT values are positive)
 model.add(Dense(256, activation='relu'))
 model.add(Dense(256, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dense(256, activation='relu'))
-model.add(Dense(256, activation='relu'))
+model.add(Dense(128, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 # Compile model
 opt = keras.optimizers.Adam(learning_rate=1e-4)
@@ -100,6 +95,8 @@ model.summary()
 # Just for naming's sake, and reshaping classes
 X_train = sift_vecs
 y_train = classes.reshape(-1,1)
+import pdb
+pdb.set_trace()
 history = model.fit(X_train, y_train,
                     validation_split=0.3,
                     epochs=epochs,
