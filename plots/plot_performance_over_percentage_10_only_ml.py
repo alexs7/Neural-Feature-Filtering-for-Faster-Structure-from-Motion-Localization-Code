@@ -81,9 +81,6 @@ for dataset in datasets:
     min_idx = all_metrics_ml_methods_z_transformed.mean(axis=1).rank(ascending=True).idxmin()
     best_method = percentage['method'][min_idx]
 
-    import pdb
-    pdb.set_trace()
-
     print(" percentage: " + percentages_str[percentages_str_idx])
     print("  best method: " + best_method)
 
