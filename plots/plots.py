@@ -85,9 +85,15 @@ for percentage in percentages:
         y = np.array(y)[idx_to_use_coop]
         labels = np.array(labels)[idx_to_use_coop]
         ftm = np.array(ftm)[idx_to_use_coop]
+
+        # CMU
+        # colors = {"CB, s.p.i" : 'tab:blue', "CB, s.p.v" : 'tab:orange', "CB, s.p.s" : 'tab:green', "Class, top mtchs" : 'tab:purple', "All (~800)" : 'tab:red', "R, s.p.v" : 'tab:cyan'}
+        # Coop
+        # colors = { "All (~800)" : 'tab:red', "CB, s.p.i" : 'tab:blue', "R, s.p.v" : 'tab:cyan' , "Rd C & R s.p.i" : 'tab:pink', "Rd C & R s.p.s" : 'tab:olive', "Rd C & R s.p.v" : 'tab:brown'}
+
         colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple', 'tab:red', 'tab:cyan', 'tab:pink', 'tab:olive']
 
-        plt.title('Error Per Method')
+        plt.title('Error Per Method') #change this per dataset
 
         for i in range(len(labels)): # x,y,labels have the same order
             plt.scatter(x[i], y[i], s=100, alpha=0.75, c=colors[i], label=names_dict[labels[i]])
