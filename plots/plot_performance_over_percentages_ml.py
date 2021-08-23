@@ -87,7 +87,7 @@ results_arr = np.array(["Dataset", "5%", "10%", "15%", "20%", "50%"])
 csv_results_arr = np.array(["Dataset", "5%", "10%", "15%", "20%", "50%"]) #for csv saving
 
 # comment out which on you want to use
-model_indices = np.delete(np.arange(1,23), [1,20]) #remove the classifier trained on all, and random - for paper
+model_indices = np.delete(np.arange(1,23), [1,20, 21]) #remove the classifier trained on all, and random - for paper
 # model_indices = np.arange(1,23) #all models
 
 all_slices_str_idx = 0
@@ -97,23 +97,39 @@ for dataset in datasets:
     percentages_results_arr = np.array([all_slices_str[all_slices_str_idx]])
     percentages_results_arr_csv = np.array([all_slices_str[all_slices_str_idx]]) #duplicate for csv saving
 
-    for percentage in dataset:
+    for percentage in dataset: #TODO: percentage here shloud be named entry maybe ?
         conc_times_all_ml_methods = percentage.iloc[model_indices, 4]
         fm_times_all_ml_methods = percentage.iloc[model_indices, 5]
         t_err_all_ml_methods = percentage.iloc[model_indices, 7]
         rot_err_all_ml_methods = percentage.iloc[model_indices, 8]
 
-        conc_times_all_ml_methods_z_transformed = (conc_times_all_ml_methods - conc_times_all_ml_methods.mean() ) / conc_times_all_ml_methods.std()
-        fm_times_all_ml_methods_z_transformed = (fm_times_all_ml_methods - fm_times_all_ml_methods.mean() ) / fm_times_all_ml_methods.std()
+        #conc_times_all_ml_methods_z_transformed = (conc_times_all_ml_methods - conc_times_all_ml_methods.mean() ) / conc_times_all_ml_methods.std()
+        #fm_times_all_ml_methods_z_transformed = (fm_times_all_ml_methods - fm_times_all_ml_methods.mean() ) / fm_times_all_ml_methods.std()
         t_err_all_ml_methods_z_transformed = (t_err_all_ml_methods - t_err_all_ml_methods.mean() ) / t_err_all_ml_methods.std()
         rot_err_ml_methods_z_transformed = (rot_err_all_ml_methods - rot_err_all_ml_methods.mean() ) / rot_err_all_ml_methods.std()
 
-        all_metrics_ml_methods_z_transformed = pd.concat([conc_times_all_ml_methods_z_transformed,
-                                                          fm_times_all_ml_methods_z_transformed,
+        all_metrics_ml_methods_z_transformed = pd.concat([#conc_times_all_ml_methods_z_transformed,
+                                                          #fm_times_all_ml_methods_z_transformed,
                                                           t_err_all_ml_methods_z_transformed,
                                                           rot_err_ml_methods_z_transformed], axis=1)
 
-        min_idx = all_metrics_ml_methods_z_transformed.mean(axis=1).rank(ascending=True).idxmin()
+        min_idx = all_metrics_ml_methods_z_transformed.mean(axis=1).rank(ascending=True).idxmin() #all ranks are here
+
+
+        all_ranks_for_excel = all_metrics_ml_methods_z_transformed.mean(axis=1).rank(ascending=True)
+        # print("-----------Excel-------------")
+        print("percentage: " + percentages_str[percentages_str_idx] +  " " + all_slices_str[all_slices_str_idx])
+        # removing the classifier all and random from the ranking
+        all_ranks_for_excel_np_array = np.array(all_ranks_for_excel)
+        all_ranks_for_excel_np_array=np.insert(all_ranks_for_excel_np_array, 1, -1)
+        all_ranks_for_excel_np_array=np.insert(all_ranks_for_excel_np_array, 20, -1)
+        all_ranks_for_excel_np_array=np.insert(all_ranks_for_excel_np_array, 21, -1)
+        for rank in all_ranks_for_excel_np_array:
+            print(rank)
+
+        import pdb
+        pdb.set_trace()
+
         best_method = percentage['method'][min_idx]
 
         print(" percentage: " + percentages_str[percentages_str_idx])

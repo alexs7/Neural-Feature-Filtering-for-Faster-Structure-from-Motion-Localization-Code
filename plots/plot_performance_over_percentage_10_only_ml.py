@@ -78,6 +78,10 @@ for dataset in datasets:
                                                       t_err_all_ml_methods_z_transformed,
                                                       rot_err_ml_methods_z_transformed], axis=1)
 
+    if dataset_name == "all_cmu_slice10":
+        import pdb
+        pdb.set_trace()
+
     min_idx = all_metrics_ml_methods_z_transformed.mean(axis=1).rank(ascending=True).idxmin()
     best_method = percentage['method'][min_idx]
 
