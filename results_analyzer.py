@@ -42,10 +42,10 @@ print("-------------- RANSACs/PROSAC Stats")
 #                 'ransac_dist_visibility_score', 'inverse_lowes_ratio', 'reliability_higher_neighbour_heatmap_value', 'reliability_higher_neighbour_score',
 #                 'higher_neighbour_visibility_score', 'lowes_by_reliability_score_ratio', 'lowes_by_heatmap_value_ratio',
 #                 'lowes_by_higher_neighbour_reliability_score', 'lowes_by_higher_neighbour_heatmap_value']
-# For paper
-ransac_types = ['ransac_base', 'prosac_base', 'ransac_live', 'ransac_dist_heatmap_val',
+# For paper (28/09/2021 Thesis)
+ransac_types = ['ransac_base', 'prosac_base', 'ransac_live', 'ransac_dist_heatmap_val', 'ransac_dist_reliability_score',
                 'ransac_dist_visibility_score', 'inverse_lowes_ratio', 'reliability_higher_neighbour_heatmap_value', 'reliability_higher_neighbour_score',
-                'higher_neighbour_visibility_score', 'lowes_by_reliability_score_ratio']
+                'higher_neighbour_visibility_score', 'lowes_by_reliability_score_ratio', 'lowes_by_higher_neighbour_heatmap_value']
 
 print("RANSAC Types number: " + str(len(ransac_types)))
 
