@@ -19,6 +19,7 @@ import sys
 # This script will read anything that has "Extended" in it's name. This was the best performing model name and I kept it. So when you train another model
 # with a different name make sure before you run this script the name is changed to "Extended" - (18/07/2021), TODO: this needs to fixed
 # 08/08/2021 changed to "Extended_New_..."
+# 01/11/2021 changed to "Extended..."
 
 # use CMU_data dir or Coop_data
 # example command (comment and uncomment):
@@ -48,49 +49,26 @@ prepared_data_path = os.path.join(ml_path, "prepared_data")
 
 print("Base path: " + base_path)
 
-class_model_dir =  os.path.join(os.path.join(models_dir, "classification_Extended_New_"+dataset+"_"+slice), model)
-class_model_scalers_dir = os.path.join(models_dir, "classification_Extended_New_"+dataset+"_"+slice)
-
-regression_score_per_image_dir = os.path.join(os.path.join(models_dir, "regression_Extended_New_"+dataset+"_"+slice+"_score_per_image"), model)
-regression_score_per_image_scalers_dir = os.path.join(models_dir, "regression_Extended_New_"+dataset+"_"+slice+"_score_per_image")
-
-regression_score_per_session_dir = os.path.join(os.path.join(models_dir, "regression_Extended_New_"+dataset+"_"+slice+"_score_per_session"), model)
-regression_score_per_session_scalers_dir = os.path.join(models_dir, "regression_Extended_New_"+dataset+"_"+slice+"_score_per_session")
-
-regression_score_visibility_model_dir = os.path.join(os.path.join(models_dir, "regression_Extended_New_"+dataset+"_"+slice+"_score_visibility"), model)
-regression_score_visibility_model_scalers_dir = os.path.join(models_dir, "regression_Extended_New_"+dataset+"_"+slice+"_score_visibility")
-
-regression_all_score_per_image_model_dir = os.path.join(os.path.join(models_dir, "regression_AllExtended_New_"+dataset+"_"+slice+"_score_per_image"), model)
-regression_all_score_per_image_model_scalers_dir = os.path.join(models_dir, "regression_AllExtended_New_"+dataset+"_"+slice+"_score_per_image")
-
-regression_all_score_per_session_model_dir = os.path.join(os.path.join(models_dir, "regression_AllExtended_New_"+dataset+"_"+slice+"_score_per_session"), model)
-regression_all_score_per_session_model_scalers_dir = os.path.join(models_dir, "regression_AllExtended_New_"+dataset+"_"+slice+"_score_per_session")
-
-regression_all_visibility_score_visibility_model_dir = os.path.join(os.path.join(models_dir, "regression_AllExtended_New_"+dataset+"_"+slice+"_score_visibility"), model)
-regression_all_visibility_score_visibility_model_scalers_dir = os.path.join(models_dir, "regression_AllExtended_New_"+dataset+"_"+slice+"_score_visibility")
-
-combined_model_score_per_image_dir = os.path.join(os.path.join(models_dir, "combined_Extended_New_"+dataset+"_"+slice+"_score_per_image"), model)
-combined_model_score_per_image_scalers_dir = os.path.join(models_dir, "combined_Extended_New_"+dataset+"_"+slice+"_score_per_image")
-
-combined_model_score_per_session_dir = os.path.join(os.path.join(models_dir, "combined_Extended_New_"+dataset+"_"+slice+"_score_per_session"), model)
-combined_model_score_per_session_scalers_dir = os.path.join(models_dir, "combined_Extended_New_"+dataset+"_"+slice+"_score_per_session")
-
-combined_model_score_visibility_dir = os.path.join(os.path.join(models_dir, "combined_Extended_New_"+dataset+"_"+slice+"_score_visibility"), model)
-combined_model_score_visibility_scalers_dir = os.path.join(models_dir, "combined_Extended_New_"+dataset+"_"+slice+"_score_visibility")
+class_model_dir =  os.path.join(os.path.join(models_dir, "classification_Extended_"+dataset+"_"+slice), model)
+regression_score_per_image_dir = os.path.join(os.path.join(models_dir, "regression_Extended_"+dataset+"_"+slice+"_score_per_image"), model)
+regression_all_score_per_image_model_dir = os.path.join(os.path.join(models_dir, "regression_AllExtended_"+dataset+"_"+slice+"_score_per_image"), model)
+regression_score_per_session_dir = os.path.join(os.path.join(models_dir, "regression_Extended_"+dataset+"_"+slice+"_score_per_session"), model)
+regression_all_score_per_session_model_dir = os.path.join(os.path.join(models_dir, "regression_AllExtended_"+dataset+"_"+slice+"_score_per_session"), model)
+regression_score_visibility_model_dir = os.path.join(os.path.join(models_dir, "regression_Extended_"+dataset+"_"+slice+"_score_visibility"), model)
+regression_all_visibility_score_visibility_model_dir = os.path.join(os.path.join(models_dir, "regression_AllExtended_"+dataset+"_"+slice+"_score_visibility"), model)
+combined_model_score_per_image_dir = os.path.join(os.path.join(models_dir, "combined_Extended_"+dataset+"_"+slice+"_score_per_image"), model)
+combined_model_score_per_session_dir = os.path.join(os.path.join(models_dir, "combined_Extended_"+dataset+"_"+slice+"_score_per_session"), model)
+combined_model_score_visibility_dir = os.path.join(os.path.join(models_dir, "combined_Extended_"+dataset+"_"+slice+"_score_visibility"), model)
 
 print("Loading Model(s)..")
 classification_model = keras.models.load_model(class_model_dir)
-
 regression_model_score_per_image = keras.models.load_model(regression_score_per_image_dir)
 regression_model_score_per_session = keras.models.load_model(regression_score_per_session_dir)
 regression_model_score_visibility = keras.models.load_model(regression_score_visibility_model_dir)
-
 # trained on all matches
 regression_on_all_model_score_per_image = keras.models.load_model(regression_all_score_per_image_model_dir)
 regression_on_all_model_score_per_session = keras.models.load_model(regression_all_score_per_session_model_dir)
 regression_on_all_model_score_visibility = keras.models.load_model(regression_all_visibility_score_visibility_model_dir)
-
-# combined
 combined_model_score_per_image = keras.models.load_model(combined_model_score_per_image_dir)
 combined_model_score_per_session = keras.models.load_model(combined_model_score_per_session_dir)
 combined_model_score_visibility = keras.models.load_model(combined_model_score_visibility_dir)
@@ -114,82 +92,57 @@ print("Feature matching using models..")
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 
 print("Getting matches using classifier only (with top ones selected)..")
-matches_cl_top, matching_time_cl_top = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                        points3D_xyz_live, ratio_test_val,
-                                                                        classification_model, class_model_scalers_dir, top_no=random_percentage)
+matches_cl_top, matching_time_cl_top = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classifier= classification_model, top_no=random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_top))
 print()
 
 print("Getting matches using classifier only..")
-matches_cl, matching_time_cl = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                points3D_xyz_live, ratio_test_val,
-                                                                classification_model, class_model_scalers_dir)
+matches_cl, matching_time_cl = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classifier= classification_model)
 print("Feature Matching time: " + str(matching_time_cl))
 print()
 
 print("Getting matches using classifier and regressor (score per images)..")
-matches_cl_rg_score_image, matching_time_cl_rg_score_image = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                                                 points3D_xyz_live, ratio_test_val, classification_model,
-                                                                                                 regression_model_score_per_image, class_model_scalers_dir,
-                                                                                                 regression_score_per_image_scalers_dir, random_percentage)
+matches_cl_rg_score_image, matching_time_cl_rg_score_image = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_per_image, random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_rg_score_image))
 print()
 
 print("Getting matches using classifier and regressor (score per session)..")
-matches_cl_rg_score_session, matching_time_cl_rg_score_session = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                                                     points3D_xyz_live, ratio_test_val, classification_model,
-                                                                                                     regression_model_score_per_session, class_model_scalers_dir,
-                                                                                                     regression_score_per_session_scalers_dir, random_percentage)
+matches_cl_rg_score_session, matching_time_cl_rg_score_session = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_per_session, random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_rg_score_session))
 print()
 
 print("Getting matches using classifier and regressor (score visibility)..")
-matches_cl_rg_score_visibility, matching_time_cl_rg_score_visibility = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                                                           points3D_xyz_live, ratio_test_val, classification_model,
-                                                                                                           regression_model_score_visibility, class_model_scalers_dir,
-                                                                                                           regression_score_visibility_model_scalers_dir, random_percentage)
+matches_cl_rg_score_visibility, matching_time_cl_rg_score_visibility = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_visibility, random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_rg_score_visibility))
 print()
 
 print("Getting matches using regressor (all) only (score per images)..")
-matches_rg_score_image, matching_time_rg_score_image = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                                        points3D_xyz_live, ratio_test_val, regression_on_all_model_score_per_image,
-                                                                                        regression_all_score_per_image_model_scalers_dir, random_percentage)
+matches_rg_score_image, matching_time_rg_score_image = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_per_image, random_percentage)
 print("Feature Matching time: " + str(matching_time_rg_score_image))
 print()
 
 print("Getting matches using regressor (all) only (score per session)..")
-matches_rg_score_session, matching_time_rg_score_session = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                                            points3D_xyz_live, ratio_test_val, regression_on_all_model_score_per_session,
-                                                                                            regression_all_score_per_session_model_scalers_dir, random_percentage)
+matches_rg_score_session, matching_time_rg_score_session = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_per_session, random_percentage)
 print("Feature Matching time: " + str(matching_time_rg_score_session))
 print()
 
 print("Getting matches using regressor (all) only (score visibility)..")
-matches_rg_score_visibility, matching_time_rg_score_visibility = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                                                  points3D_xyz_live, ratio_test_val, regression_on_all_model_score_visibility,
-                                                                                                  regression_all_visibility_score_visibility_model_scalers_dir, random_percentage)
+matches_rg_score_visibility, matching_time_rg_score_visibility = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_visibility, random_percentage)
 print("Feature Matching time: " + str(matching_time_rg_score_visibility))
 print()
 
 print("Getting matches using combined NN only (trained on score per image)..")
-matches_combined_score_per_image, matching_time_combined_score_per_image = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                                                            points3D_xyz_live, ratio_test_val, combined_model_score_per_image,
-                                                                                                            combined_model_score_per_image_scalers_dir, random_percentage)
+matches_combined_score_per_image, matching_time_combined_score_per_image = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_per_image, random_percentage)
 print("Feature Matching time: " + str(matching_time_combined_score_per_image))
 print()
 
 print("Getting matches using combined NN only (trained on score per session)..")
-matches_combined_score_per_session, matching_time_combined_score_per_session = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                                                                points3D_xyz_live, ratio_test_val, combined_model_score_per_session,
-                                                                                                                combined_model_score_per_session_scalers_dir, random_percentage)
+matches_combined_score_per_session, matching_time_combined_score_per_session = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_per_session, random_percentage)
 print("Feature Matching time: " + str(matching_time_combined_score_per_session))
 print()
 
 print("Getting matches using combined NN only (trained on score visibility)..")
-matches_combined_score_visibility, matching_time_combined_score_visibility = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live,
-                                                                                                              points3D_xyz_live, ratio_test_val, combined_model_score_visibility,
-                                                                                                              combined_model_score_visibility_scalers_dir, random_percentage)
+matches_combined_score_visibility, matching_time_combined_score_visibility = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_visibility, random_percentage)
 print("Feature Matching time: " + str(matching_time_combined_score_visibility))
 print()
 
