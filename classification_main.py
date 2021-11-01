@@ -59,20 +59,21 @@ print("Epochs: " + str(epochs))
 print("Loading data..")
 sift_vecs, classes = getClassificationData(db_path)
 
+# 01-11-2021 (removed scaling)
 # These will overwrite the plots per dataset - but it is fine, it is the
 # same plots - for classification/regression etc, i.e. it is dataset dependent not network dependent
-print("Saving graphs of the distribution of the mean SIFT vectors - before standard scaler")
-plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='b')
-plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_before_Standard_Scaler.png'))
-
-scaler = StandardScaler()
-scaler_transformed = scaler.fit(sift_vecs)
-sift_vecs = scaler_transformed.transform(sift_vecs)
-
-plt.cla()
-print("Saving graphs of the distribution of the mean SIFT vectors - after standard scaler")
-plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='r')
-plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_after_Standard_Scaler.png'))
+# print("Saving graphs of the distribution of the mean SIFT vectors - before standard scaler")
+# plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='b')
+# plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_before_Standard_Scaler.png'))
+#
+# scaler = StandardScaler()
+# scaler_transformed = scaler.fit(sift_vecs)
+# sift_vecs = scaler_transformed.transform(sift_vecs)
+#
+# plt.cla()
+# print("Saving graphs of the distribution of the mean SIFT vectors - after standard scaler")
+# plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='r')
+# plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_after_Standard_Scaler.png'))
 
 # Create model
 print("Creating model")
@@ -106,9 +107,11 @@ history = model.fit(X_train, y_train,
 # Save model here
 print("Saving model..")
 model.save(model_save_dir)
+
+# 01-11-2021 (removed scaling)
 # This has to happen here because by now "log_dir" will have been created by Tensorboard
-print("Saving Scaler..")
-scaler_save_path = os.path.join(log_dir, "scaler.pkl")
-dump(scaler_transformed, open(scaler_save_path, 'wb'))
+# print("Saving Scaler..")
+# scaler_save_path = os.path.join(log_dir, "scaler.pkl")
+# dump(scaler_transformed, open(scaler_save_path, 'wb'))
 
 print("Done!")

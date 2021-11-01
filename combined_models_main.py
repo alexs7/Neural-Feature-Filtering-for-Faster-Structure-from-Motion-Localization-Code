@@ -66,25 +66,26 @@ print("Epochs: " + str(epochs))
 print("Loading data..")
 sift_vecs, scores, classes = getCombinedData(db_path, score_name = score_to_train_on)
 
+# 01-11-2021 (removed scaling)
 # These will overwrite the plots per dataset - but it is fine, it is the
 # same plots - for classification/regression etc, i.e. it is dataset dependent not network dependent
-print("Saving graphs of the distribution of the mean SIFT vectors - before standard scaler")
-plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='b')
-plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_before_Standard_Scaler.png'))
-
-scaler = StandardScaler()
-scaler_transformed = scaler.fit(sift_vecs)
-sift_vecs = scaler_transformed.transform(sift_vecs)
-
-plt.cla()
-print("Saving graphs of the distribution of the mean SIFT vectors - after standard scaler")
-plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='r')
-plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_after_Standard_Scaler.png'))
-
-# minmax scaler
-print("Scaling output to 0 - 1 range") # any score is from 0 - N, so just scale it to 0 - 1 and use a sigmoid
-min_max_scaler = MinMaxScaler()
-scores = min_max_scaler.fit_transform(scores.reshape(-1, 1))
+# print("Saving graphs of the distribution of the mean SIFT vectors - before standard scaler")
+# plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='b')
+# plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_before_Standard_Scaler.png'))
+#
+# scaler = StandardScaler()
+# scaler_transformed = scaler.fit(sift_vecs)
+# sift_vecs = scaler_transformed.transform(sift_vecs)
+#
+# plt.cla()
+# print("Saving graphs of the distribution of the mean SIFT vectors - after standard scaler")
+# plt.hist(sift_vecs.mean(axis=1), bins=50, alpha=0.6, color='r')
+# plt.savefig(os.path.join("plots/dist_plots/", name+'_dist_after_Standard_Scaler.png'))
+#
+# # minmax scaler
+# print("Scaling output to 0 - 1 range") # any score is from 0 - N, so just scale it to 0 - 1 and use a sigmoid
+# min_max_scaler = MinMaxScaler()
+# scores = min_max_scaler.fit_transform(scores.reshape(-1, 1))
 
 # Create model
 print("Creating model")
@@ -123,12 +124,14 @@ history = model.fit(X_train,
 # Save model here
 print("Saving model...")
 model.save(model_save_dir)
+
+# 01-11-2021 (removed scaling)
 # This has to happen here because by now "log_dir" will have been created by Tensorboard
-print("Saving Scalers..")
-scaler_save_path = os.path.join(log_dir, "scaler.pkl")
-dump(scaler_transformed, open(scaler_save_path, 'wb'))
-min_max_scaler_save_path = os.path.join(log_dir, "min_max_scaler.pkl")
-dump(min_max_scaler, open(min_max_scaler_save_path, 'wb'))
+# print("Saving Scalers..")
+# scaler_save_path = os.path.join(log_dir, "scaler.pkl")
+# dump(scaler_transformed, open(scaler_save_path, 'wb'))
+# min_max_scaler_save_path = os.path.join(log_dir, "min_max_scaler.pkl")
+# dump(min_max_scaler, open(min_max_scaler_save_path, 'wb'))
 
 print("Done!")
 
