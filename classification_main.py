@@ -95,8 +95,6 @@ model.summary()
 # Just for naming's sake, and reshaping classes
 X_train = sift_vecs
 y_train = classes.reshape(-1,1)
-import pdb
-pdb.set_trace()
 history = model.fit(X_train, y_train,
                     validation_split=0.3,
                     epochs=epochs,

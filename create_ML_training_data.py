@@ -40,6 +40,9 @@ from sklearn.model_selection import train_test_split
 # use git locally on your laptop - the cloud does not like git
 # get IP of container with "hare inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container name>"
 
+# start all containters
+# hare start ar2056_trainNN_GPU_0 ar2056_trainNN_GPU_1 ar2056_trainNN_GPU_2 ar2056_trainNN_GPU_3 ar2056_trainNN_GPU_4 ar2056_trainNN_GPU_5  ar2056_trainNN_GPU_0_ssd ar2056_trainNN_GPU_1_ssd ar2056_trainNN_GPU_2_ssd ar2056_trainNN_GPU_3_ssd ar2056_trainNN_GPU_4_ssd ar2056_trainNN_GPU_5_ssd ar2056_bath2020ssh_ssd ar2056_bath2020ssh
+
 # The order you have to follow to get the final paper results:
 # 1 - create_ML_training_data.py
 # 2 - train_all_networks.py
