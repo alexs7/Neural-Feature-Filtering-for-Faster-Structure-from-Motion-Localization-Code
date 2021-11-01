@@ -147,11 +147,13 @@ print("Feature Matching time: " + str(matching_time_combined_score_visibility))
 print()
 
 print("Benchmarking ML model(s)..")
-benchmarks_iters = 5
+benchmarks_iters = 3
 results = np.empty([0,8])
+image_pose_errors_all = []
 
 print("RANSAC.. (classifier only, with top matches selected)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_cl_top, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_cl_top, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_cl_top
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_top))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -159,7 +161,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC.. (classifier only)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_cl, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_cl, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_cl
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -167,7 +170,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC.. (classifier and regressor, score per image)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_cl_rg_score_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_cl_rg_score_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_cl_rg_score_image
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg_score_image))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -175,7 +179,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC.. (classifier and regressor, score per session)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_cl_rg_score_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_cl_rg_score_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_cl_rg_score_session
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg_score_session))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -183,7 +188,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC.. (classifier and regressor, score visibility)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_cl_rg_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_cl_rg_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_cl_rg_score_visibility
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg_score_visibility))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -191,7 +197,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC.. (regressor only, score per image)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_rg_score_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_rg_score_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_rg_score_image
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_rg_score_image))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -199,7 +206,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC.. (regressor only, score per session)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_rg_score_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_rg_score_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_rg_score_session
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_rg_score_session))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -207,7 +215,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC.. (regressor only, score per visibility)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_rg_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_rg_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_rg_score_visibility
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_rg_score_visibility))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -215,7 +224,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC.. (combined NN per image)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_combined_score_per_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_combined_score_per_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_combined_score_per_image
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_per_image))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -223,7 +233,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC.. (combined NN per session)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_combined_score_per_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_combined_score_per_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_combined_score_per_session
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_per_session))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -231,7 +242,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC.. (combined NN on score visibility)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, matches_combined_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, matches_combined_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_combined_score_visibility
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_visibility))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -239,7 +251,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC dist.. (classifier and regressor, score per image)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac_dist, matches_cl_rg_score_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=-1, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac_dist, matches_cl_rg_score_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=-1, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_cl_rg_score_image
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg_score_image))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -247,7 +260,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC dist.. (classifier and regressor, score per session)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac_dist, matches_cl_rg_score_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=-1, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac_dist, matches_cl_rg_score_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=-1, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_cl_rg_score_session
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg_score_session))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -255,7 +269,8 @@ results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matchi
 print()
 
 print("RANSAC dist.. (classifier and regressor, score visibility)")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac_dist, matches_cl_rg_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=-1, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac_dist, matches_cl_rg_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=-1, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_cl_rg_score_visibility
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_cl_rg_score_visibility))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -265,7 +280,8 @@ print()
 # NOTE: for PROSAC the matches are already sorted so just pass 1, no need to sort them again
 print("PROSAC - (regressor only, score per image)")
 print()
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_rg_score_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, prosac, matches_rg_score_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_rg_score_image
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_rg_score_image))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -274,7 +290,8 @@ print()
 
 print("PROSAC - (regressor only, score per session)")
 print()
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_rg_score_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, prosac, matches_rg_score_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_rg_score_session
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_rg_score_session))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -283,7 +300,8 @@ print()
 
 print("PROSAC - (regressor only, score visibility)")
 print()
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_rg_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, prosac, matches_rg_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_rg_score_visibility
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_rg_score_visibility))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -292,7 +310,8 @@ print()
 
 print("PROSAC - (combined, score per image)")
 print()
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_combined_score_per_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, prosac, matches_combined_score_per_image, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_combined_score_per_image
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_per_image))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -301,7 +320,8 @@ print()
 
 print("PROSAC - (combined, score per session)")
 print()
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_combined_score_per_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, prosac, matches_combined_score_per_session, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_combined_score_per_session
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_per_session))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -310,7 +330,8 @@ print()
 
 print("PROSAC - (combined, score per visibility)")
 print()
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, prosac, matches_combined_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, prosac, matches_combined_score_visibility, localised_query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_model = time + matching_time_combined_score_visibility
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_model, time, matching_time_combined_score_visibility))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -326,3 +347,4 @@ results = np.r_[results, vanillia_matches_data]
 # results = np.around(results, 2) #format to 2 decimal places (28/06/2021 - removed rounding)
 
 np.savetxt(os.path.join(ml_path, "results_evaluator_"+str(random_percentage)+".csv"), results, delimiter=",")
+np.save(os.path.join(ml_path, "image_pose_errors_all.npy"), np.array(image_pose_errors_all))

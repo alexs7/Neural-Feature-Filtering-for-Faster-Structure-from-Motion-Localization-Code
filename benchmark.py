@@ -1,6 +1,6 @@
 # 19/05/2021 Added benchmark_ml for machine learning approaches
 import numpy as np
-from pose_evaluator import pose_evaluate
+from pose_evaluator import pose_evaluate, pose_evaluate_ml
 from ransac_comparison import run_comparison, run_comparison_ml
 
 def benchmark(benchmarks_iters, ransac_func, matches, query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=False):
@@ -61,5 +61,8 @@ def benchmark_ml(benchmarks_iters, ransac_func, matches, query_images_names, K, 
     trans_errors_overall = np.array(trans_errors_overall).mean()
     rot_errors_overall = np.array(rot_errors_overall).mean()
 
+    # run one more time for "image_pose_errors", poses will be set from above!
+    image_pose_errors = pose_evaluate_ml(poses, query_images_ground_truth_poses, scale)
+
     if (verbose): print()
-    return inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall
+    return inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors
