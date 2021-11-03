@@ -1,5 +1,5 @@
 # Added for the ml part.
-# The values here are copy pated by the excel file.
+# The values here in the .csv file are copy pasted by the excel file.
 # this file was copied from plot_performance_over_percentages_ml.py to work only on the 10% case
 import numpy as np
 import matplotlib.pyplot as plt
@@ -78,15 +78,31 @@ for dataset in datasets:
                                                       t_err_all_ml_methods_z_transformed,
                                                       rot_err_ml_methods_z_transformed], axis=1)
 
-    if dataset_name == "all_cmu_slice10":
-        import pdb
-        pdb.set_trace()
-
     min_idx = all_metrics_ml_methods_z_transformed.mean(axis=1).rank(ascending=True).idxmin()
     best_method = percentage['method'][min_idx]
 
+    # This is for, idx_to_use_coop, idx_to_use_cmu in plots.py, beware of the offset (and zero-indexing)
+    if(dataset_name == 'all_cmu_slice4'):
+        print('all_cmu_slice4')
+        print(all_metrics_ml_methods_z_transformed.mean(axis=1).rank(ascending=True))
+        print(percentage['method'])
+    if(dataset_name == 'all_coop_slice1'):
+        print('all_coop_slice1')
+        print(all_metrics_ml_methods_z_transformed.mean(axis=1).rank(ascending=True))
+        print(percentage['method'])
+
     print(" percentage: " + percentages_str[percentages_str_idx])
     print("  best method: " + best_method)
+    #  - (all_slices_str_idx * 24) is needed here to offset each time it moves to another slice
+    print("     FM: %.2f" % np.round(percentage.iloc[min_idx - (all_slices_str_idx * 24), 5] * 1000,3)) #to milliseconds
+    print("     Conc: %.2f" % np.round(percentage.iloc[min_idx - (all_slices_str_idx * 24), 4] * 1000,3))
+    print("     T Err: %.4f" % np.round(percentage.iloc[min_idx - (all_slices_str_idx * 24), 7],5))
+    print("     R Err: %.4f" % np.round(percentage.iloc[min_idx - (all_slices_str_idx * 24), 8],5))
+    print("  baseline: ")
+    print("     FM: %.2f" % np.round(percentage.iloc[22, 5] * 1000,3)) #to milliseconds
+    print("     Conc: %.2f" % np.round(percentage.iloc[22, 4] * 1000,3))
+    print("     T Err: %.4f" % np.round(percentage.iloc[22, 7],5))
+    print("     R Err: %.4f" % np.round(percentage.iloc[22, 8],5))
 
     best_methods[dataset_name] = best_method
 
@@ -164,6 +180,7 @@ plt.legend(loc='best', framealpha=1, fontsize=10, shadow = True)
 plt.savefig("plots/rot_err_all_cmu_bar_percentage_percentage_10.pdf")
 plt.cla()
 
+print()
 print("Bar Charts Coop.. - printing these for table not using bar charts")
 
 print("Retail Shop Error Baseline VS Best Model:")
@@ -171,6 +188,6 @@ print("Retail Shop Error Baseline VS Best Model:")
 print("Baseline (Feature Matching Time/Translation/Rotation): " + str(fm_times_baseline[5]) + " / " + str(t_err_baseline[5]) + " / " + str(rot_err_baseline[5]))
 print("Best Model (Feature Matching Time/Translation/Rotation/): " + str(fm_times_best_model[5]) + " / " + str(t_err_best_model[5]) + " / " + str(rot_err_best_model[5]))
 
-
+print()
 print("Dots graphs..")
 print("Run plots.py for dots.. troOolling!")

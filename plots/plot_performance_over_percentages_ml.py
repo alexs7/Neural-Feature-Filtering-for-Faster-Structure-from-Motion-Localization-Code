@@ -1,5 +1,5 @@
 # Added for the ml part.
-# The values here are copy pated by the excel file.
+# The values here in the .csv files are copy pasted by the excel file.
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -67,7 +67,7 @@ all_cmu_slice3 = [cmu_slice3_5, cmu_slice3_10, cmu_slice3_15, cmu_slice3_20, cmu
 all_cmu_slice4 = [cmu_slice4_5, cmu_slice4_10, cmu_slice4_15, cmu_slice4_20, cmu_slice4_50]
 all_cmu_slice6 = [cmu_slice6_5, cmu_slice6_10, cmu_slice6_15, cmu_slice6_20, cmu_slice6_50]
 all_cmu_slice10 = [cmu_slice10_5, cmu_slice10_10, cmu_slice10_15, cmu_slice10_20, cmu_slice10_50]
-all_cmu_slice11 = [cmu_slice11_5, cmu_slice3_10, cmu_slice3_15, cmu_slice3_20, cmu_slice3_50]
+all_cmu_slice11 = [cmu_slice11_5, cmu_slice11_10, cmu_slice11_15, cmu_slice11_20, cmu_slice11_50]
 all_coop_slice1 = [coop_slice1_5, coop_slice1_10, coop_slice1_15, coop_slice1_20, coop_slice1_50]
 
 #all_datasets

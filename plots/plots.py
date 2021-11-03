@@ -20,31 +20,33 @@ print(plt.style.available)
 # plt.figure(figsize=(8, 8), dpi=100)
 
 names_dict = {
-"Class, top mtchs" : "Classifier w/ top 10% matches",
-"Class, all mtchs" : "Classifier using all matches",
-"C & R, s.p.i" : "Classifier and Regressor w/ score per image",
-"C & R, s.p.s" : "Classifier and Regressor w/ score per session",
-"C & R, s.p.v" : "Classifier and Regressor w/ visibility score",
-"R, s.p.i" : "Regressor w/ score per image",
-"R, s.p.s" : "Regressor w/ score per session",
-"R, s.p.v" : "Regressor w/ visibility score",
-"CB, s.p.i" : "Combined w/ score per image",
-"CB, s.p.s" : "Combined w/ score per session",
-"CB, s.p.v" : "Combined w/ visibility score",
-"Rd C & R s.p.i" : "Class. and Regr. w/ score per image, dist. RANSAC",
-"Rd C & R s.p.s" : "Class. and Regr. w/ score per session, dist. RANSAC",
-"Rd C & R s.p.v" : "Class. and Regr. w/ visibility score, dist. RANSAC",
-"PRSC R, s.p.i" : "Regressor w/ score per image, PROSAC",
-"PRSC R, s.p.s" : "Regressor w/ score per session, PROSAC",
-"PRSC R, s.p.v" :  "Regressor w/ visibility score, PROSAC",
-"PRSC CB, s.p.i" : "Combined w/ score per image, PROSAC",
-"PRSC CB, s.p.s" : "Combined w/ score per session, PROSAC",
-"PRSC CB, s.p.v" : "Combined w/ visibility score, PROSAC",
-"Rndm 10%" : "Random feature case",
-"All (~800)" : "Baseline using all features"
+    # coop = [8, 12, 2, 4, 10, 20], cmu_slice4 = [10, 0, 8, 19, 11, 20]
+    "Class, top mtchs" : "Classifier w/ top 10% matches", #0
+    "Class, all mtchs" : "Classifier using all matches",  #1
+    "C & R, s.p.i" : "Classifier and Regressor w/ image score", #2
+    "C & R, s.p.s" : "Classifier and Regressor w/ score per session", #3
+    "C & R, s.p.v" : "Classifier and Regressor w/ visibility score",  #4
+    "R, s.p.i" : "Regressor w/ score per image",   #5
+    "R, s.p.s" : "Regressor w/ score per session",  #6
+    "R, s.p.v" : "Regressor w/ visibility score",  #7
+    "CB, s.p.i" : "Combined w/ score per image",  #8
+    "CB, s.p.s" : "Combined w/ score per session",  #9
+    "CB, s.p.v" : "Combined w/ visibility score",  #10
+    "Rd C & R s.p.i" : "Class. and Regr. w/ score per image, dist. RANSAC",  #11
+    "Rd C & R s.p.s" : "Class. and Regr. w/ score per session, R*",  #12
+    "Rd C & R s.p.v" : "Class. and Regr. w/ visibility score, dist. RANSAC",  #13
+    "PRSC R, s.p.i" : "Regressor w/ score per image, PROSAC",  #14
+    "PRSC R, s.p.s" : "Regressor w/ score per session, PROSAC",  #15
+    "PRSC R, s.p.v" :  "Regressor w/ visibility score, PROSAC",  #16
+    "PRSC CB, s.p.i" : "Combined w/ score per image, PROSAC",  #17
+    "PRSC CB, s.p.s" : "Combined w/ score per session, PROSAC",  #18
+    "PRSC CB, s.p.v" : "Combined w/ visibility score, PROSAC",  #19
+    "Rndm 10%" : "Random feature case",  #20
+    "All (~800)" : "Baseline using all features"  #21
 }
 
-percentages = [5,10,15,20,50]
+# percentages = [5,10,15,20,50]
+percentages = [10]
 for percentage in percentages:
     results_path_csv = "plots/results_" + str(percentage) + ".csv"
     res = pd.read_csv(results_path_csv)
@@ -62,6 +64,7 @@ for percentage in percentages:
 
     for df_slice in all_dfs:
         slice_name = df_slice.iloc[0,0]
+        print(slice_name)
 
         y = np.array(df_slice['t_err'].dropna())
         x = np.array(df_slice['rot_err'].dropna())
@@ -76,24 +79,20 @@ for percentage in percentages:
         ftm = ftm * 1000
         labels = np.delete(labels,-2)
 
-        # This code has to be tweak for each slice. I did for CMU slice 4 and Coop. Same goes for limits, and dots label position.
-        # to get the idx_to_use values comment out "plt.annotate(names_dict[labels[i]] + " idx: " + str(i), (x[i] + 0.01, y[i] + 0.007), fontsize=8)"
-        # idx_to_use_cmu_slice_4 = [8, 10, 9, 20, 0, 7]
-        # idx_to_use_coop = [20,12,7,11,13,8]
-        idx_to_use_coop = [8, 10, 9, 20, 0, 7]
+        # This code has to be tweaked for each slice. I did for CMU slice 4 and Coop. Same goes for limits, and dots label position.
+        # to get the idx_to_use values comment out "plt.annotate(names_dict[labels[i]] + " idx: " + str(i), (x[i] + 0.01, y[i] + 0.007), fontsize=8)" - 02/11/2021 - This is old and
+        # you can get the idxs from "plot_performance_over_percentage_10_only_ml.py" check there
+        # replace any with below
+        # coop = [8, 12, 2, 4, 10, 20], cmu_slice4 = [10, 0, 8, 19, 11, 20]
+        idx_to_use_coop = [10, 0, 8, 19, 11, 20]
         x = np.array(x)[idx_to_use_coop]
         y = np.array(y)[idx_to_use_coop]
         labels = np.array(labels)[idx_to_use_coop]
         ftm = np.array(ftm)[idx_to_use_coop]
 
-        # CMU
-        # colors = {"CB, s.p.i" : 'tab:blue', "CB, s.p.v" : 'tab:orange', "CB, s.p.s" : 'tab:green', "Class, top mtchs" : 'tab:purple', "All (~800)" : 'tab:red', "R, s.p.v" : 'tab:cyan'}
-        # Coop
-        # colors = { "All (~800)" : 'tab:red', "CB, s.p.i" : 'tab:blue', "R, s.p.v" : 'tab:cyan' , "Rd C & R s.p.i" : 'tab:pink', "Rd C & R s.p.s" : 'tab:olive', "Rd C & R s.p.v" : 'tab:brown'}
-
         colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple', 'tab:red', 'tab:cyan', 'tab:pink', 'tab:olive']
 
-        plt.title('Error Per Method') #change this per dataset
+        plt.title('CMU Slice 4') #change this per dataset
 
         for i in range(len(labels)): # x,y,labels have the same order
             plt.scatter(x[i], y[i], s=100, alpha=0.75, c=colors[i], label=names_dict[labels[i]])
@@ -101,6 +100,7 @@ for percentage in percentages:
         plt.xlabel('Rotation Error (degrees)')
         plt.ylabel('Translation Error (meters)')
         # plt.colorbar()
+        # plt.legend(loc='upper left', framealpha=1, shadow=True) # Coop
         plt.legend(loc='lower right', framealpha=1, shadow=True)
 
         if(slice_name == 'Coop Data'): # need to use different limits
@@ -112,25 +112,39 @@ for percentage in percentages:
             plt.xlim([0, 3]) # degrees - rotation
             plt.ylim([0, 0.5]) # meters - translation
 
-        for i, txt in enumerate(labels):
-            label_key = txt #just for readability
-            # cmu slice 4
-            if(label_key == 'CB, s.p.v'): #manually positing them
-                plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.09, y[i] + 0.01), fontsize=9) #for ftm
-            else:
-                plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] + 0.01, y[i] + 0.01), fontsize=9)  # for ftm
-            # coop
-            # if(label_key == "Rd C & R s.p.i"):
-            #     plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.05, y[i] + 0.0005), fontsize=9)  # for ftm
-            #     continue
-            # if (label_key == "CB, s.p.i"):
-            #     plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.06, y[i] + 0.0003), fontsize=9)  # for ftm
-            #     continue
+        # coop
+        if(slice_name == 'Coop Data'):
+            print("Coop")
+            print(labels)
+            # ['CB, s.p.i' 'Rd C & R s.p.s' 'C & R, s.p.i' 'C & R, s.p.v' 'CB, s.p.v' 'All (~800)']
+            plt.annotate(str(round(ftm[0], 1)) + "ms", (x[0]+0.03, y[0]), fontsize=10)  # for ftm
+            plt.annotate(str(round(ftm[1], 1)) + "ms", (x[1]+0.03, y[1]), fontsize=10)  # for ftm
+            plt.annotate(str(round(ftm[2], 1)) + "ms", (x[2]+0.03, y[2]), fontsize=10)  # for ftm
+            plt.annotate(str(round(ftm[3], 1)) + "ms", (x[3]+0.03, y[3]), fontsize=10)  # for ftm
+            plt.annotate(str(round(ftm[4], 1)) + "ms", (x[4]-0.2, y[4]), fontsize=10)  # for ftm
+            plt.annotate(str(round(ftm[5], 1)) + "ms", (x[5]+0.03, y[5]), fontsize=10)  # for ftm
+        # cmu 4
+        else:
+            print("CMU")
+            print(labels)
+            plt.annotate(str(round(ftm[0], 1)) + "ms", (x[0]+0.03, y[0]), fontsize=10)  # for ftm
+            plt.annotate(str(round(ftm[1], 1)) + "ms", (x[1]+0.03, y[1]), fontsize=10)  # for ftm
+            plt.annotate(str(round(ftm[2], 1)) + "ms", (x[2]+0.03, y[2]), fontsize=10)  # for ftm
+            plt.annotate(str(round(ftm[3], 1)) + "ms", (x[3]+0.03, y[3]), fontsize=10)  # for ftm
+            plt.annotate(str(round(ftm[4], 1)) + "ms", (x[4]+0.03, y[4]), fontsize=10)  # for ftm
+            plt.annotate(str(round(ftm[5], 1)) + "ms", (x[5]+0.03, y[5]), fontsize=10)  # for ftm
 
-            # coop
-            # plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] + 0.01, y[i] + 0.0004), fontsize=9)  # for ftm
+        # if(label_key == "Rd C & R s.p.i"):
+        #     plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.05, y[i] + 0.0005), fontsize=9)  # for ftm
+        #     continue
+        # if (label_key == "CB, s.p.i"):
+        #     plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] - 0.06, y[i] + 0.0003), fontsize=9)  # for ftm
+        #     continue
 
-            # plt.annotate(" idx: " + str(i), (x[i], y[i]), fontsize=8) #for names debug
+        # coop
+        # plt.annotate(str(round(ftm[i], 1)) + "ms", (x[i] + 0.01, y[i] + 0.0004), fontsize=9)  # for ftm
+
+        # plt.annotate(" idx: " + str(i), (x[i], y[i]), fontsize=8) #for names debug
 
         # plt.tight_layout()
         fig.set_tight_layout(True)

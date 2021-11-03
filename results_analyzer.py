@@ -1,3 +1,4 @@
+# This is for the first paper, exmaps
 import numpy as np
 
 # add slice 2 ?
