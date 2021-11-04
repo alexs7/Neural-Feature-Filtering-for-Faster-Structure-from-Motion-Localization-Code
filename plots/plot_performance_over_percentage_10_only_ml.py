@@ -15,6 +15,8 @@ results_10_path_csv = "plots/results_10.csv"
 res = pd.read_csv(results_10_path_csv)
 data_10 = pd.DataFrame(res)
 
+cmu_only_metrics_ml_methods_z_transformed = np.empty([19,0])
+
 # 0 here starts from "CMU_slice3" not the headers
 cmu_slice3_10 = data_10.iloc[0:23, 0:]
 cmu_slice4_10 = data_10.iloc[24:47, 0:]
@@ -56,7 +58,7 @@ for dataset in datasets:
     percentages_str_idx = 0
     percentages_results_arr = np.array([all_slices_str[all_slices_str_idx]])
     percentages_results_arr_csv = np.array([all_slices_str[all_slices_str_idx]]) #duplicate for csv saving
-    percentage = dataset[0] #get the 10% case
+    percentage = dataset[0] #get the 10% case, for each dataset (maybe percentage isn't the best name)
 
     # Choose here what to optimise for!
     # For example if you want to optimise for translation and rotation, comment out the other ones
@@ -78,7 +80,11 @@ for dataset in datasets:
                                                       t_err_all_ml_methods_z_transformed,
                                                       rot_err_ml_methods_z_transformed], axis=1)
 
+    if (dataset_name != 'all_coop_slice1'): #for all cmu slices
+        cmu_only_metrics_ml_methods_z_transformed = np.c_[cmu_only_metrics_ml_methods_z_transformed, np.array([all_metrics_ml_methods_z_transformed.values][0])]
+
     min_idx = all_metrics_ml_methods_z_transformed.mean(axis=1).rank(ascending=True).idxmin()
+    print("min_idx:" + str(min_idx))
     best_method = percentage['method'][min_idx]
 
     # This is for, idx_to_use_coop, idx_to_use_cmu in plots.py, beware of the offset (and zero-indexing)
@@ -108,6 +114,13 @@ for dataset in datasets:
 
     all_slices_str_idx += 1
     print()
+
+print("Getting the best performing method per all CMU slices only")
+min_idx_cmu_all = pd.DataFrame(cmu_only_metrics_ml_methods_z_transformed.mean(axis=1)).rank(ascending=True).idxmin()
+# percentage here will be of the Coop, last one set by the loop above, but I still use it because the order of the models is the same
+# 120 here is the offset because Coop slice is at the end of the .csv file
+best_method_cmu_only = percentage['method'][min_idx_cmu_all+120]
+print("best_method_cmu_only: " + best_method_cmu_only)
 
 # np.save("plots/best_methods_percentage_10.npy", best_methods)
 
