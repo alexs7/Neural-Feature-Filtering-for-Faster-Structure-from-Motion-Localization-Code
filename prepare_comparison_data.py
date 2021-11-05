@@ -50,6 +50,9 @@ query_images_names = load_images_from_text_file(query_images_path)
 localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
 query_images_ground_truth_poses = get_query_images_pose_from_images(localised_query_images_names, query_images)
 
+# for the buckets results
+image_pose_errors_all = []
+
 # live points
 # Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py" - to get the 3D points avg descs, and corresponding xyz coordinates (128 + 3) from the LIVE model.
 # also you will need the scale between the colmap poses and the ARCore poses (for example the 2020-06-22 the 392 images are from morning run - or whatever you use) - ONLY if you use the Coop_data
@@ -86,10 +89,10 @@ print("Feature Matching time for vanillia samples (avg per image): " + str(featm
 
 print()
 # get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
-benchmarks_iters = 5 #15 was in first publication
+benchmarks_iters = 1 #15 was in first publication
 
 print("Benchmarking Random, iterations: " + str(benchmarks_iters))
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
 total_time_rand = time + featm_time_random
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_rand, time, featm_time_random ))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
@@ -98,21 +101,27 @@ random_matches_data = np.array([inlers_no, outliers, iterations, time, featm_tim
 print()
 
 print("Benchmarking Vanillia..")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall = benchmark_ml(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
+image_pose_errors_all.append(image_pose_errors)
 total_time_vanil = time + featm_time_vanillia
 print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_vanil, time, featm_time_vanillia ))
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 vanillia_matches_data = np.array([inlers_no, outliers, iterations, time, featm_time_vanillia, total_time_vanil, trans_errors_overall, rot_errors_overall])
 
 prepared_data_path = os.path.join(ml_path, "prepared_data")
-os.makedirs(prepared_data_path, exist_ok=True)
-np.save(os.path.join(prepared_data_path, "query_images_ground_truth_poses.npy"), query_images_ground_truth_poses)
-np.save(os.path.join(prepared_data_path, "localised_query_images_names.npy"), localised_query_images_names)
-np.save(os.path.join(prepared_data_path, "points3D_xyz_live.npy"), points3D_xyz_live)
-np.save(os.path.join(prepared_data_path, "K.npy"), K)
-np.save(os.path.join(prepared_data_path, "scale.npy"), scale)
-np.save(os.path.join(prepared_data_path, "random_matches.npy"), random_matches)
-np.save(os.path.join(prepared_data_path, "vanillia_matches.npy"), vanillia_matches)
-# these below are the files used later in model_evaluator to aggregate all results in one file
-np.save(os.path.join(prepared_data_path, "random_matches_data_"+str(random_percentage)+".npy"), random_matches_data)
-np.save(os.path.join(prepared_data_path, "vanillia_matches_data_"+str(random_percentage)+".npy"), vanillia_matches_data)
+
+# 05/11/2021 this will need to be be uncommented
+# os.makedirs(prepared_data_path, exist_ok=True)
+# np.save(os.path.join(prepared_data_path, "query_images_ground_truth_poses.npy"), query_images_ground_truth_poses)
+# np.save(os.path.join(prepared_data_path, "localised_query_images_names.npy"), localised_query_images_names)
+# np.save(os.path.join(prepared_data_path, "points3D_xyz_live.npy"), points3D_xyz_live)
+# np.save(os.path.join(prepared_data_path, "K.npy"), K)
+# np.save(os.path.join(prepared_data_path, "scale.npy"), scale)
+# np.save(os.path.join(prepared_data_path, "random_matches.npy"), random_matches)
+# np.save(os.path.join(prepared_data_path, "vanillia_matches.npy"), vanillia_matches)
+# # these below are the files used later in model_evaluator to aggregate all results in one file
+# np.save(os.path.join(prepared_data_path, "random_matches_data_"+str(random_percentage)+".npy"), random_matches_data)
+# np.save(os.path.join(prepared_data_path, "vanillia_matches_data_"+str(random_percentage)+".npy"), vanillia_matches_data)
+
+# added on 04/11/2021
+np.save(os.path.join(prepared_data_path, "baseline_image_pose_errors_all_"+str(random_percentage)+"_base.npy"), image_pose_errors_all)
