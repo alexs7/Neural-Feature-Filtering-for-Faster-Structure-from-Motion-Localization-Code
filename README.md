@@ -1,3 +1,1 @@
-# Mobile Pose Estimation Pipeline
-
-This is an attempt to create a real-time mobile localization pipeline given an offline map.
+The code for Neural Feature Filtering for Faster Structure from Motion Localization
