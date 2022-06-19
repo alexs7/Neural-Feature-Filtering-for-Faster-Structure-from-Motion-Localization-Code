@@ -29,7 +29,7 @@ import sys
 # python3 model_evaluator.py colmap_data/CMU_data/slice3/ all slice3 early_stop_model 5 -> This is the case for the network trained on all the CMU data
 # or for Coop
 # python3 model_evaluator.py colmap_data/Coop_data/slice1/ Coop slice1 early_stop_model
-# TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh' in weatherwax, ssh root@172.17.0.13 (or whatever IP it is)
+# TODO: For this code in this file you have to use the container 'ar2056_bath2020ssh (_ssd)' in weatherwax, ssh root@172.17.0.13 (or whatever IP it is), (updated 19/06/2022)
 # This is because the method predict_on_batch() needs the GPUs for speed - make sure they are free too.
 # If you test multiple datasets, slice4, slice3, run the in sequence as prediction time will be slower if ran in parallel - RUN the evaluator for all datasets on 1 machine!
 # Look at the command below:

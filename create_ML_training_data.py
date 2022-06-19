@@ -53,6 +53,7 @@ from sklearn.model_selection import train_test_split
 # 7 - under plots/ plots.py and plot_performance_over_percentages_ml.py (or plot_performance_over_percentage_10_only_ml.py)
 
 # 16/07/2021 - now using ssds, but need to extend every 28 days os use, hare extend /mnt/fast1/ar2056/ (on weatherwax)
+# 19/06/2022 - from the above stesp you can start from #6, if you get paranoid you can do #5 again..
 
 def get_image_decs(db, image_id): #not to be confused with get_queryDescriptors() in feature_matching_generator.py - that one normalises descriptors.
     data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
