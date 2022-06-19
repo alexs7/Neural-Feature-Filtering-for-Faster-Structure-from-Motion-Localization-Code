@@ -140,6 +140,9 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
         queryDescriptors = get_queryDescriptors(db, image_id)
         len_descs = queryDescriptors.shape[0]
 
+        import pdb
+        pdb.set_trace()
+
         start = time.time()
         classifier_predictions = classifier.predict_on_batch(queryDescriptors) #, use_multiprocessing=True, workers = 4)
         end = time.time()

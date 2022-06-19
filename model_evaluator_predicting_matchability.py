@@ -42,16 +42,13 @@ points3D_xyz_live = np.load(os.path.join(ml_path, "prepared_data/points3D_xyz_li
 K = np.load(os.path.join(ml_path, "prepared_data/K.npy"))
 scale = np.load(os.path.join(ml_path, "prepared_data/scale.npy"))
 
-import pdb
-pdb.set_trace()
-
 # evaluation starts here
 print("Feature matching using models..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 
 print("Getting matches using classifier only (with top ones selected)..")
-matches_cl_top, matching_time_cl_top = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classifier= classification_model, top_no=random_percentage)
+matches_cl_top, matching_time_cl_top = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, top_no=random_percentage)
 print("Feature Matching time: " + str(matching_time_cl_top))
 print()
 
