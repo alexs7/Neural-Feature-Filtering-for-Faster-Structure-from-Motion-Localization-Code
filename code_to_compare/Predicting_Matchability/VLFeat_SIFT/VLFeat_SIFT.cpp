@@ -839,8 +839,9 @@ main(int argc, char **argv)
             vl_file_meta_put_double (&out, k -> x     ) ;
             vl_file_meta_put_double (&out, k -> y     ) ;
             vl_file_meta_put_double (&out, k -> sigma ) ;
-            std::cout << q << std::endl;
-            std::cout << angles [q] << std::endl;
+//            std::cout << q << std::endl;
+//            std::cout << angles [q] << std::endl;
+            std::cout << nangles << std::endl;
             vl_file_meta_put_double (&out, angles [q] ) ;
             for (l = 0 ; l < 128 ; ++l) {
               vl_file_meta_put_uint8 (&out, (vl_uint8) (512.0 * descr [l])) ;
