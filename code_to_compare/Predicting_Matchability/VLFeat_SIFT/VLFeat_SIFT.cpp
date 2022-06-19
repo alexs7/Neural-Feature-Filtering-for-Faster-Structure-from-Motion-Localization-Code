@@ -819,7 +819,6 @@ main(int argc, char **argv)
           }
 
           if (force_classification) {
-            std::cout << "force_classification" << std::endl;
             int l ;
             std::vector<float> siftdesc(128) ;
             std::vector<float> results(rtrees.params.n_classes) ;
@@ -834,14 +833,10 @@ main(int argc, char **argv)
           }
 
           if (out.active) {
-            std::cout << "out.active" << std::endl;
             int l ;
             vl_file_meta_put_double (&out, k -> x     ) ;
             vl_file_meta_put_double (&out, k -> y     ) ;
             vl_file_meta_put_double (&out, k -> sigma ) ;
-//            std::cout << q << std::endl;
-//            std::cout << angles [q] << std::endl;
-            std::cout << nangles << std::endl;
             vl_file_meta_put_double (&out, angles [q] ) ;
             for (l = 0 ; l < 128 ; ++l) {
               vl_file_meta_put_uint8 (&out, (vl_uint8) (512.0 * descr [l])) ;
@@ -850,7 +845,6 @@ main(int argc, char **argv)
           }
 
           if (frm.active) {
-            std::cout << "frm.active" << std::endl;
             vl_file_meta_put_double (&frm, k -> x     ) ;
             vl_file_meta_put_double (&frm, k -> y     ) ;
             vl_file_meta_put_double (&frm, k -> sigma ) ;
