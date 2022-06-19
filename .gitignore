@@ -31,4 +31,4 @@ plots/*.pdf
 plots/*.csv
 plots/CMU*
 plots/Coop*
-/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Predicting_Matchability/VLFeat_SIFT/images/
+/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Predicting_Matchability/VLFeat_SIFT/test_images/
