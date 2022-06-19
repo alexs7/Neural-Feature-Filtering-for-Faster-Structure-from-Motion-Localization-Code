@@ -1,0 +1,74 @@
+Predicting Matchability (v0.9.1)
+------------------------------
+
+Sample code providing SIFT feature extraction and classification:
+VLFeat_SIFT.cpp - extended version of sift.c from VLFeat
+VLFeat_SIFT.exe - Windows 64bit binary (VS2012)
+rforest.gz - trained random forest of 75 trees of maximum depth 10
+
+When using the code either in source or binary form, please cite:
+
+@InProceedings{Hartmann-etal-CVPR-2014,
+ Author = {Hartmann, Wilfried and Havlena, Michal and Schindler, Konrad},
+ Title = {Predicting Matchability},
+ Booktitle = {CVPR},
+ Year  = {2014},
+ Howpublished = {\url{http://www.igp.ethz.ch/photogrammetry/research/pm}}
+}
+
+@Misc{Vedaldi-VLFeat-2008,
+ Author = {Vedaldi, Andrea and Fulkerson, Brian},
+ Title = {{VLFeat}: An Open and Portable Library of Computer Vision Algorithms},
+ Year  = {2008},
+ Howpublished = {\url{http://www.vlfeat.org/}}
+}
+
+
+DEPENDENCIES
+
+VLFeat (tested with 0.9.18) http://www.vlfeat.org/
+  VLFeat is distributed under the BSD license (see the COPYING file).
+  The documentation is available online at http://www.vlfeat.org/index.html
+
+Random forest classifier by Stefan Walk
+  This code is distributed under the MIT license (see the LICENSE file).
+  Required source files are included in this package already.
+
+Boost C++ Libraries (tested with 1.55.0) http://www.boost.org/
+  Precompiled Windows libraries can be found at:
+  http://sourceforge.net/projects/boost/files/boost-binaries/1.55.0-build2/
+
+
+BUILDING THE SOFTWARE FROM SOURCES
+
+WINDOWS - Visual Studio
+In the e.g. "VS2012 x64 Command Prompt" with VLFeat and Boost available
+at the respective paths, VLFeat_SIFT.exe compiles with:
+cl /nologo /MD /EHsc /Ox /DNDEBUG /D__LITTLE_ENDIAN__ /DVL_DISABLE_AVX /openmp /I C:\Boost\1.55.0\VC\11.0 /I C:\vlfeat-0.9.18 VLFeat_SIFT.cpp vl.lib /link /LIBPATH:C:\Boost\1.55.0\VC\11.0\lib /LIBPATH:C:\vlfeat-0.9.18\bin\win64
+
+LINUX - gcc
+With Boost installed in the system and VLFeat available at the respective
+path, VLFeat_SIFT compiles with:
+g++ -O3 -DNDEBUG -Wall -march=native -o VLFeat_SIFT VLFeat_SIFT.cpp -I /opt/vlfeat-0.9.18 -L /opt/vlfeat-0.9.18/bin/glnxa64 -lboost_serialization-mt -lboost_iostreams-mt -lvl -Wl,-rpath,/opt/vlfeat-0.9.18/bin/glnxa64
+
+
+USAGE
+
+The command line application VLFeat_SIFT.exe can be used in the same way
+as the original sift.exe tool from VLFeat.
+Additionally, the predicting matchability approach is implemented which
+classifies the extracted SIFT features and only outputs those features
+classified matchable.
+For this purpose there are two additional options:
+--classify [forest_name] (default: disable classification)
+--cl-thresh [threshold] (default: 0.5)
+
+Example usage with the new parameters:
+VLFeat_SIFT.exe --octaves 2 --levels 3 --first-octave 0 --peak-thresh 0.001 --edge-thresh 10.0 --magnif 3 --classify rforest.gz --cl-thresh 0.525 image1.pgm image2.pgm image3.pgm ...
+
+
+CHANGELOG
+
+0.9.1 - Random forest file (rforest.gz) updated after a minor correction of the training data.
+
+0.9 - Initial public release.
