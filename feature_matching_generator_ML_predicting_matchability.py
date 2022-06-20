@@ -116,8 +116,9 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
 
         # sanity check
         if (ratio_test_val == 1.0):
-            print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
-            # assert len(good_matches) == len(temp_matches)
+            if (len(good_matches) != len(temp_matches)):
+                print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
+
 
         end = time.time()
         elapsed_time = end - start
