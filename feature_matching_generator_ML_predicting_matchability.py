@@ -42,7 +42,6 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
     matches = {}
     matches_sum = []
     total_time = 0
-    matchable_threshold = 0.5
     percentage_reduction_total = 0
     image_gt_dir = os.path.join(base_path, 'gt/images/')
     vlfeat_command_path = "code_to_compare/Predicting_Matchability/VLFeat_SIFT/VLFeat_SIFT"
@@ -62,14 +61,15 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
             convert_command = ["convert", image_gt_path, converted_image_gt_path]
             subprocess.check_call(convert_command)
 
-        converted_image_gt_sift_path = converted_image_gt_path.replace(".pgm", ".sift")
-        vlfeat_command_no_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path, converted_image_gt_path]
-        vlfeat_command_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--classify", predicting_matchability_random_forest, "--cl-thresh", "0.525", "--output", converted_image_gt_sift_path, converted_image_gt_path]
+        converted_image_gt_sift_path_no_classify = converted_image_gt_path.replace(".pgm", ".sift_not_classified")
+        converted_image_gt_sift_path_classify = converted_image_gt_path.replace(".pgm", ".sift_classified")
+        vlfeat_command_no_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path_no_classify, converted_image_gt_path]
+        vlfeat_command_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--classify", predicting_matchability_random_forest, "--cl-thresh", "0.525", "--output", converted_image_gt_sift_path_classify, converted_image_gt_path]
 
         # original
         subprocess.check_call(vlfeat_command_no_classify)
         #  just to get the length
-        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path)
+        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_no_classify)
         len_descs_no_classify = keypoints_xy_descs.shape[0]
 
         # predicting matchability code
@@ -80,7 +80,7 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
         elapsed_time = end - start
         total_time += elapsed_time
 
-        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path)
+        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_classify)
         keypoints_xy = keypoints_xy_descs[:,0:2]
         queryDescriptors = keypoints_xy_descs[:,4:132]
         len_descs = queryDescriptors.shape[0]
@@ -96,8 +96,8 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
         # m the closest, n is the second closest
         good_matches = []
-        for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
-            assert(m.distance <= n.distance) #TODO: maybe count how many pass the ratio test VS how many they dont without the NN ?
+        for m, n in temp_matches:
+            assert(m.distance <= n.distance)
             # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
             if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
                 if(m.queryIdx >= keypoints_xy.shape[0]): #keypoints_xy.shape[0] always same as classifier_predictions.shape[0]
@@ -110,14 +110,14 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
                 xy2D = keypoints_xy[m.queryIdx, :].tolist()
                 xyz3D = points3D_xyz[m.trainIdx, :].tolist()
 
-                # TODO: add a flag and predict a score for each match to use later in PROSAC
                 match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
 
         # sanity check
         if (ratio_test_val == 1.0):
-            assert len(good_matches) == len(temp_matches)
+            print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
+            # assert len(good_matches) == len(temp_matches)
 
         end = time.time()
         elapsed_time = end - start
