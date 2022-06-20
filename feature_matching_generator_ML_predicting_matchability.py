@@ -65,8 +65,9 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
         vlfeat_command = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path, converted_image_gt_path]
 
         start = time.time()
-        subprocess.check_call(vlfeat_command)
+        subprocess.check_call(vlfeat_command) #calling predicting matchability code
         end = time.time()
+        elapsed_time = end - start
         total_time += elapsed_time
 
         keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path)
