@@ -62,10 +62,19 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
             subprocess.check_call(convert_command)
 
         converted_image_gt_sift_path = converted_image_gt_path.replace(".pgm", ".sift")
-        vlfeat_command = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path, converted_image_gt_path]
+        vlfeat_command_no_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path, converted_image_gt_path]
+        vlfeat_command_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--classify rforest.gz", "--cl-thresh 0.525", "--output", converted_image_gt_sift_path, converted_image_gt_path]
 
+        # original
+        subprocess.check_call(vlfeat_command_no_classify)
+        #  just to get the length
+        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path)
+        len_descs_no_classify = keypoints_xy_descs.shape[0]
+
+        # predicting matchability code
+        #  overwrites the "converted_image_gt_sift_path" file
         start = time.time()
-        subprocess.check_call(vlfeat_command) #calling predicting matchability code
+        subprocess.check_call(vlfeat_command_classify) #calling predicting matchability code
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
