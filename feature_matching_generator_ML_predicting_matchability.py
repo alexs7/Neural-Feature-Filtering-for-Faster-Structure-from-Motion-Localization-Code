@@ -63,7 +63,7 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
 
         converted_image_gt_sift_path = converted_image_gt_path.replace(".pgm", ".sift")
         vlfeat_command_no_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path, converted_image_gt_path]
-        vlfeat_command_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--classify rforest.gz", "--cl-thresh 0.525", "--output", converted_image_gt_sift_path, converted_image_gt_path]
+        vlfeat_command_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--classify", "rforest.gz", "--cl-thresh", "0.525", "--output", converted_image_gt_sift_path, converted_image_gt_path]
 
         # original
         subprocess.check_call(vlfeat_command_no_classify)
