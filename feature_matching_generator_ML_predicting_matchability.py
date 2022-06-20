@@ -1,12 +1,14 @@
 # This file is copied from my previous publication and using now with minor modification for the ML approach
 #  such as not normalising the descriptors.
 # creates 2d-3d matches data for ransac comparison
-
+import os
 import time
 from itertools import chain
 import cv2
 import numpy as np
 import sys
+import subprocess
+from os.path import exists
 
 # creates 2d-3d matches data for ransac comparison
 def get_keypoints_xy(db, image_id):
@@ -42,42 +44,40 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
     total_time = 0
     matchable_threshold = 0.5
     percentage_reduction_total = 0
+    image_gt_dir = os.path.join(base_path, 'gt/images/')
+    vlfeat_command_path = "code_to_compare/Predicting_Matchability/VLFeat_SIFT/VLFeat_SIFT"
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
         query_image = query_images[i]
-        # if(verbose):
-        #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
+        if(verbose):
+            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
-        image_id = get_image_id(db,query_image)
-        # keypoints data (first keypoint correspond to the first descriptor etc etc)
-        keypoints_xy = get_keypoints_xy(db, image_id)
-        queryDescriptors = get_queryDescriptors(db, image_id)
+        image_gt_path = os.path.join(image_gt_dir, query_image)
+        converted_image_gt_path = os.path.join(image_gt_dir, query_image.replace(".jpg", ".pgm"))
+
+        if(exists(converted_image_gt_path) == False):
+            # convert image for VLFeat (required imagemagick)
+            convert_command = ["convert", image_gt_path, converted_image_gt_path]
+            subprocess.check_call(convert_command)
+
+        converted_image_gt_sift_path = converted_image_gt_path.replace(".pgm", ".sift")
+        vlfeat_command = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path, converted_image_gt_path]
+
+        start = time.time()
+        subprocess.check_call(vlfeat_command)
+        end = time.time()
+        total_time += elapsed_time
+
+        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path)
+        keypoints_xy = keypoints_xy_descs[:,0:2]
+        queryDescriptors = keypoints_xy_descs[:,4:132]
         len_descs = queryDescriptors.shape[0]
 
         import pdb
         pdb.set_trace()
 
-        # TODO: Convert the image here to pgm, using imagemagick and a system command.
-        # Then run the VLFeat code.
-        # Then load the *.sift file from the results in python.
-        # Create the keypoint and query desc variables here again an move on..
-
-        start = time.time()
-        classifier_predictions = classifier.predict_on_batch(queryDescriptors) #, use_multiprocessing=True, workers = 4)
-        end = time.time()
-        elapsed_time = end - start
-        total_time += elapsed_time
-
-        # only keep matchable ones - discard the rest, NOTE: matchable_desc_indices sometimes can be less than the 10% or whatever percentage!
-        matchable_desc_indices = np.where(classifier_predictions > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/classifier_predictions
-        matchable_desc_indices_length = matchable_desc_indices.shape[0]
-
         percentage_reduction_total = percentage_reduction_total + (100 - matchable_desc_indices_length * 100 / queryDescriptors.shape[0])
-
-        keypoints_xy = keypoints_xy[matchable_desc_indices]
-        queryDescriptors = queryDescriptors[matchable_desc_indices]
-        classifier_predictions = classifier_predictions[matchable_desc_indices]
 
         if(top_no != None):
             percentage_num = int(len_descs * top_no / 100)
