@@ -85,24 +85,9 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
         queryDescriptors = keypoints_xy_descs[:,4:132]
         len_descs = queryDescriptors.shape[0]
 
-        import pdb
-        pdb.set_trace()
+        percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_no_classify)
 
-        percentage_reduction_total = percentage_reduction_total + (100 - matchable_desc_indices_length * 100 / queryDescriptors.shape[0])
-
-        if(top_no != None):
-            percentage_num = int(len_descs * top_no / 100)
-            start = time.time()
-            classification_sorted_indices = classifier_predictions[:, 0].argsort()[::-1]
-            end = time.time()
-            elapsed_time = end - start
-            total_time += elapsed_time
-            keypoints_xy = keypoints_xy[classification_sorted_indices]
-            queryDescriptors = queryDescriptors[classification_sorted_indices]
-            # here I use the "percentage_num" value because as it was generated from the initial number of "queryDescriptors"
-            keypoints_xy = keypoints_xy[0:percentage_num, :]
-            queryDescriptors = queryDescriptors[0:percentage_num, :]
-
+        queryDescriptors = queryDescriptors.astype(np.float32)  # required for opencv
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()

@@ -77,5 +77,5 @@ results = np.r_[results, random_matches_data]
 results = np.r_[results, vanillia_matches_data]
 # results = np.around(results, 2) #format to 2 decimal places (28/06/2021 - removed rounding)
 
-np.savetxt(os.path.join(ml_path, "results_evaluator_"+str(random_percentage)+".csv"), results, delimiter=",")
-np.save(os.path.join(ml_path, "image_pose_errors_all_"+str(random_percentage)+".npy"), np.array(image_pose_errors_all))
+np.savetxt(os.path.join(ml_path, "results_evaluator_"+str(random_percentage)+"_predicting_matchability.csv"), results, delimiter=",")
+np.save(os.path.join(ml_path, "image_pose_errors_all_"+str(random_percentage)+"_predicting_matchability.npy"), np.array(image_pose_errors_all))
