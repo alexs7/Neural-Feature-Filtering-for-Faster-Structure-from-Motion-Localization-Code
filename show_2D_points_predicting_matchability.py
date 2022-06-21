@@ -1,7 +1,9 @@
 import sys
-
 import cv2
 import numpy as np
+
+# Example comand for image "CMU_data/slice3/gt/images/session_7/img_01763_c0_1288792470557721us.jpg"
+# python3 show_2D_points_predicting_matchability.py colmap_data/CMU_data/slice3/gt/images/session_7/img_01763_c0_1288792470557721us.jpg colmap_data/CMU_data/slice3/gt/images/session_7/img_01763_c0_1288792470557721us.sift_not_classified colmap_data/CMU_data/slice3/gt/images/session_7/img_01763_c0_1288792470557721us.sift_classified colmap_data/CMU_data/slice3/gt/images/session_7/img_01763_c0_1288792470557721us_comparison.jpg
 
 def show_projected_points(image_path, sift_path_not_classified, sift_path_classified, output_image_path):
     red = (0, 0, 255)
