@@ -132,7 +132,6 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
             if (len(good_matches) != len(temp_matches)):
                 print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
 
-
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
@@ -147,7 +146,7 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
         matches_all_avg = total_all_images / len(matches_sum)
         print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
         percentage_reduction_avg = percentage_reduction_total / len(query_images)
-        print("Average matches percentage reduction per image (regardless of top_no): " + str(percentage_reduction_avg) + "%")
+        print("Average matches percentage reduction per image: " + str(percentage_reduction_avg) + "%")
 
     total_avg_time = total_time / len(query_images)
     return matches, total_avg_time
