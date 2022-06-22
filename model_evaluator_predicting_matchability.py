@@ -29,7 +29,7 @@ model = sys.argv[4]
 random_percentage = int(sys.argv[5])
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
-comparison_data_path = os.path.join(base_path, "predicting_matchability_comaprison_data")
+comparison_data_path = os.path.join(base_path, "predicting_matchability_comparison_data")
 
 print("Base path: " + base_path)
 
