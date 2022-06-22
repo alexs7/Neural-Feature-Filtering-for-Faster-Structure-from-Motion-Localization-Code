@@ -62,7 +62,8 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
             print("comparison_data_path does not exist")
             exit()
 
-        converted_image_gt_path = os.path.join(comparison_data_path, query_image.split("/")[1].replace(".jpg", ".pgm")) #split here is to get rid of the "session7/" folder name
+        query_image_no_folder = query_image.split("/")[1]
+        converted_image_gt_path = os.path.join(comparison_data_path, query_image_no_folder.replace(".jpg", ".pgm")) #split here is to get rid of the "session7/" folder name
 
         if(exists(converted_image_gt_path) == False):
             # convert image for VLFeat (required imagemagick)
@@ -90,7 +91,7 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
 
         # This is to generate visuals for my thesis
         print("Running show_projected_points() for " + image_gt_path)
-        show_projected_points(image_gt_path, comparison_data_path, query_image, converted_image_gt_sift_path_all, converted_image_gt_sift_path_classify)
+        show_projected_points(image_gt_path, comparison_data_path, query_image_no_folder, converted_image_gt_sift_path_all, converted_image_gt_sift_path_classify)
 
         keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_classify)
         keypoints_xy = keypoints_xy_descs[:,0:2]

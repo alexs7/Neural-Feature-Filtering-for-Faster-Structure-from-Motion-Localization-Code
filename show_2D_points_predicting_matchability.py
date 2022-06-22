@@ -3,12 +3,12 @@ import sys
 import cv2
 import numpy as np
 
-def show_projected_points(image_gt_path, comaprison_data_path, image_name, sift_path_all, sift_path_classified):
+def show_projected_points(image_gt_path, comaprison_data_path, query_image_no_folder, sift_path_all, sift_path_classified):
     red = (0, 0, 255)
     blue = (255, 0, 0)
 
     image = cv2.imread(image_gt_path)
-    image_out_path = os.path.join(comaprison_data_path, image_name)
+    image_out_path = os.path.join(comaprison_data_path, query_image_no_folder)
 
     keypoints_xy_descs_not_classified = np.loadtxt(sift_path_all)
     keypoints_xy_not_classified = keypoints_xy_descs_not_classified[:, 0:2]
@@ -28,6 +28,4 @@ def show_projected_points(image_gt_path, comaprison_data_path, image_name, sift_
         center = (x, y)
         cv2.circle(image, center, 2, blue, -1)
 
-    import pdb
-    pdb.set_trace()
     cv2.imwrite(image_out_path, image)
