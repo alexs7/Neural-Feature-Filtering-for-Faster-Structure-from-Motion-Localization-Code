@@ -29,7 +29,7 @@ model = sys.argv[4]
 random_percentage = int(sys.argv[5])
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
-comaprison_data_path = os.path.join(base_path, "predicting_matchability_comaprison_data")
+comparison_data_path = os.path.join(base_path, "predicting_matchability_comaprison_data")
 
 print("Base path: " + base_path)
 
@@ -52,10 +52,10 @@ print("Feature matching using models..")
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 
 print("Creating dirs for for Predicting Matchability (2014) files..")
-os.makedirs(comaprison_data_path, exist_ok=True)
+os.makedirs(comparison_data_path, exist_ok=True)
 
 print("Getting matches using Predicting Matchability (2014)..")
-matches, matching_time = feature_matcher_wrapper_predicting_matchability(base_path, comaprison_data_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, top_no=random_percentage)
+matches, matching_time = feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, top_no=random_percentage)
 print("Feature Matching time: " + str(matching_time))
 print()
 

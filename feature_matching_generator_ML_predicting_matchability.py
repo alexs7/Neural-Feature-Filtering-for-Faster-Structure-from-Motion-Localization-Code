@@ -59,10 +59,10 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
         image_gt_path = os.path.join(image_gt_dir, query_image)
 
         if( exists(comparison_data_path) == False):
-            print("comaprison_data_path does not exist")
+            print("comparison_data_path does not exist")
             exit()
 
-        converted_image_gt_path = os.path.join(comparison_data_path, query_image.replace(".jpg", ".pgm"))
+        converted_image_gt_path = os.path.join(comparison_data_path, query_image.split("/")[1].replace(".jpg", ".pgm"))
 
         if(exists(converted_image_gt_path) == False):
             # convert image for VLFeat (required imagemagick)
