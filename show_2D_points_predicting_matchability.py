@@ -28,4 +28,6 @@ def show_projected_points(image_gt_path, comaprison_data_path, image_name, sift_
         center = (x, y)
         cv2.circle(image, center, 2, blue, -1)
 
+    import pdb
+    pdb.set_trace()
     cv2.imwrite(image_out_path, image)
