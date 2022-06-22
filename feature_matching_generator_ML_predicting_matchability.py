@@ -62,7 +62,7 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
             print("comparison_data_path does not exist")
             exit()
 
-        converted_image_gt_path = os.path.join(comparison_data_path, query_image.split("/")[1].replace(".jpg", ".pgm"))
+        converted_image_gt_path = os.path.join(comparison_data_path, query_image.split("/")[1].replace(".jpg", ".pgm")) #split here is to get rid of the "session7/" folder name
 
         if(exists(converted_image_gt_path) == False):
             # convert image for VLFeat (required imagemagick)
@@ -73,10 +73,6 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
         converted_image_gt_sift_path_classify = converted_image_gt_path.replace(".pgm", ".sift_classified")
         vlfeat_command_no_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path_all, converted_image_gt_path]
         vlfeat_command_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--classify", predicting_matchability_random_forest, "--cl-thresh", "0.525", "--output", converted_image_gt_sift_path_classify, converted_image_gt_path]
-
-        # This is to generate visuals for my thesis
-        print("Running show_projected_points() for " + image_gt_path)
-        show_projected_points(image_gt_path, comparison_data_path, query_image, converted_image_gt_sift_path_all, converted_image_gt_sift_path_classify)
 
         # original
         subprocess.check_call(vlfeat_command_no_classify)
@@ -91,6 +87,10 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
+
+        # This is to generate visuals for my thesis
+        print("Running show_projected_points() for " + image_gt_path)
+        show_projected_points(image_gt_path, comparison_data_path, query_image, converted_image_gt_sift_path_all, converted_image_gt_sift_path_classify)
 
         keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_classify)
         keypoints_xy = keypoints_xy_descs[:,0:2]
