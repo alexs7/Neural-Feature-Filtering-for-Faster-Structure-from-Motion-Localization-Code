@@ -1,17 +1,16 @@
+import os
 import sys
 import cv2
 import numpy as np
 
-# Example comand for image "CMU_data/slice3/gt/images/session_7/img_01763_c0_1288792470557721us.jpg"
-# python3 show_2D_points_predicting_matchability.py colmap_data/CMU_data/slice3/gt/images/session_7/img_01763_c0_1288792470557721us.jpg colmap_data/CMU_data/slice3/gt/images/session_7/img_01763_c0_1288792470557721us.sift_not_classified colmap_data/CMU_data/slice3/gt/images/session_7/img_01763_c0_1288792470557721us.sift_classified colmap_data/CMU_data/slice3/gt/images/session_7/img_01763_c0_1288792470557721us_comparison.jpg
-
-def show_projected_points(image_path, sift_path_not_classified, sift_path_classified, output_image_path):
+def show_projected_points(image_gt_path, comaprison_data_path, image_name, sift_path_all, sift_path_classified):
     red = (0, 0, 255)
-    green = (0, 255, 0)
+    blue = (255, 0, 0)
 
-    image = cv2.imread(image_path)
+    image = cv2.imread(image_gt_path)
+    image_out_path = os.path.join(comaprison_data_path, image_name)
 
-    keypoints_xy_descs_not_classified = np.loadtxt(sift_path_not_classified)
+    keypoints_xy_descs_not_classified = np.loadtxt(sift_path_all)
     keypoints_xy_not_classified = keypoints_xy_descs_not_classified[:, 0:2]
 
     keypoints_xy_descs_classified = np.loadtxt(sift_path_classified)
@@ -21,19 +20,12 @@ def show_projected_points(image_path, sift_path_not_classified, sift_path_classi
         x = int(keypoints_xy_not_classified[i][0])
         y = int(keypoints_xy_not_classified[i][1])
         center = (x, y)
-        cv2.circle(image, center, 3, red, -1)
+        cv2.circle(image, center, 2, red, -1)
 
     for i in range(int(len(keypoints_xy_descs_classified))):
         x = int(keypoints_xy_classified[i][0])
         y = int(keypoints_xy_classified[i][1])
         center = (x, y)
-        cv2.circle(image, center, 3, green, -1)
+        cv2.circle(image, center, 2, blue, -1)
 
-    cv2.imwrite(output_image_path, image)
-
-image_path = sys.argv[1]
-sift_path_not_classified = sys.argv[2]
-sift_path_classified = sys.argv[3]
-output_image_path = sys.argv[4]
-
-show_projected_points(image_path, sift_path_not_classified, sift_path_classified, output_image_path)
+    cv2.imwrite(image_out_path, image)

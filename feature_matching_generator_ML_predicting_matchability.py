@@ -11,6 +11,9 @@ import subprocess
 from os.path import exists
 
 # creates 2d-3d matches data for ransac comparison
+from show_2D_points_predicting_matchability import show_projected_points
+
+
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
     query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
@@ -37,7 +40,7 @@ def get_image_id(db, query_image):
     image_id = str(image_id.fetchone()[0])
     return image_id
 
-def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, top_no = None, verbose= True):
+def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, top_no = None, verbose= True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -54,23 +57,32 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
             print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
         image_gt_path = os.path.join(image_gt_dir, query_image)
-        converted_image_gt_path = os.path.join(image_gt_dir, query_image.replace(".jpg", ".pgm"))
+
+        if( exists(comparison_data_path) == False):
+            print("comaprison_data_path does not exist")
+            exit()
+
+        converted_image_gt_path = os.path.join(comparison_data_path, query_image.replace(".jpg", ".pgm"))
 
         if(exists(converted_image_gt_path) == False):
             # convert image for VLFeat (required imagemagick)
             convert_command = ["convert", image_gt_path, converted_image_gt_path]
             subprocess.check_call(convert_command)
 
-        converted_image_gt_sift_path_no_classify = converted_image_gt_path.replace(".pgm", ".sift_not_classified")
+        converted_image_gt_sift_path_all = converted_image_gt_path.replace(".pgm", ".sift_all")
         converted_image_gt_sift_path_classify = converted_image_gt_path.replace(".pgm", ".sift_classified")
-        vlfeat_command_no_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path_no_classify, converted_image_gt_path]
+        vlfeat_command_no_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path_all, converted_image_gt_path]
         vlfeat_command_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--classify", predicting_matchability_random_forest, "--cl-thresh", "0.525", "--output", converted_image_gt_sift_path_classify, converted_image_gt_path]
+
+        # This is to generate visuals for my thesis
+        print("Running show_projected_points() for " + image_gt_path)
+        show_projected_points(image_gt_path, comparison_data_path, query_image, converted_image_gt_sift_path_all, converted_image_gt_sift_path_classify)
 
         # original
         subprocess.check_call(vlfeat_command_no_classify)
         #  just to get the length
-        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_no_classify)
-        len_descs_no_classify = keypoints_xy_descs.shape[0]
+        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_all)
+        len_descs_all_classify = keypoints_xy_descs.shape[0]
 
         # predicting matchability code
         #  overwrites the "converted_image_gt_sift_path" file
@@ -85,7 +97,7 @@ def feature_matcher_wrapper_predicting_matchability(base_path, db, query_images,
         queryDescriptors = keypoints_xy_descs[:,4:132]
         len_descs = queryDescriptors.shape[0]
 
-        percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_no_classify)
+        percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_all_classify)
 
         queryDescriptors = queryDescriptors.astype(np.float32)  # required for opencv
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
