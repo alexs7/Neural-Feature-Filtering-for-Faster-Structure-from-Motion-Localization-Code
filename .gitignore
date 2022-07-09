@@ -32,3 +32,4 @@ plots/*.csv
 plots/CMU*
 plots/Coop*
 code_to_compare/Predicting_Matchability/VLFeat_SIFT/test_images/
+code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build
