@@ -48,13 +48,7 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
     percentage_reduction_total = 0
     image_gt_dir = os.path.join(base_path, 'gt/images/')
 
-    import pdb
-    pdb.set_trace()
-
     # TODO: 09/07/2022 Code below will have to be revised to match second paper
-
-    vlfeat_command_path = "code_to_compare/Predicting_Matchability/VLFeat_SIFT/VLFeat_SIFT"
-    predicting_matchability_random_forest = "code_to_compare/Predicting_Matchability/VLFeat_SIFT/rforest.gz"
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -62,47 +56,20 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
         if(verbose):
             print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
-        image_gt_path = os.path.join(image_gt_dir, query_image)
-
         if( exists(comparison_data_path) == False):
             print("comparison_data_path does not exist")
             exit()
 
-        query_image_no_folder = query_image.split("/")[1]
-        converted_image_gt_path = os.path.join(comparison_data_path, query_image_no_folder.replace(".jpg", ".pgm")) #split here is to get rid of the "session7/" folder name
+        image_id = get_image_id(db,query_image)
+        # keypoints data (first keypoint correspond to the first descriptor etc etc)
+        keypoints_xy = get_keypoints_xy(db, image_id)
+        queryDescriptors = get_queryDescriptors(db, image_id)
 
-        if(exists(converted_image_gt_path) == False):
-            # convert image for VLFeat (required imagemagick)
-            convert_command = ["convert", image_gt_path, converted_image_gt_path]
-            subprocess.check_call(convert_command)
+        import pdb
+        pdb.set_trace()
 
-        converted_image_gt_sift_path_all = converted_image_gt_path.replace(".pgm", ".sift_all")
-        converted_image_gt_sift_path_classify = converted_image_gt_path.replace(".pgm", ".sift_classified")
-        vlfeat_command_no_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path_all, converted_image_gt_path]
-        vlfeat_command_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--classify", predicting_matchability_random_forest, "--cl-thresh", "0.525", "--output", converted_image_gt_sift_path_classify, converted_image_gt_path]
+        # Creating masks to pass to match or not match code
 
-        # original
-        subprocess.check_call(vlfeat_command_no_classify)
-        #  just to get the length
-        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_all)
-        len_descs_all_classify = keypoints_xy_descs.shape[0]
-
-        # predicting matchability code
-        #  overwrites the "converted_image_gt_sift_path" file
-        start = time.time()
-        subprocess.check_call(vlfeat_command_classify) #calling predicting matchability code
-        end = time.time()
-        elapsed_time = end - start
-        total_time += elapsed_time
-
-        # This is to generate visuals for my thesis
-        print("Running show_projected_points() for " + image_gt_path)
-        show_projected_points(image_gt_path, comparison_data_path, query_image_no_folder, converted_image_gt_sift_path_all, converted_image_gt_sift_path_classify)
-
-        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_classify)
-        keypoints_xy = keypoints_xy_descs[:,0:2]
-        queryDescriptors = keypoints_xy_descs[:,4:132]
-        len_descs = queryDescriptors.shape[0]
 
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_all_classify)
 
