@@ -1,6 +1,4 @@
-# This file is copied from my previous publication and using now with minor modification for the ML approach
-#  such as not normalising the descriptors.
-# creates 2d-3d matches data for ransac comparison
+# This file was added to create 2D-3D matches for Match or No Match: Keypoint Filtering based on Matching Probability (2020) paper
 import os
 import time
 from itertools import chain
@@ -9,10 +7,6 @@ import numpy as np
 import sys
 import subprocess
 from os.path import exists
-
-# creates 2d-3d matches data for ransac comparison
-from show_2D_points_predicting_matchability import show_projected_points
-
 
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
@@ -40,7 +34,7 @@ def get_image_id(db, query_image):
     image_id = str(image_id.fetchone()[0])
     return image_id
 
-def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, top_no = None, verbose= True):
+def feature_matcher_wrapper_match_or_no_match(base_path, masks_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, top_no = None, verbose= True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -53,17 +47,28 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
         query_image = query_images[i]
+        query_name_only = query_image.split("/")[1].split(".")[0]
         if(verbose):
             print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
-        if( exists(comparison_data_path) == False):
-            print("comparison_data_path does not exist")
+        if( exists(masks_path) == False):
+            print("masks_path does not exist")
             exit()
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+
+        query_image_file = cv2.imread(os.path.join(image_gt_dir, query_image))
+        mask = np.zeros([query_image_file.shape[0], query_image_file.shape[1]])
+        # reverse here as y is the width and x is the height, values
+        # keypoints from COLMAP use the convention that the upper left image corner has coordinate (0, 0) == x,y.
+        # np array "mask", uses numpy conventions, row_idx = y, column_idx = x
+        row_idx = np.floor(keypoints_xy[:,1]).astype(int)
+        column_idx = np.floor(keypoints_xy[:,0]).astype(int)
+        mask[row_idx,column_idx] = 1 #Mask specifying where to look for keypoints. It must be a 8-bit integer matrix with non-zero values in the region of interest.
+        cv2.imwrite(os.path.join(masks_path, query_name_only + ".png"), mask * 255)
 
         import pdb
         pdb.set_trace()

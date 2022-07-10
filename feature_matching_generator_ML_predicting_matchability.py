@@ -1,6 +1,4 @@
-# This file is copied from my previous publication and using now with minor modification for the ML approach
-#  such as not normalising the descriptors.
-# creates 2d-3d matches data for ransac comparison
+# This file was added to create 2D-3D matches for Predicting Matchability (2014) paper
 import os
 import time
 from itertools import chain
@@ -9,10 +7,7 @@ import numpy as np
 import sys
 import subprocess
 from os.path import exists
-
-# creates 2d-3d matches data for ransac comparison
 from show_2D_points_predicting_matchability import show_projected_points
-
 
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")

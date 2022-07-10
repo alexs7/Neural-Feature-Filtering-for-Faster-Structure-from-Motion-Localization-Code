@@ -30,6 +30,7 @@ random_percentage = int(sys.argv[5])
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 comparison_data_path = os.path.join(base_path, "match_or_no_match_comparison_data")
+masks_path = os.path.join(os.path.join(comparison_data_path, dataset + "_" + slice), "masks")
 
 print("Base path: " + base_path)
 
@@ -54,8 +55,11 @@ ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no 
 print("Creating dirs for for Match or No Match: Keypoint Filtering based on Matching Probability (2020) files..")
 os.makedirs(comparison_data_path, exist_ok=True)
 
+print("Creating masks dirs..")
+os.makedirs(masks_path, exist_ok=True)
+
 print("Getting matches using Match or No Match: Keypoint Filtering based on Matching Probability (2020)..")
-matches, matching_time = feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, top_no=random_percentage)
+matches, matching_time = feature_matcher_wrapper_match_or_no_match(base_path, masks_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, top_no=random_percentage)
 print("Feature Matching time: " + str(matching_time))
 print()
 
