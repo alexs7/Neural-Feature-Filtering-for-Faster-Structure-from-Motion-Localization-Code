@@ -32,8 +32,6 @@
 
 int main(int argc, char** argv) {
 
-    std::cout << "Step 0" << std::endl;
-
 	// INPUTS *********************************************************************************************
 	/// For Training and Testing phase: Amount of features which define the classifier architecture. (8=proposed, 128=Predicting matchability 2014)
 	// TODO -  change this to run for diff architectures. Also change the file with the model in the directory
@@ -75,15 +73,12 @@ int main(int argc, char** argv) {
 	cv::Mat testDescSrcPred, testDescTarPred;
 	int iter = fn.size();
 
-    std::cout << "Step 1" << std::endl;
-
 	// Iterate over testing images
 	for (double k = 0; k < iter; k++)
 	{
 		cv::String name;
         std::cout << "change src for image " << fn[k];
         testImageInputSrc = imread(fn[k]);
-        std::cout << "Step 2" << std::endl;
         name = fn[k];
 
         if (!testImageInputSrc.data) {

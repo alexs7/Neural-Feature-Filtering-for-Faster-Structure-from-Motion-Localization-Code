@@ -30,7 +30,8 @@ random_percentage = int(sys.argv[5])
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 comparison_data_path = os.path.join(base_path, "match_or_no_match_comparison_data")
-masks_path = os.path.join(os.path.join(comparison_data_path, dataset + "_" + slice), "masks")
+match_or_no_match_tool_path = "code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build"
+masks_path = os.path.join(match_or_no_match_tool_path, "masks")
 
 print("Base path: " + base_path)
 

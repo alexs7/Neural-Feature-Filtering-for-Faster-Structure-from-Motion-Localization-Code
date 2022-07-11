@@ -68,13 +68,17 @@ def feature_matcher_wrapper_match_or_no_match(base_path, masks_path, db, query_i
         row_idx = np.floor(keypoints_xy[:,1]).astype(int)
         column_idx = np.floor(keypoints_xy[:,0]).astype(int)
         mask[row_idx,column_idx] = 1 #Mask specifying where to look for keypoints. It must be a 8-bit integer matrix with non-zero values in the region of interest.
+
+        # For each image you will have to save a mask and call the match or not match tool for that image
+        # Copy an image from the gt folder to the folder of the tool 'Test Images'
+        # and run the match or no match tool on a single image passing its mask
+        # then maybe delete the image ?
         cv2.imwrite(os.path.join(masks_path, query_name_only + ".png"), mask * 255)
 
         import pdb
         pdb.set_trace()
 
         # Creating masks to pass to match or not match code
-
 
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_all_classify)
 
