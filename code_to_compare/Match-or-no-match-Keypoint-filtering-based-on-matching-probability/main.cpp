@@ -32,6 +32,8 @@
 
 int main(int argc, char** argv) {
 
+    std:string mask_path = 
+
 	// INPUTS *********************************************************************************************
 	/// For Training and Testing phase: Amount of features which define the classifier architecture. (8=proposed, 128=Predicting matchability 2014)
 	// TODO -  change this to run for diff architectures. Also change the file with the model in the directory

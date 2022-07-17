@@ -8,6 +8,8 @@ import sys
 import subprocess
 from os.path import exists
 
+match_or_no_match_command = "./home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/matchornomatch"
+
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
     query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
@@ -70,18 +72,17 @@ def feature_matcher_wrapper_match_or_no_match(base_path, masks_path, db, query_i
         mask[row_idx,column_idx] = 1 #Mask specifying where to look for keypoints. It must be a 8-bit integer matrix with non-zero values in the region of interest.
 
         # For each image you will have to create a mask using the keypoints above.
-        # Then the mask will be applied on the image and the masked resulting image will be passed to
-        # the algorithm of Match or No Match paper. This keeps the code modifications minimal from the paper
-        # Save the masked image to the folder of the tool 'Test Images'
-        # and run the match or no match tool on that masked image
-        # then maybe delete the image ?
+        # Then the mask will be applied on the image (in the cpp code).
+        # The reason why you have to pass the mask in the c++ code is because you can't pass the
+        # the masked image as it eliminates data around the keypoint (the SIFT patch needed)
 
+        mask = mask.astype(np.uint8) * 255
+        cv2.imwrite(os.path.join(masks_path, query_name_only + ".png"), mask)
+
+        # match or no match command
         import pdb
         pdb.set_trace()
-
-        cv2.imwrite(os.path.join(masks_path, query_name_only + ".png"), mask * 255)
-
-
+        subprocess.check_call(match_or_no_match_command)
 
         # Creating masks to pass to match or not match code
 
