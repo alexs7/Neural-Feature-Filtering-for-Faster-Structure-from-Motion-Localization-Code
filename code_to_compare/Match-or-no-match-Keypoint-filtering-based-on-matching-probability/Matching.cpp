@@ -7,7 +7,7 @@ void Matching::detectAndDescribe(const cv::Mat & img, std::vector<cv::KeyPoint>&
 	// Keypoint Detection
 	cv::Ptr<cv::Feature2D> pImageSIFT = cv::SIFT::create();
 	//::xfeatures2d::SIFT::create();
-	pImageSIFT->detect(img, imgKps, mask);
+	pImageSIFT->detect(img, imgKps);
 
 	for (int i = 0; i < imgKps.size(); i++)
 	{

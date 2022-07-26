@@ -7,8 +7,9 @@ import numpy as np
 import sys
 import subprocess
 from os.path import exists
+import shutil
 
-match_or_no_match_command = "./home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/matchornomatch"
+match_or_no_match_command = "/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/matchornomatch"
 
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
@@ -36,20 +37,21 @@ def get_image_id(db, query_image):
     image_id = str(image_id.fetchone()[0])
     return image_id
 
-def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, top_no = None, verbose= True):
+def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose= True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     total_time = 0
     percentage_reduction_total = 0
     image_gt_dir = os.path.join(base_path, 'gt/images/')
+    test_images_tool_path = "code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/Test Images"
 
     # TODO: 09/07/2022 Code below will have to be revised to match second paper
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
         query_image = query_images[i]
-        query_name_only = query_image.split("/")[1].split(".")[0]
+        query_name_only_ext = query_image.split("/")[1]
         if(verbose):
             print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
@@ -59,12 +61,21 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         queryDescriptors = get_queryDescriptors(db, image_id)
 
         query_image_file = cv2.imread(os.path.join(image_gt_dir, query_image))
+        src_image_path = os.path.join(image_gt_dir, query_image)
+        dest_image_test_path = os.path.join(test_images_tool_path, query_name_only_ext)
+        shutil.copyfile(src_image_path, dest_image_test_path)
+
+        # match or no match command
+        start = time.time()
+        subprocess.check_call(match_or_no_match_command)
+        end = time.time()
+        elapsed_time = end - start
+        total_time += elapsed_time
+
+        os.remove(dest_image_test_path) #remove image we are doing images one by one
 
         import pdb
         pdb.set_trace()
-
-        # match or no match command
-        subprocess.check_call(match_or_no_match_command)
 
 
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_all_classify)
