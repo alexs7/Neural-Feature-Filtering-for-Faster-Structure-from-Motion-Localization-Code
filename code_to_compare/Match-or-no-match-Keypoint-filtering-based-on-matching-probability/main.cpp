@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
         // Create proper sift file name
         const char *b = ".sift";
         std::string c = rawname + b;
-        std::string rawnameSift = c.insert(0, "Sift/");
+        std::string rawnameSift = c.insert(0, "Sift/"); //TODO: Need to create dir Sift manually - Alex
         const char *nameSift = rawnameSift.c_str();
 
         file1 = fopen(nameSift, "w");
