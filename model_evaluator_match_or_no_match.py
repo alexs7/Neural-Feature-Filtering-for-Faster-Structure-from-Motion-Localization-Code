@@ -56,7 +56,7 @@ print("Creating dirs for for Match or No Match: Keypoint Filtering based on Matc
 os.makedirs(comparison_data_path, exist_ok=True)
 
 print("Getting matches using Match or No Match: Keypoint Filtering based on Matching Probability (2020)..")
-matches, matching_time = feature_matcher_wrapper_match_or_no_match(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, top_no=random_percentage)
+matches, matching_time = feature_matcher_wrapper_match_or_no_match(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
 print("Feature Matching time: " + str(matching_time))
 print()
 
