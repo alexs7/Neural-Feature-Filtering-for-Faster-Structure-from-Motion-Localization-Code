@@ -60,6 +60,7 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
+        len_descs = queryDescriptors.shape[0]
 
         query_image_file = cv2.imread(os.path.join(image_gt_dir, query_image))
         src_image_path = os.path.join(image_gt_dir, query_image)
@@ -75,17 +76,20 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
 
         os.remove(dest_image_test_path) #remove image we are doing images one by one
 
-        import pdb
-        pdb.set_trace()
         image_results_path = os.path.join(match_or_no_match_tool_cwd, "Sift", query_name_only_ext + ".txt")
-        np.load(image_results_path)
-    
-        percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_all_classify)
+        results = np.loadtxt(image_results_path)
+        len_descs_classified = results.shape[0]
+
+        percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_classified)
 
         queryDescriptors = queryDescriptors.astype(np.float32)  # required for opencv
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()
+
+        import pdb
+        pdb.set_trace()
+
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
