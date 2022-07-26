@@ -36,7 +36,7 @@ def get_image_id(db, query_image):
     image_id = str(image_id.fetchone()[0])
     return image_id
 
-def feature_matcher_wrapper_match_or_no_match(base_path, masks_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, top_no = None, verbose= True):
+def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, top_no = None, verbose= True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -53,38 +53,19 @@ def feature_matcher_wrapper_match_or_no_match(base_path, masks_path, db, query_i
         if(verbose):
             print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
-        if( exists(masks_path) == False):
-            print("masks_path does not exist")
-            exit()
-
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
 
         query_image_file = cv2.imread(os.path.join(image_gt_dir, query_image))
-        mask = np.zeros([query_image_file.shape[0], query_image_file.shape[1]])
-        # reverse here as y is the width and x is the height, values
-        # keypoints from COLMAP use the convention that the upper left image corner has coordinate (0, 0) == x,y.
-        # np array "mask", uses numpy conventions, row_idx = y, column_idx = x
-        row_idx = np.floor(keypoints_xy[:,1]).astype(int)
-        column_idx = np.floor(keypoints_xy[:,0]).astype(int)
-        mask[row_idx,column_idx] = 1 #Mask specifying where to look for keypoints. It must be a 8-bit integer matrix with non-zero values in the region of interest.
 
-        # For each image you will have to create a mask using the keypoints above.
-        # Then the mask will be applied on the image (in the cpp code).
-        # The reason why you have to pass the mask in the c++ code is because you can't pass the
-        # the masked image as it eliminates data around the keypoint (the SIFT patch needed)
-
-        mask = mask.astype(np.uint8) * 255
-        cv2.imwrite(os.path.join(masks_path, query_name_only + ".png"), mask)
-
-        # match or no match command
         import pdb
         pdb.set_trace()
+
+        # match or no match command
         subprocess.check_call(match_or_no_match_command)
 
-        # Creating masks to pass to match or not match code
 
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_all_classify)
 
