@@ -77,7 +77,6 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         import pdb
         pdb.set_trace()
 
-
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_all_classify)
 
         queryDescriptors = queryDescriptors.astype(np.float32)  # required for opencv
