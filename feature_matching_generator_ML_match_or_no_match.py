@@ -59,7 +59,7 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
-        queryDescriptors = get_queryDescriptors(db, image_id)
+        queryDescriptors = get_queryDescriptors(db, image_id) #just to get their size
         len_descs = queryDescriptors.shape[0]
 
         query_image_file = cv2.imread(os.path.join(image_gt_dir, query_image))
@@ -80,15 +80,12 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         results = np.loadtxt(image_results_path)
         len_descs_classified = results.shape[0]
 
-        percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_classified)
+        percentage_reduction_total = percentage_reduction_total + (100 - len_descs_classified * 100 / len_descs)
 
-        queryDescriptors = queryDescriptors.astype(np.float32)  # required for opencv
+        queryDescriptors = results[:, -128:].astype(np.float32) # replacing queryDescriptors here so to keep code changes minimal
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()
-
-        import pdb
-        pdb.set_trace()
 
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
@@ -117,6 +114,9 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         if (ratio_test_val == 1.0):
             if (len(good_matches) != len(temp_matches)):
                 print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
+
+        import pdb
+        pdb.set_trace()
 
         end = time.time()
         elapsed_time = end - start
