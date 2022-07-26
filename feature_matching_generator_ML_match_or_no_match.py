@@ -10,7 +10,7 @@ from os.path import exists
 import shutil
 
 match_or_no_match_command = "./matchornomatch"
-match_or_no_match_tool_cwd_params = "/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/"
+match_or_no_match_tool_cwd = "/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/"
 
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
@@ -68,7 +68,7 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
 
         # match or no match command
         start = time.time()
-        subprocess.check_call([match_or_no_match_command], cwd=match_or_no_match_tool_cwd_params)
+        subprocess.check_call([match_or_no_match_command], cwd=match_or_no_match_tool_cwd)
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
@@ -77,7 +77,9 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
 
         import pdb
         pdb.set_trace()
-
+        image_results_path = os.path.join(match_or_no_match_tool_cwd, "Sift", query_name_only_ext + ".txt")
+        np.load(image_results_path)
+    
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_all_classify)
 
         queryDescriptors = queryDescriptors.astype(np.float32)  # required for opencv
