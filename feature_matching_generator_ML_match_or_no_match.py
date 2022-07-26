@@ -83,6 +83,8 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs_classified * 100 / len_descs)
 
         queryDescriptors = results[:, -128:].astype(np.float32) # replacing queryDescriptors here so to keep code changes minimal
+        keypoints_xy = results[:, 0:2] # replacing keypoints_xy as they are mapped to queryDescriptors
+
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()
