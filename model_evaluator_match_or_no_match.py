@@ -60,7 +60,7 @@ matches, matching_time = feature_matcher_wrapper_match_or_no_match(base_path, db
 print("Feature Matching time: " + str(matching_time))
 print()
 
-print("Benchmarking ML model(s)..")
+print("Benchmarking Match or No Match: Keypoint Filtering based on Matching Probability (2020) untrained model..")
 benchmarks_iters = 3
 results = np.empty([0,8])
 image_pose_errors_all = []
@@ -73,6 +73,9 @@ print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f
 print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
 results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1, 8)]
 print()
+
+import pdb
+pdb.set_trace()
 
 print("Loading baseline results for comparison..")
 random_matches_data = np.load(os.path.join(prepared_data_path, "random_matches_data_"+str(random_percentage)+".npy")).reshape(1,8)

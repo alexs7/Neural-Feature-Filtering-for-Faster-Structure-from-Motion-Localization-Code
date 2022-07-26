@@ -115,9 +115,6 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
             if (len(good_matches) != len(temp_matches)):
                 print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
 
-        import pdb
-        pdb.set_trace()
-
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
