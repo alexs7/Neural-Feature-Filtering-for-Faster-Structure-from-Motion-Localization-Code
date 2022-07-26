@@ -9,9 +9,8 @@ import subprocess
 from os.path import exists
 import shutil
 
-match_or_no_match_tool_path = "code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/matchornomatch"
-match_or_no_match_tool_folder_path = "code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build"
-match_or_no_match_command = "matchornomatch"
+match_or_no_match_command = "./matchornomatch"
+match_or_no_match_tool_cwd_params = "/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/"
 
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
@@ -68,14 +67,11 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         shutil.copyfile(src_image_path, dest_image_test_path)
 
         # match or no match command
-        cwd = os.getcwd()
-        os.chdir(os.path.join(cwd, match_or_no_match_tool_folder_path))
         start = time.time()
-        subprocess.check_call(match_or_no_match_command)
+        subprocess.check_call([match_or_no_match_command], cwd=match_or_no_match_tool_cwd_params)
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
-        os.chdir(cwd) # change back
 
         os.remove(dest_image_test_path) #remove image we are doing images one by one
 
