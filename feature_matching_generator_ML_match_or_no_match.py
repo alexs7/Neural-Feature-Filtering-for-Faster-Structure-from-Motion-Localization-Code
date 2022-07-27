@@ -94,6 +94,16 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
 
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs_classified * 100 / len_descs)
 
+        idxs = np.empty([])
+        for res in results:
+            res_rnd = np.round(res[0:2])
+            res_rnd = res_rnd.astype(int)
+            import pdb
+            pdb.set_trace()
+            idx = np.where((keypoints_xy_rnd[:, 0] == res_rnd[0]) & (keypoints_xy_rnd[:, 1] == res_rnd[1]))[0][0]
+            idxs = np.append(idxs, idx)
+        assert(idxs.shape[0] == results.shape[0])
+
         import pdb
         pdb.set_trace()
 
