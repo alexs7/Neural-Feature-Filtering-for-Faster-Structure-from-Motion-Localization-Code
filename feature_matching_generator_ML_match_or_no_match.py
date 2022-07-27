@@ -81,19 +81,19 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
 
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs_classified * 100 / len_descs)
 
-        idxs = np.empty([])
+        idxs = np.empty([0])
         for res in results:
-            matched = np.where(np.isclose(keypoints_xy[:, 0], res[0], atol=1) & np.isclose(keypoints_xy[:, 1], res[1], atol=1))[0]
+            matched = np.where(np.isclose(keypoints_xy[:, 0], res[0], atol=2) & np.isclose(keypoints_xy[:, 1], res[1], atol=2))[0]
             if(matched.shape[0] == 0):
                 continue
             idxs = np.append(idxs, matched[0])
 
+        # from now on I will be using the descs and keypoints that Match or No Match deemed matchable
+        queryDescriptors = queryDescriptors[idxs] # replacing queryDescriptors here so to keep code changes minimal
+        keypoints_xy = keypoints_xy[idxs] # replacing keypoints_xy as they are mapped to queryDescriptors
+
         import pdb
         pdb.set_trace()
-        assert(idxs.shape[0] == results.shape[0])
-
-        queryDescriptors = results[:, -128:].astype(np.float32) # replacing queryDescriptors here so to keep code changes minimal
-        keypoints_xy = results[:, 0:2] # replacing keypoints_xy as they are mapped to queryDescriptors
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
