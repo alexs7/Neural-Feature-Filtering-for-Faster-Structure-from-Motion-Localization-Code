@@ -13,7 +13,9 @@ public:
 	//destructor
 	~Matching(void) {};
 
-	static void detectAndDescribe(const cv::Mat & img, const cv::Mat & mask, std::vector<cv::KeyPoint>& imgKps, cv::Mat & imgDesc, const cv::String & KpsOfImageX);
+	static void detectAndDescribeMask(const cv::Mat & img, const cv::Mat & mask, std::vector<cv::KeyPoint>& imgKps, cv::Mat & imgDesc, const cv::String & KpsOfImageX);
+
+	static void detectAndDescribe(const cv::Mat & img,  std::vector<cv::KeyPoint>& imgKps, cv::Mat & imgDesc, const cv::String & KpsOfImageX);
 
 	static void printMatches(const cv::Mat & source, const cv::Mat & target, const std::vector<cv::KeyPoint>& srcKps, const std::vector<cv::KeyPoint>& tarKps, const std::vector<cv::DMatch>& matches, cv::String const & KindOfMatches);
 

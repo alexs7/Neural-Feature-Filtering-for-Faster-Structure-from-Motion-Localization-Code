@@ -2,12 +2,39 @@
 
 
 // Detect and Describe the SIFT keypoints within an image
-void Matching::detectAndDescribe(const cv::Mat & img, const cv::Mat & mask, std::vector<cv::KeyPoint>& imgKps, cv::Mat &imgDesc, const cv::String& KpsOfImageX)
+void Matching::detectAndDescribeMask(const cv::Mat & img, const cv::Mat & mask, std::vector<cv::KeyPoint>& imgKps, cv::Mat &imgDesc, const cv::String& KpsOfImageX)
 {
 	// Keypoint Detection
 	cv::Ptr<cv::Feature2D> pImageSIFT = cv::SIFT::create();
 	//::xfeatures2d::SIFT::create();
 	pImageSIFT->detect(img, imgKps, mask);
+	
+	std::cout << imgKps.size() << std::endl;
+
+	for (int i = 0; i < imgKps.size(); i++)
+	{
+		std::cout << i << std::endl;
+//		cv::circle(img, cv::Point(imgKps[i].pt.x, imgKps[i].pt.y), 9, cv::Scalar(0, 0, 255), 1);
+	}
+
+	cv::Mat img_down;
+	const int IMAGE_DOWNSAMPLE = 1;
+	cv::resize(img, img_down, img.size() / IMAGE_DOWNSAMPLE);
+//	cv::imshow(KpsOfImageX, img_down);
+	std::cout << KpsOfImageX << std::endl;
+	cv::imwrite(KpsOfImageX + ".png", img);
+
+	// Keypoint description
+	pImageSIFT->compute(img, imgKps, imgDesc);
+}
+
+
+void Matching::detectAndDescribe(const cv::Mat & img, std::vector<cv::KeyPoint>& imgKps, cv::Mat &imgDesc, const cv::String& KpsOfImageX)
+{
+	// Keypoint Detection
+	cv::Ptr<cv::Feature2D> pImageSIFT = cv::SIFT::create();
+	//::xfeatures2d::SIFT::create();
+	pImageSIFT->detect(img, imgKps);
 
 	for (int i = 0; i < imgKps.size(); i++)
 	{
@@ -23,6 +50,7 @@ void Matching::detectAndDescribe(const cv::Mat & img, const cv::Mat & mask, std:
 	// Keypoint description
 	pImageSIFT->compute(img, imgKps, imgDesc);
 }
+
 
 // Print the calculated matches
 void Matching::printMatches(const cv::Mat & source, const cv::Mat & target, const std::vector<cv::KeyPoint> &srcKps, const std::vector<cv::KeyPoint> &tarKps, const std::vector< cv::DMatch >& matches, cv::String const& KindOfMatches)

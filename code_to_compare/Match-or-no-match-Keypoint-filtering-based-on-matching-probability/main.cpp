@@ -81,8 +81,8 @@ int main(int argc, char *argv[]) {
 		cv::String name;
         std::cout << "change src for image " << fn[k] << std::endl;;
         testImageInputSrc = imread(fn[k]);
-        mask_path = argv[1]
-        mask = imread(mask_path);
+        mask_path = argv[1];
+        mask = imread(mask_path, CV_8U);
         std::cout << "Loaded mask!" << std::endl;;
         name = fn[k];
 

@@ -257,7 +257,7 @@ void App::predictOnImage(const cv::Mat & testImageInput, const cv::Mat & mask, c
 	cv::Mat testImage = testImageInput.clone();
 
 	// Detect and describe SIFT keypoints on image
-	matching.detectAndDescribe(testImage, mask, testKps, testDesc, imageSrcDet);
+	matching.detectAndDescribeMask(testImage, mask, testKps, testDesc, imageSrcDet);
 
 	// Calculate features (variables) according to the selected architecture
 	cv::Mat1f featuresTest(testKps.size(), n_featuresWrtMethod, CV_32F);
