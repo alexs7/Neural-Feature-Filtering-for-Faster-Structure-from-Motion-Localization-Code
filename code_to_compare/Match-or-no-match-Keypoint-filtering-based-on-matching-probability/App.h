@@ -18,7 +18,7 @@ public:
 
 	static void trainForest(const cv::String & trainedDataPath, const int featAmount);
 
-	static void predictOnImage(const cv::Mat & testImageInput, const cv::Mat & mask, const cv::String trainedModelXMLFile, const cv::String CSVfileTestImagePredictions, std::vector<cv::KeyPoint> &testKps, cv::Mat &testDesc, cv::Mat &labelsPredicted, const int n_featuresWrtMethod);
+	static void predictOnImage(const cv::Mat & testImageInput, const cv::String trainedModelXMLFile, const cv::String CSVfileTestImagePredictions, std::vector<cv::KeyPoint> &testKps, cv::Mat &testDesc, cv::Mat &labelsPredicted, const int n_featuresWrtMethod);
 };
 
 

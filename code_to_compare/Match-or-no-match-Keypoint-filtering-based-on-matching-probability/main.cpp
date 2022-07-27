@@ -72,8 +72,6 @@ int main(int argc, char *argv[]) {
 	std::vector<cv::KeyPoint> testKpsSrcCut, testKpsTarCut;
 	cv::Mat testDescSrcPred, testDescTarPred;
 	int iter = fn.size();
-    cv::String mask_path;
-    cv::Mat mask;
 
 	// Iterate over testing images
 	for (double k = 0; k < iter; k++)
@@ -81,9 +79,6 @@ int main(int argc, char *argv[]) {
 		cv::String name;
         std::cout << "change src for image " << fn[k] << std::endl;;
         testImageInputSrc = imread(fn[k]);
-        mask_path = argv[1];
-        mask = imread(mask_path, CV_8U);
-        std::cout << "Loaded mask!" << std::endl;;
         name = fn[k];
 
         if (!testImageInputSrc.data) {
@@ -106,7 +101,7 @@ int main(int argc, char *argv[]) {
         const char* CSVfileTestImagePredictions = rawnameCopy.c_str();
 
         clock_t tStartPre = clock();
-        App::predictOnImage(testImageInputSrc, mask, trainedModel, CSVfileTestImagePredictions, testKpsSrc, testDescSrc, labelsPredictedSrc, n_featuresWrtMethod);
+        App::predictOnImage(testImageInputSrc, trainedModel, CSVfileTestImagePredictions, testKpsSrc, testDescSrc, labelsPredictedSrc, n_featuresWrtMethod);
         printf("Prediction execution time: %.2fs\n", (double)(clock() - tStartPre) / CLOCKS_PER_SEC);
 
         // Isolate predicted matchable keypoints and descriptors for image Src
