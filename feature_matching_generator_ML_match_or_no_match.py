@@ -46,10 +46,6 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
     percentage_reduction_total = 0
     image_gt_dir = os.path.join(base_path, 'gt/images/')
     test_images_tool_path = "code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/Test Images"
-    masks_path = "code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/masks"
-
-    print("Creating masks dirs..")
-    os.makedirs(masks_path, exist_ok=True)
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -64,15 +60,7 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         queryDescriptors = get_queryDescriptors(db, image_id) #just to get their size
         len_descs = queryDescriptors.shape[0]
 
-        keypoints_xy_rnd = np.round(keypoints_xy).astype(int)
         query_image_file = cv2.imread(os.path.join(image_gt_dir, query_image))
-
-        # create mask
-        mask = np.zeros(query_image_file.shape[0:2])
-        mask[keypoints_xy_rnd[:,1], keypoints_xy_rnd[:,0]] = 255
-        mask = np.uint8(mask)
-        mask_path = os.path.join(masks_path, query_name_only_ext)
-        cv2.imwrite(mask_path, mask)
 
         src_image_path = os.path.join(image_gt_dir, query_image)
         dest_image_test_path = os.path.join(test_images_tool_path, query_name_only_ext)
@@ -86,7 +74,6 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         total_time += elapsed_time
 
         os.remove(dest_image_test_path) #remove image, we are doing images one by one
-        os.remove(mask_path) #remove mask, we are doing images one by one
 
         image_results_path = os.path.join(match_or_no_match_tool_cwd, "Sift", query_name_only_ext + ".txt")
         results = np.loadtxt(image_results_path)
@@ -96,11 +83,8 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
 
         idxs = np.empty([])
         for res in results:
-            res_rnd = np.round(res[0:2])
-            res_rnd = res_rnd.astype(int)
-            import pdb
-            pdb.set_trace()
-            idx = np.where((keypoints_xy_rnd[:, 0] == res_rnd[0]) & (keypoints_xy_rnd[:, 1] == res_rnd[1]))[0][0]
+            idx = np.where(np.isclose(keypoints_xy[:, 0], res[0], atol=0.5) &
+                           np.isclose(keypoints_xy[:, 1],res[1], atol=0.5))[0][0]
             idxs = np.append(idxs, idx)
         assert(idxs.shape[0] == results.shape[0])
 
