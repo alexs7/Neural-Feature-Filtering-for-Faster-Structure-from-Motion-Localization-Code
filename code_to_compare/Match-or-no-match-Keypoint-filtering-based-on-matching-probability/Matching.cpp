@@ -13,15 +13,13 @@ void Matching::detectAndDescribeMask(const cv::Mat & img, const cv::Mat & mask, 
 
 	for (int i = 0; i < imgKps.size(); i++)
 	{
-		std::cout << i << std::endl;
-//		cv::circle(img, cv::Point(imgKps[i].pt.x, imgKps[i].pt.y), 9, cv::Scalar(0, 0, 255), 1);
+		cv::circle(img, cv::Point(imgKps[i].pt.x, imgKps[i].pt.y), 9, cv::Scalar(0, 0, 255), 1);
 	}
 
 	cv::Mat img_down;
 	const int IMAGE_DOWNSAMPLE = 1;
 	cv::resize(img, img_down, img.size() / IMAGE_DOWNSAMPLE);
 //	cv::imshow(KpsOfImageX, img_down);
-	std::cout << KpsOfImageX << std::endl;
 	cv::imwrite(KpsOfImageX + ".png", img);
 
 	// Keypoint description
