@@ -2,12 +2,12 @@
 
 
 // Detect and Describe the SIFT keypoints within an image
-void Matching::detectAndDescribe(const cv::Mat & img, std::vector<cv::KeyPoint>& imgKps, cv::Mat &imgDesc, const cv::String& KpsOfImageX)
+void Matching::detectAndDescribe(const cv::Mat & img, const cv::Mat & mask, std::vector<cv::KeyPoint>& imgKps, cv::Mat &imgDesc, const cv::String& KpsOfImageX)
 {
 	// Keypoint Detection
 	cv::Ptr<cv::Feature2D> pImageSIFT = cv::SIFT::create();
 	//::xfeatures2d::SIFT::create();
-	pImageSIFT->detect(img, imgKps);
+	pImageSIFT->detect(img, imgKps, mask);
 
 	for (int i = 0; i < imgKps.size(); i++)
 	{

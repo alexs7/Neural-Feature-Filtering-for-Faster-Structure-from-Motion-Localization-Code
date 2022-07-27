@@ -240,7 +240,7 @@ void App::trainForest(const cv::String & trainedDataPath, const int featAmount){
 }
 
 // Testing phase. Apply the classifier to get predicted matchable keypoints for an image
-void App::predictOnImage(const cv::Mat & testImageInput, const cv::String trainedModelXMLFile, const cv::String CSVfileTestImagePredictions, std::vector<cv::KeyPoint> &testKps, cv::Mat &testDesc, cv::Mat &labelsPredicted, const int n_featuresWrtMethod) {
+void App::predictOnImage(const cv::Mat & testImageInput, const cv::Mat & mask, const cv::String trainedModelXMLFile, const cv::String CSVfileTestImagePredictions, std::vector<cv::KeyPoint> &testKps, cv::Mat &testDesc, cv::Mat &labelsPredicted, const int n_featuresWrtMethod) {
 
 	// TODO-Deactivate image showing to improve performance
 	cv::String win3, imageSrcDet, fileSrcPred;
@@ -257,7 +257,7 @@ void App::predictOnImage(const cv::Mat & testImageInput, const cv::String traine
 	cv::Mat testImage = testImageInput.clone();
 
 	// Detect and describe SIFT keypoints on image
-	matching.detectAndDescribe(testImage, testKps, testDesc, imageSrcDet);
+	matching.detectAndDescribe(testImage, mask, testKps, testDesc, imageSrcDet);
 
 	// Calculate features (variables) according to the selected architecture
 	cv::Mat1f featuresTest(testKps.size(), n_featuresWrtMethod, CV_32F);
