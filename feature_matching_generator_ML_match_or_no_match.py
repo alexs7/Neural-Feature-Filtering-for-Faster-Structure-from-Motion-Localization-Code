@@ -93,14 +93,13 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
         queryDescriptors = queryDescriptors[idxs] # replacing queryDescriptors here so to keep code changes minimal
         keypoints_xy = keypoints_xy[idxs] # replacing keypoints_xy as they are mapped to queryDescriptors
 
+        np.save(os.path.join(comparison_data_path, image_id), keypoints_xy) #use these later for illustration
+
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()
 
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
-
-        import pdb
-        pdb.set_trace()
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
         # m the closest, n is the second closest
