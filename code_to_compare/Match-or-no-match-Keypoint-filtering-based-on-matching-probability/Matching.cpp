@@ -9,8 +9,6 @@ void Matching::detectAndDescribeMask(const cv::Mat & img, const cv::Mat & mask, 
 	//::xfeatures2d::SIFT::create();
 	pImageSIFT->detect(img, imgKps, mask);
 	
-	std::cout << imgKps.size() << std::endl;
-
 	for (int i = 0; i < imgKps.size(); i++)
 	{
 		cv::circle(img, cv::Point(imgKps[i].pt.x, imgKps[i].pt.y), 9, cv::Scalar(0, 0, 255), 1);
