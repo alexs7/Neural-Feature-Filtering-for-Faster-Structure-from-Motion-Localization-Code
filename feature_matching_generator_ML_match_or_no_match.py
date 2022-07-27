@@ -94,6 +94,9 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
 
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs_classified * 100 / len_descs)
 
+        import pdb
+        pdb.set_trace()
+
         queryDescriptors = results[:, -128:].astype(np.float32) # replacing queryDescriptors here so to keep code changes minimal
         keypoints_xy = results[:, 0:2] # replacing keypoints_xy as they are mapped to queryDescriptors
 
