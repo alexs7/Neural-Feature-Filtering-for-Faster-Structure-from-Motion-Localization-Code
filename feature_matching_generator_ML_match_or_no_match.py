@@ -38,7 +38,7 @@ def get_image_id(db, query_image):
     image_id = str(image_id.fetchone()[0])
     return image_id
 
-def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose= True):
+def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose= True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
@@ -87,22 +87,20 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
             if(matched.shape[0] == 0):
                 continue
             idxs = np.append(idxs, matched[0])
+        idxs = idxs.astype(int)
 
         # from now on I will be using the descs and keypoints that Match or No Match deemed matchable
         queryDescriptors = queryDescriptors[idxs] # replacing queryDescriptors here so to keep code changes minimal
         keypoints_xy = keypoints_xy[idxs] # replacing keypoints_xy as they are mapped to queryDescriptors
 
-        import pdb
-        pdb.set_trace()
-
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()
 
+        temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
+
         import pdb
         pdb.set_trace()
-
-        temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
         # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
         # m the closest, n is the second closest
