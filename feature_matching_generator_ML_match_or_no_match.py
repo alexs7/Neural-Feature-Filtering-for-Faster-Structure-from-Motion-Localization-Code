@@ -46,8 +46,10 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
     percentage_reduction_total = 0
     image_gt_dir = os.path.join(base_path, 'gt/images/')
     test_images_tool_path = "code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/Test Images"
+    masks_path = "code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/masks"
 
-    # TODO: 09/07/2022 Code below will have to be revised to match second paper
+    print("Creating masks dirs..")
+    os.makedirs(masks_path, exist_ok=True)
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -62,19 +64,29 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         queryDescriptors = get_queryDescriptors(db, image_id) #just to get their size
         len_descs = queryDescriptors.shape[0]
 
+        keypoints_xy_rnd = np.round(keypoints_xy).astype(int)
         query_image_file = cv2.imread(os.path.join(image_gt_dir, query_image))
+
+        # create mask
+        mask = np.zeros(query_image_file.shape[0:2])
+        mask[keypoints_xy_rnd[:,1], keypoints_xy_rnd[:,0]] = 255
+        mask = np.uint8(mask)
+        mask_path = os.path.join(masks_path, query_name_only_ext)
+        cv2.imwrite(mask_path, mask)
+
         src_image_path = os.path.join(image_gt_dir, query_image)
         dest_image_test_path = os.path.join(test_images_tool_path, query_name_only_ext)
         shutil.copyfile(src_image_path, dest_image_test_path)
 
         # match or no match command
         start = time.time()
-        subprocess.check_call([match_or_no_match_command], cwd=match_or_no_match_tool_cwd)
+        subprocess.check_call([match_or_no_match_command, os.path.join("masks", query_name_only_ext)], cwd=match_or_no_match_tool_cwd)
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
 
-        os.remove(dest_image_test_path) #remove image we are doing images one by one
+        os.remove(dest_image_test_path) #remove image, we are doing images one by one
+        os.remove(mask_path) #remove mask, we are doing images one by one
 
         image_results_path = os.path.join(match_or_no_match_tool_cwd, "Sift", query_name_only_ext + ".txt")
         results = np.loadtxt(image_results_path)
@@ -88,6 +100,9 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()
+
+        import pdb
+        pdb.set_trace()
 
         temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
 
