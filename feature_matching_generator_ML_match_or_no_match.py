@@ -83,13 +83,14 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
 
         idxs = np.empty([])
         for res in results:
-            idx = np.where(np.isclose(keypoints_xy[:, 0], res[0], atol=0.5) &
-                           np.isclose(keypoints_xy[:, 1],res[1], atol=0.5))[0][0]
-            idxs = np.append(idxs, idx)
+            matched = np.where(np.isclose(keypoints_xy[:, 0], res[0], atol=1) & np.isclose(keypoints_xy[:, 1], res[1], atol=1))[0]
+            if(matched.shape[0] == 0):
+                import pdb
+                pdb.set_trace()
+                continue
+            idxs = np.append(idxs, matched[0])
+            
         assert(idxs.shape[0] == results.shape[0])
-
-        import pdb
-        pdb.set_trace()
 
         queryDescriptors = results[:, -128:].astype(np.float32) # replacing queryDescriptors here so to keep code changes minimal
         keypoints_xy = results[:, 0:2] # replacing keypoints_xy as they are mapped to queryDescriptors
