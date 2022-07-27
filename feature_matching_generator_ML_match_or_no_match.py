@@ -80,7 +80,7 @@ def feature_matcher_wrapper_match_or_no_match(base_path, db, query_images, train
 
         # match or no match command
         start = time.time()
-        subprocess.check_call([match_or_no_match_command, os.path.join("masks", query_name_only_ext)], cwd=match_or_no_match_tool_cwd)
+        subprocess.check_call([match_or_no_match_command], cwd=match_or_no_match_tool_cwd)
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
