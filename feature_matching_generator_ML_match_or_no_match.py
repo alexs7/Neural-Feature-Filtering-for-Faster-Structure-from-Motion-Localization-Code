@@ -86,10 +86,8 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
         idxs = np.empty([0])
         for kp_idx in range(keypoints_xy.shape[0]):
             kp = keypoints_xy[kp_idx]
+            # matched, here will be an index for results[] so do not use it to get COLMAPs keypoints
             matched = np.where(np.isclose(kp[0], results[:, 0], atol=2) & np.isclose(kp[1], results[:, 1], atol=2))[0]
-            if(matched.shape[0] > 1):
-                import pdb
-                pdb.set_trace()
             if (matched.shape[0] != 0): #then it means COLMAP keypoint was found in results[] so save it
                 idxs = np.append(idxs, kp_idx)
         idxs = idxs.astype(int)
