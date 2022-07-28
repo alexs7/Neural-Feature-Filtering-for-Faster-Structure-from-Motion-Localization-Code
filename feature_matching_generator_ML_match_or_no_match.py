@@ -93,7 +93,7 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
         verif_img = query_image_file.copy()
         for kp in keypoints_xy:
             kp = kp.astype(int)
-            cv2.circle(verif_img, (kp[0], kp[1]), 4, (0, 0, 255), -1)
+            cv2.circle(verif_img, (kp[0], kp[1]), 4, (0, 0, 255), -1) #red
 
         # from now on I will be using the descs and keypoints that Match or No Match deemed matchable
         queryDescriptors = queryDescriptors[idxs] # replacing queryDescriptors here so to keep code changes minimal
@@ -103,7 +103,7 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
 
         for kp in keypoints_xy:
             kp = kp.astype(int)
-            cv2.circle(verif_img, (kp[0], kp[1]), 2, (0, 255, 0), -1)
+            cv2.circle(verif_img, (kp[0], kp[1]), 3, (0, 255, 0), -1) # green
 
         cv2.imwrite(os.path.join(comparison_data_path, image_id + ".jpg"), verif_img)
 
