@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
         file2 = fopen(nameSift2, "w");
         int n2 = testDescSrcPred.rows;
         int d2 = testDescSrcPred.cols;
-        // fprintf(file2, "%d %d\n", n2, d2); //TODO: Removed to make parsing with no easier - Alex
+        // fprintf(file2, "%d %d\n", n2, d2); //TODO: Removed to make parsing with numpy easier - Alex
         for (int i = 0; i < n2; i++) {
         	// first y and then x
         	fprintf(file2, "%f %f %f %f", testKpsSrcCut[i].pt.x, testKpsSrcCut[i].pt.y, testKpsSrcCut[i].octave, testKpsSrcCut[i].angle);

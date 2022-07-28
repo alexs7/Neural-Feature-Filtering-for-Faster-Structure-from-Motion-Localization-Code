@@ -81,6 +81,9 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
 
         percentage_reduction_total = percentage_reduction_total + (100 - len_descs_classified * 100 / len_descs)
 
+        import pdb
+        pdb.set_trace()
+
         idxs = np.empty([0])
         for res in results:
             matched = np.where(np.isclose(keypoints_xy[:, 0], res[0], atol=2) & np.isclose(keypoints_xy[:, 1], res[1], atol=2))[0]
