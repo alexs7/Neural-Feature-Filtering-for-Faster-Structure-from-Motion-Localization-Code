@@ -91,6 +91,22 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
                 continue
             idxs = np.append(idxs, matched[0])
         idxs = idxs.astype(int)
+        print(idxs.shape)
+
+        import pdb
+        pdb.set_trace()
+
+        idxs = np.empty([0])
+        for kp in keypoints_xy:
+            matched = np.where(np.isclose(results[:, 0], kp[0], atol=2) & np.isclose(results[:, 1], kp[1], atol=2))[0]
+            if (matched.shape[0] == 0):
+                continue
+            idxs = np.append(idxs, matched[0])
+        idxs = idxs.astype(int)
+        print(idxs.shape)
+
+        import pdb
+        pdb.set_trace()
 
         # write original ones first before replacing them below
         verif_img = query_image_file.copy()
