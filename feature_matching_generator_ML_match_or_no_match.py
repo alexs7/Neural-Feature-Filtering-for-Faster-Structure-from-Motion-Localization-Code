@@ -89,11 +89,22 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
             idxs = np.append(idxs, matched[0])
         idxs = idxs.astype(int)
 
+        # write original ones first before replacing them below
+        verif_img = query_image_file.copy()
+        for kp in keypoints_xy:
+            cv2.circle(verif_img, (kp[0], kp[1]), 2, (0, 0, 255), -1)
+
         # from now on I will be using the descs and keypoints that Match or No Match deemed matchable
         queryDescriptors = queryDescriptors[idxs] # replacing queryDescriptors here so to keep code changes minimal
         keypoints_xy = keypoints_xy[idxs] # replacing keypoints_xy as they are mapped to queryDescriptors
 
         np.save(os.path.join(comparison_data_path, image_id), keypoints_xy) #use these later for illustration
+
+        verif_img = query_image_file.copy()
+        for kp in keypoints_xy:
+            cv2.circle(verif_img, (kp[0], kp[1]), 1, (0, 255, 0), -1)
+
+        cv2.imwrite(os.path.join(comparison_data_path, image_id + ".jpg"), verif_img)
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
