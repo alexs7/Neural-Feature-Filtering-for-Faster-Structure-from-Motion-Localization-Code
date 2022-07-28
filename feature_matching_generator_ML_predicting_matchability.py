@@ -51,6 +51,13 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
         if(verbose):
             print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
+        # COLMAP Data
+        image_id = get_image_id(db, query_image)
+        # keypoints data (first keypoint correspond to the first descriptor etc etc)
+        keypoints_xy_colmap = get_keypoints_xy(db, image_id)
+        queryDescriptors_colmap = get_queryDescriptors(db, image_id)  # just to get their size
+        len_descs_colmap = queryDescriptors_colmap.shape[0]
+
         image_gt_path = os.path.join(image_gt_dir, query_image)
 
         if( exists(comparison_data_path) == False):
@@ -70,6 +77,9 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
         vlfeat_command_no_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path_all, converted_image_gt_path]
         vlfeat_command_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--classify", predicting_matchability_random_forest, "--cl-thresh", "0.525", "--output", converted_image_gt_sift_path_classify, converted_image_gt_path]
 
+        import pdb
+        pdb.set_trace()
+
         # original
         subprocess.check_call(vlfeat_command_no_classify)
         #  just to get the length
@@ -87,6 +97,9 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
         # This is to generate visuals for my thesis
         print("Running show_projected_points() for " + image_gt_path)
         show_projected_points(image_gt_path, comparison_data_path, query_image_no_folder, converted_image_gt_sift_path_all, converted_image_gt_sift_path_classify)
+
+        import pdb
+        pdb.set_trace()
 
         keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_classify)
         keypoints_xy = keypoints_xy_descs[:,0:2]
