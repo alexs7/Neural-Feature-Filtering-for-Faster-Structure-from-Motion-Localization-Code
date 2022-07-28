@@ -1,5 +1,6 @@
 # This file was added to create 2D-3D matches for Predicting Matchability (2014) paper
 import os
+import pdb
 import time
 from itertools import chain
 import cv2
@@ -7,7 +8,7 @@ import numpy as np
 import sys
 import subprocess
 from os.path import exists
-from show_2D_points_predicting_matchability import show_projected_points
+from joblib import load
 
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
@@ -35,15 +36,16 @@ def get_image_id(db, query_image):
     image_id = str(image_id.fetchone()[0])
     return image_id
 
-def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, top_no = None, verbose= True):
+def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose= True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matches_sum = []
     total_time = 0
     percentage_reduction_total = 0
     image_gt_dir = os.path.join(base_path, 'gt/images/')
-    vlfeat_command_path = "code_to_compare/Predicting_Matchability/VLFeat_SIFT/VLFeat_SIFT"
-    predicting_matchability_random_forest = "code_to_compare/Predicting_Matchability/VLFeat_SIFT/rforest.gz"
+    print("Loading Model - Random Forest")
+    model_path = os.path.join(base_path, "predicting_matchability_comparison_data/rf_model.joblib")
+    rnd_forest = load(model_path)
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
@@ -54,9 +56,9 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
         # COLMAP Data
         image_id = get_image_id(db, query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
-        keypoints_xy_colmap = get_keypoints_xy(db, image_id)
-        queryDescriptors_colmap = get_queryDescriptors(db, image_id)  # just to get their size
-        len_descs_colmap = queryDescriptors_colmap.shape[0]
+        keypoints_xy = get_keypoints_xy(db, image_id)
+        queryDescriptors = get_queryDescriptors(db, image_id)  # just to get their size
+        len_descs = queryDescriptors.shape[0]
 
         image_gt_path = os.path.join(image_gt_dir, query_image)
 
@@ -64,51 +66,34 @@ def feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_p
             print("comparison_data_path does not exist")
             exit()
 
-        query_image_no_folder = query_image.split("/")[1]
-        converted_image_gt_path = os.path.join(comparison_data_path, query_image_no_folder.replace(".jpg", ".pgm")) #split here is to get rid of the "session7/" folder name
-
-        if(exists(converted_image_gt_path) == False):
-            # convert image for VLFeat (required imagemagick)
-            convert_command = ["convert", image_gt_path, converted_image_gt_path]
-            subprocess.check_call(convert_command)
-
-        converted_image_gt_sift_path_all = converted_image_gt_path.replace(".pgm", ".sift_all")
-        converted_image_gt_sift_path_classify = converted_image_gt_path.replace(".pgm", ".sift_classified")
-        vlfeat_command_no_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--output", converted_image_gt_sift_path_all, converted_image_gt_path]
-        vlfeat_command_classify = [vlfeat_command_path, "--octaves", "2", "--levels", "3", "--first-octave", "0", "--peak-thresh", "0.001", "--edge-thresh", "10.0", "--magnif", "3", "--classify", predicting_matchability_random_forest, "--cl-thresh", "0.525", "--output", converted_image_gt_sift_path_classify, converted_image_gt_path]
-
-        import pdb
-        pdb.set_trace()
-
-        # original
-        subprocess.check_call(vlfeat_command_no_classify)
-        #  just to get the length
-        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_all)
-        len_descs_all_classify = keypoints_xy_descs.shape[0]
-
         # predicting matchability code
         #  overwrites the "converted_image_gt_sift_path" file
         start = time.time()
-        subprocess.check_call(vlfeat_command_classify) #calling predicting matchability code
+        predictions = rnd_forest.predict(queryDescriptors)
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
 
-        # This is to generate visuals for my thesis
-        print("Running show_projected_points() for " + image_gt_path)
-        show_projected_points(image_gt_path, comparison_data_path, query_image_no_folder, converted_image_gt_sift_path_all, converted_image_gt_sift_path_classify)
+        positive_samples_no = len(np.where(predictions == 1)[0])
+        percentage_reduction_total = percentage_reduction_total + (100 -  positive_samples_no * 100 / len_descs)
 
-        import pdb
-        pdb.set_trace()
+        query_image_file = cv2.imread(image_gt_path)
+        verif_img = query_image_file.copy() #need a copy here
+        for kp in keypoints_xy:
+            kp = kp.astype(int)
+            cv2.circle(verif_img, (kp[0], kp[1]), 4, (0, 0, 255), -1) #red
+        for kp in keypoints_xy[predictions == 1]: #only positive ones
+            kp = kp.astype(int)
+            cv2.circle(verif_img, (kp[0], kp[1]), 4, (0, 255, 0), -1) #green
 
-        keypoints_xy_descs = np.loadtxt(converted_image_gt_sift_path_classify)
-        keypoints_xy = keypoints_xy_descs[:,0:2]
-        queryDescriptors = keypoints_xy_descs[:,4:132]
-        len_descs = queryDescriptors.shape[0]
+        #Save image to disk
+        verif_img_path = os.path.join(comparison_data_path, query_image.split('/')[1])
+        cv2.imwrite(verif_img_path, verif_img)
 
-        percentage_reduction_total = percentage_reduction_total + (100 - len_descs * 100 / len_descs_all_classify)
+        # from now on I will be using the descs and keypoints that Predicting Matchability (2014) deemed matchable
+        queryDescriptors = queryDescriptors[predictions == 1] # replacing queryDescriptors here so to keep code changes minimal
+        keypoints_xy = keypoints_xy[predictions == 1] # replacing keypoints_xy as they are mapped to queryDescriptors
 
-        queryDescriptors = queryDescriptors.astype(np.float32)  # required for opencv
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()

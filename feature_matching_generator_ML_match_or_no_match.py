@@ -79,8 +79,6 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
         results = np.loadtxt(image_results_path)
         len_descs_classified = results.shape[0]
 
-        percentage_reduction_total = percentage_reduction_total + (100 - len_descs_classified * 100 / len_descs)
-
         # Looping though COLMAP's keypoints and checking if they are matchable,
         # i.e they are found in the results[] array
         idxs = np.empty([0])
@@ -91,6 +89,8 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
             if (matched.shape[0] != 0): #then it means COLMAP keypoint was found in results[] so save it
                 idxs = np.append(idxs, kp_idx)
         idxs = idxs.astype(int)
+
+        percentage_reduction_total = percentage_reduction_total + (100 - len(idxs) * 100 / len_descs)
 
         # write original ones first before replacing them below
         verif_img = query_image_file.copy()

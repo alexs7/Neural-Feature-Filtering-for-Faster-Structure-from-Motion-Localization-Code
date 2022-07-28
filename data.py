@@ -1,4 +1,4 @@
-from sklearn import preprocessing
+import os.path
 from database import COLMAPDatabase
 import numpy as np
 
@@ -72,3 +72,23 @@ def getCombinedData(db_path, score_name):
     print("Total Training Size: " + str(sift_vecs.shape[0]))
 
     return sift_vecs, scores, classes
+
+def getTrainingDataForPredictingMatchability(base_path, random_samples_no):
+    predicting_matchability_db_path = os.path.join(base_path, "training_data.db")
+    training_data_db = COLMAPDatabase.connect(predicting_matchability_db_path)
+    print("Getting data from db..")
+    matched = training_data_db.execute("SELECT sift FROM data WHERE matched = 1").fetchall()
+    unmatched = training_data_db.execute("SELECT sift FROM data WHERE matched = 0").fetchall()
+    sift_matched = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in matched)
+    sift_matched = np.array(list(sift_matched))
+    sift_unmatched = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in unmatched)
+    sift_unmatched = np.array(list(sift_unmatched))
+
+    if(sift_matched.shape[0] < random_samples_no): #if less samples are available
+        random_samples_no = sift_matched.shape[0]
+
+    random_idxs = np.random.choice(np.arange(sift_matched.shape[0]), random_samples_no, replace=False)
+    random_pos_samples = sift_matched[random_idxs,:]
+    random_neg_samples = sift_unmatched[random_idxs,:]
+
+    return random_pos_samples, random_neg_samples

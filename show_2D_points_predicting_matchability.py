@@ -3,9 +3,9 @@ import sys
 import cv2
 import numpy as np
 
-def show_projected_points(image_gt_path, comaprison_data_path, query_image_no_folder, sift_path_all, sift_path_classified):
+def save_projected_points_PM(image_gt_path, comaprison_data_path, all_kp, neg_kp):
     red = (0, 0, 255)
-    blue = (255, 0, 0)
+    green = (0, 255, 0)
 
     image = cv2.imread(image_gt_path)
     image_out_path = os.path.join(comaprison_data_path, query_image_no_folder)

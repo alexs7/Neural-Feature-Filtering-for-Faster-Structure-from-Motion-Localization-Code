@@ -4,6 +4,18 @@ import sys
 import numpy as np
 
 IS_PYTHON3 = sys.version_info[0] >= 3
+MAX_IMAGE_ID = 2**31 - 1
+
+def image_ids_to_pair_id(image_id1, image_id2):
+    if image_id1 > image_id2:
+        image_id1, image_id2 = image_id2, image_id1
+    return image_id1 * MAX_IMAGE_ID + image_id2
+
+
+def pair_id_to_image_ids(pair_id):
+    image_id2 = pair_id % MAX_IMAGE_ID
+    image_id1 = (pair_id - image_id2) / MAX_IMAGE_ID
+    return image_id1, image_id2
 
 class COLMAPDatabase(sqlite3.Connection):
 
@@ -14,7 +26,7 @@ class COLMAPDatabase(sqlite3.Connection):
     @staticmethod
     def blob_to_array(blob, dtype, shape=(-1,)):
         if IS_PYTHON3:
-            return np.frombuffer(blob, dtype=dtype).reshape(*shape)
+            return np.fromstring(blob, dtype=dtype).reshape(*shape)
         else:
             return np.frombuffer(blob, dtype=dtype).reshape(*shape)
 
@@ -46,6 +58,25 @@ class COLMAPDatabase(sqlite3.Connection):
                                                 xy BLOB NOT NULL,
                                                 matched INTEGER NOT NULL
                                             );"""
+        conn = None
+        try:
+            conn = sqlite3.connect(db_file)
+            conn.execute(sql_drop_table_if_exists)
+            conn.commit()
+            conn.execute(sql_create_data_table)
+            conn.commit()
+            return conn
+        except Error as e:
+            print(e)
+
+    @staticmethod
+    def create_db_predicting_matchability_data(db_file):
+        sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
+        sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
+                                                    image_ids BLOB NOT NULL,
+                                                    sift BLOB NOT NULL,
+                                                    matched INTEGER NOT NULL
+                                                );"""
         conn = None
         try:
             conn = sqlite3.connect(db_file)

@@ -1,32 +1,21 @@
 import os
-
 from feature_matching_generator_ML_predicting_matchability import feature_matcher_wrapper_predicting_matchability
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
-from tensorflow import keras
-from RANSACParameters import RANSACParameters
 from database import COLMAPDatabase
-from feature_matching_generator_ML import feature_matcher_wrapper_model_cl, feature_matcher_wrapper_model_cl_rg, feature_matcher_wrapper_model_rg, \
-    feature_matcher_wrapper_model_cb
-from parameters import Parameters
 import numpy as np
-from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
-from point3D_loader import read_points3d_default, get_points3D_xyz
-from ransac_prosac import ransac, ransac_dist, prosac
-from get_scale import calc_scale_COLMAP_ARCORE
-from benchmark import benchmark, benchmark_ml
+from ransac_prosac import ransac
+from benchmark import benchmark_ml
 import sys
 
 # Read the original file model_evaluator.py for notes.
-# This file was added to evaluate Predicting Matchability (2014) paper
+# Similarly to model_evaluator.py, in sequence NOT parallel
+# python3 model_evaluator_predicting_matchability.py colmap_data/CMU_data/slice3/ 10 && python3 model_evaluator_predicting_matchability.py colmap_data/CMU_data/slice4/ 10 && python3 model_evaluator_predicting_matchability.py colmap_data/CMU_data/slice6/ 10 && python3 model_evaluator_predicting_matchability.py colmap_data/CMU_data/slice10/ 10 && python3 model_evaluator_predicting_matchability.py colmap_data/CMU_data/slice11/ 10 && python3 model_evaluator_predicting_matchability.py colmap_data/Coop_data/slice1/ 10
+# This file was added to evaluate Predicting Matchability - PM (2014) paper
 
 base_path = sys.argv[1]
-models_dir = "colmap_data/tensorboard_results"
-dataset = sys.argv[2]
-slice = sys.argv[3]
-model = sys.argv[4]
-# percentage number 5%, 10%, 20% etc (08/08/2021 - use only 10% for paper)
-random_percentage = int(sys.argv[5])
+random_percentage = int(sys.argv[2]) #this is just used to load the data (the 10% case in this case)
+
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 comparison_data_path = os.path.join(base_path, "predicting_matchability_comparison_data")
@@ -55,11 +44,11 @@ print("Creating dirs for for Predicting Matchability (2014) files..")
 os.makedirs(comparison_data_path, exist_ok=True)
 
 print("Getting matches using Predicting Matchability (2014)..")
-matches, matching_time = feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, top_no=random_percentage)
+matches, matching_time = feature_matcher_wrapper_predicting_matchability(base_path, comparison_data_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
 print("Feature Matching time: " + str(matching_time))
 print()
 
-print("Benchmarking ML model(s)..")
+print("Benchmarking PM 2014 Random Forest model(s)..")
 benchmarks_iters = 3
 results = np.empty([0,8])
 image_pose_errors_all = []

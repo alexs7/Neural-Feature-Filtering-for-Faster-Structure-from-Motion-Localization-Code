@@ -73,9 +73,6 @@ print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_error
 results = np.r_[results, np.array([inlers_no, outliers, iterations, time, matching_time, total_time_model, trans_errors_overall, rot_errors_overall]).reshape(1, 8)]
 print()
 
-import pdb
-pdb.set_trace()
-
 print("Loading baseline results for comparison..")
 random_matches_data = np.load(os.path.join(prepared_data_path, "random_matches_data_"+str(random_percentage)+".npy")).reshape(1,8)
 vanillia_matches_data = np.load(os.path.join(prepared_data_path, "vanillia_matches_data_"+str(random_percentage)+".npy")).reshape(1,8)
