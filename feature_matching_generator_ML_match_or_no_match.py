@@ -101,7 +101,6 @@ def feature_matcher_wrapper_match_or_no_match(base_path, comparison_data_path, d
 
         np.save(os.path.join(comparison_data_path, image_id), keypoints_xy) #use these later for illustration
 
-        verif_img = query_image_file.copy()
         for kp in keypoints_xy:
             kp = kp.astype(int)
             cv2.circle(verif_img, (kp[0], kp[1]), 2, (0, 255, 0), -1)
