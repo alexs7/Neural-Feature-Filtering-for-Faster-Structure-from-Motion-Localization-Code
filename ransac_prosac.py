@@ -87,7 +87,6 @@ def ransac(matches_for_image, intrinsics):
             best_model['inliers'] = np.vstack((matches_for_image[(random_matches),:], inliers)) #add the previous random 4 matches too!
             best_model['inliers_for_refit'] = inliers
             best_model['outliers_no'] = outliers_no
-            best_model['iterations'] = k
             max = inliers_no
             e = outliers_no / len(matches_for_image)
             N = np.log(1 - p) / np.log(1 - np.power((1 - e), s))
@@ -108,6 +107,14 @@ def ransac(matches_for_image, intrinsics):
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
         best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5], intrinsics)
+        # 18/08/2022 save the iterations here
+        # this is because a 'best_model' can be found at k = 5 for example.
+        # but k can grow k > 5 and then the wrong time will be reported
+        best_model['iterations'] = k
+    else:
+        print("Why is this happening ? Investigate")
+        import pdb
+        pdb.set_trace()
 
     return best_model
 
@@ -146,7 +153,6 @@ def ransac_dist(matches_for_image, intrinsics):
             best_model['inliers'] = np.vstack((matches_for_image[(random_matches),:], inliers)) #add the previous random 4 matches too!
             best_model['inliers_for_refit'] = inliers
             best_model['outliers_no'] = outliers_no
-            best_model['iterations'] = k
             max = inliers_no
             e = outliers_no / len(matches_for_image)
             N = np.log(1 - p) / np.log(1 - np.power((1 - e), s))
@@ -167,6 +173,14 @@ def ransac_dist(matches_for_image, intrinsics):
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
         best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5], intrinsics)
+        # 18/08/2022 save the iterations here
+        # this is because a 'best_model' can be found at k = 5 for example.
+        # but k can grow k > 5 and then the wrong time will be reported
+        best_model['iterations'] = k
+    else:
+        print("Why is this happening ? Investigate")
+        import pdb
+        pdb.set_trace()
 
     return best_model
 
@@ -280,7 +294,7 @@ def prosac(sorted_matches, intrinsics):
             best_model['inliers'] = np.vstack((sample, inliers)) #add the previous random 4 matches too!
             best_model['inliers_for_refit'] = inliers
             best_model['outliers_no'] = CORRESPONDENCES - I_N
-            best_model['iterations'] = t
+            # best_model['iterations'] = t #18/08/2022 Moved. See comment below
 
             if(1):
                 epsilon_n_best = I_n_best / n_best
@@ -317,5 +331,13 @@ def prosac(sorted_matches, intrinsics):
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
         best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5], intrinsics)
+        # 18/08/2022 save the iterations here
+        # this is because a 'best_model' can be found at t = 5 for example.
+        # but t can grow t > 5 and then the wrong time will be reported
+        best_model['iterations'] = t
+    else:
+        print("Why is this happening ? Investigate")
+        import pdb
+        pdb.set_trace()
 
     return best_model
