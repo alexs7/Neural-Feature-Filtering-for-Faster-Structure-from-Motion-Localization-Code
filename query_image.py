@@ -398,3 +398,33 @@ def save_heatmap_of_image(image_path, K, P, points3D, outpath, values):
         cv2.circle(image, center, 7, (0, 0, 255), 2)
         cv2.circle(image, center, 5, (rgb_val, rgb_val, rgb_val), -1)
     cv2.imwrite(outpath, image)
+
+# 08/09/2022 added from: https://www.kaggle.com/code/eduardtrulls/imc2022-training-data?scriptVersionId=92062607
+def QuaternionFromMatrix(matrix):
+    '''Transform a rotation matrix into a quaternion.'''
+
+    M = np.array(matrix, dtype=np.float64, copy=False)[:4, :4]
+    m00 = M[0, 0]
+    m01 = M[0, 1]
+    m02 = M[0, 2]
+    m10 = M[1, 0]
+    m11 = M[1, 1]
+    m12 = M[1, 2]
+    m20 = M[2, 0]
+    m21 = M[2, 1]
+    m22 = M[2, 2]
+
+    K = np.array([[m00 - m11 - m22, 0.0, 0.0, 0.0],
+              [m01 + m10, m11 - m00 - m22, 0.0, 0.0],
+              [m02 + m20, m12 + m21, m22 - m00 - m11, 0.0],
+              [m21 - m12, m02 - m20, m10 - m01, m00 + m11 + m22]])
+    K /= 3.0
+
+    # The quaternion is the eigenvector of K that corresponds to the largest eigenvalue.
+    w, V = np.linalg.eigh(K)
+    q = V[[3, 0, 1, 2], np.argmax(w)]
+
+    if q[0] < 0:
+        np.negative(q, q)
+
+    return q

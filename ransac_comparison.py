@@ -1,6 +1,8 @@
 # 19/05/2021 Added run_comparison_ml for machine learning approaches
 import numpy as np
 import time
+from tqdm import tqdm
+
 from RANSACParameters import RANSACParameters
 
 # Example:  match_data = [[x, y, x, y, z , m.distance, n.distance], [h_m, h_n, r_m, r_n, v_m, v_n]] -> but flatten
@@ -215,3 +217,40 @@ def run_comparison_ml(func, matches, test_images, intrinsics, val_idx = None):
         data = np.r_[data, np.array([inliers_no, outliers_no, iterations, elapsed_time]).reshape([1,4])]
 
     return images_poses, data
+
+# 01/09/2022, This is used to return data per image! So I can examine later one by one!
+def run_comparison_generic_comparison_model(func, matches, test_images, intrinsics, val_idx = None):
+
+    #  this will hold inliers_no, outliers_no, iterations, time for each image
+    images_data = {}
+
+    for i in tqdm(range(len(test_images))):
+        image = test_images[i]
+        matches_for_image = matches[image]
+
+        assert(len(matches_for_image) >= 4)
+
+        if(val_idx is not None): #When using prosac the matches are already sorted so val_idx is None
+            if(val_idx < 0):
+                sub_dist = get_sub_distribution(matches_for_image, 7)
+                matches_for_image = np.hstack((matches_for_image, sub_dist))
+
+        start = time.time()
+        best_model = func(matches_for_image, intrinsics)
+
+        if(best_model == None):
+            print("\n Unable to get pose for image " + image)
+            images_data[image] = [None, None, None, None, None]
+            continue
+
+        end = time.time()
+        elapsed_time = end - start
+
+        pose = best_model['Rt']
+        inliers_no = best_model['inliers_no']
+        outliers_no = best_model['outliers_no']
+        iterations = best_model['iterations']
+
+        images_data[image] = [pose, inliers_no, outliers_no, iterations, elapsed_time]
+
+    return images_data

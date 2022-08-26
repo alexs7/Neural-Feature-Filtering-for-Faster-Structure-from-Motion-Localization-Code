@@ -1,3 +1,4 @@
+# This file returns the direct data to be used for model for training
 import os.path
 from database import COLMAPDatabase
 import numpy as np
@@ -74,11 +75,13 @@ def getCombinedData(db_path, score_name):
     return sift_vecs, scores, classes
 
 def getTrainingDataForPredictingMatchability(base_path, random_samples_no):
+    print("Getting data..")
     predicting_matchability_db_path = os.path.join(base_path, "training_data.db")
     training_data_db = COLMAPDatabase.connect(predicting_matchability_db_path)
-    print("Getting data from db..")
+
     matched = training_data_db.execute("SELECT sift FROM data WHERE matched = 1").fetchall()
     unmatched = training_data_db.execute("SELECT sift FROM data WHERE matched = 0").fetchall()
+
     sift_matched = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in matched)
     sift_matched = np.array(list(sift_matched))
     sift_unmatched = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in unmatched)
@@ -92,3 +95,26 @@ def getTrainingDataForPredictingMatchability(base_path, random_samples_no):
     random_neg_samples = sift_unmatched[random_idxs,:]
 
     return random_pos_samples, random_neg_samples
+
+def getTrainingDataForMatchNoMatch(base_path):
+    print("Getting data..")
+    match_no_match_db_path = os.path.join(base_path, "training_data.db")
+    training_data_db = COLMAPDatabase.connect(match_no_match_db_path)
+    raw_data = training_data_db.execute("SELECT * FROM data").fetchall()
+
+    sift = (COLMAPDatabase.blob_to_array(row[1], np.uint8) for row in raw_data)
+    sift = np.array(list(sift))
+    matched = (row[2] for row in raw_data)
+    matched = np.array(list(matched))
+    scales = (row[3] for row in raw_data)
+    scales = np.array(list(scales))
+    orientations = (row[4] for row in raw_data)
+    orientations = np.array(list(orientations))
+    xs = (row[5] for row in raw_data)
+    xs = np.array(list(xs))
+    ys = (row[6] for row in raw_data)
+    ys = np.array(list(ys))
+    greenInt = (row[7] for row in raw_data)
+    greenInt = np.array(list(greenInt))
+
+    return np.c_[sift, scales, orientations, xs, ys, greenInt, matched]

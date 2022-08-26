@@ -1,7 +1,7 @@
 # This file will load the training data from create_training_data_predicting_matchability.py
 # Train a RF classifier according to the paper, and save the model
 # to run for all datasets in parallel:
-# python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice3 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice4 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice6 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice10 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice11 & python3 train_for_predicting_matchability.py colmap_data/Coop_data/slice1
+# python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice3 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice4 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice6 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice10 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice11 & python3 train_for_predicting_matchability.py colmap_data/Coop_data/slice1 &
 
 import os
 import sys
@@ -15,6 +15,7 @@ print("Base path: " + base_path)
 
 db_live_path = os.path.join(base_path, "live/database.db")
 data_path = os.path.join(base_path, "predicting_matchability_comparison_data")
+db_path_vanillia = os.path.join(base_path, "ML_data/ml_database_all.db")
 
 # random_state, https://stackoverflow.com/questions/39158003/confused-about-random-state-in-decision-tree-of-scikit-learn
 # parameters are set from paper Section 3.2
@@ -38,6 +39,6 @@ print("Training..")
 rf.fit(X, y)
 
 print("Dumping model..")
-dump(rf, os.path.join(data_path, "rf_model.joblib"))
+dump(rf, os.path.join(data_path, "rf_model_PM.joblib"))
 
 print("Done!")
