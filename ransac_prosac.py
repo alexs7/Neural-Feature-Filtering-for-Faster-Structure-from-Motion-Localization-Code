@@ -55,6 +55,7 @@ def model_evaluate(matches_for_image, Rt, threshold, K):
     return inliers, indices
 
 def ransac(matches_for_image, intrinsics):
+    eps = 1e-15
     s = 4  # or minimal_sample_size
     p = 0.99 # this is a typical value
     # number of iterations (http://www.cse.psu.edu/~rtc12/CSE486/lecture15.pdf and https://youtu.be/5E5n7fhLHEM?list=PLTBdjV_4f-EKeki5ps2WHqJqyQvxls4ha&t=428)
@@ -92,7 +93,8 @@ def ransac(matches_for_image, intrinsics):
             best_model['inliers_for_refit'] = inliers
             best_model['outliers_no'] = outliers_no
             max = inliers_no
-            e = outliers_no / len(matches_for_image)
+            e = (outliers_no + eps) / len(matches_for_image) # +eps to avoid zero, otherwise it breaks the statement below
+
             N = np.log(1 - p) / np.log(1 - np.power((1 - e), s))
             N = int(np.floor(N))
             no_iterations = N
@@ -141,6 +143,7 @@ def ransac_dist(matches_for_image, intrinsics):
         obj_points = matches_for_image[(random_matches), 2:5]
 
         Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P, intrinsics)
+
         matches_without_random_matches = np.delete(matches_for_image, random_matches, axis=0)
         inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD, intrinsics)
 
