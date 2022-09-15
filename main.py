@@ -1,3 +1,4 @@
+# TODO: 15/09/2022, will need to refactor this to accomodate new benchmark()
 # Arguments
 import cv2
 from pathlib import Path

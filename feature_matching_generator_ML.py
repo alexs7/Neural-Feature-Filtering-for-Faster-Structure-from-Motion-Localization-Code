@@ -36,14 +36,16 @@ def get_image_id(db, query_image):
     return image_id
 
 # Will use raw descs not normalised, used in prepare_comparison_data.py
-def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose = False, points_scores_array=None, random_limit = -1):
+def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose = False, random_limit = -1):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
-    matches_sum = []
-    total_time = 0
+    images_percentage_reduction = {}
+    images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
+        total_time = 0
+        percentage_reduction = -1
         query_image = query_images[i]
         if(verbose): print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image, end="\r")
 
@@ -82,11 +84,6 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
                 xy2D = keypoints_xy[m.queryIdx, :].tolist()
                 xyz3D = points3D_xyz[m.trainIdx, :].tolist()
 
-                if (points_scores_array is not None):
-                    for points_scores in points_scores_array:
-                        scores.append(points_scores[0, m.trainIdx])
-                        scores.append(points_scores[0, n.trainIdx])
-
                 match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
                 match_data = list(chain(*match_data))
                 good_matches.append(match_data)
@@ -95,22 +92,20 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
         if(ratio_test_val == 1.0):
             assert len(good_matches) == len(temp_matches)
 
-        matches[query_image] = np.array(good_matches)
-        matches_sum.append(len(good_matches))
-
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
 
-    if(verbose):
-        print()
-        total_all_images = np.sum(matches_sum)
-        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
-        matches_all_avg = total_all_images / len(matches_sum)
-        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
+        if (random_limit != 1):
+            percentage_reduction = 100 - random_limit  # random %
+        else:
+            percentage_reduction = 0  # all baseline
 
-    total_avg_time = total_time / len(query_images)
-    return matches, total_avg_time
+        images_matching_time[query_image] = total_time
+        images_percentage_reduction[query_image] = percentage_reduction
+        matches[query_image] = np.array(good_matches)
+
+    return matches, images_matching_time, images_percentage_reduction
 
 # These will be used for benchmarking a ML model
 # There are several cases here that wil be tested:
@@ -120,16 +115,16 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
 # combined - cb
 # For each of the above cases there is a seperate method, sadly loads of duplicate code at least it is clear to understand
 # Depending on the case, It will predict if a desc if matchable or not first, then pick "class_top" (sorted) matchable descs to do the feature matching
-def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, top_no = None, verbose= True):
+def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, top_no = None):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
-    matches_sum = []
-    total_time = 0
     matchable_threshold = 0.5
-    percentage_reduction_total = 0
+    images_percentage_reduction = {}
+    images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
+        total_time = 0
         query_image = query_images[i]
         # if(verbose):
         #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
@@ -150,7 +145,7 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
         matchable_desc_indices = np.where(classifier_predictions > matchable_threshold)[0]  # matchable_desc_indices will index queryDescriptors/classifier_predictions
         matchable_desc_indices_length = matchable_desc_indices.shape[0]
 
-        percentage_reduction_total = percentage_reduction_total + (100 - matchable_desc_indices_length * 100 / queryDescriptors.shape[0])
+        percentage_reduction = (100 - matchable_desc_indices_length * 100 / queryDescriptors.shape[0])
 
         keypoints_xy = keypoints_xy[matchable_desc_indices]
         queryDescriptors = queryDescriptors[matchable_desc_indices]
@@ -162,7 +157,7 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
             classification_sorted_indices = classifier_predictions[:, 0].argsort()[::-1]
             end = time.time()
             elapsed_time = end - start
-            total_time += elapsed_time
+            total_time += elapsed_time #TODO: Maybe remove time addition 15/09/2022 ?
             keypoints_xy = keypoints_xy[classification_sorted_indices]
             queryDescriptors = queryDescriptors[classification_sorted_indices]
             # here I use the "percentage_num" value because as it was generated from the initial number of "queryDescriptors"
@@ -204,30 +199,22 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
         elapsed_time = end - start
         total_time += elapsed_time
 
+        images_matching_time[query_image] = total_time
+        images_percentage_reduction[query_image] = percentage_reduction
         matches[query_image] = np.array(good_matches)
-        matches_sum.append(len(good_matches))
 
-    if(verbose):
-        print()
-        total_all_images = np.sum(matches_sum)
-        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
-        matches_all_avg = total_all_images / len(matches_sum)
-        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
-        percentage_reduction_avg = percentage_reduction_total / len(query_images)
-        print("Average matches percentage reduction per image (regardless of top_no): " + str(percentage_reduction_avg) + "%")
+    return matches, images_matching_time, images_percentage_reduction
 
-    total_avg_time = total_time / len(query_images)
-    return matches, total_avg_time
-
-def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor, top_no = 10, verbose = True):
+def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor, top_no = 10):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
-    matches_sum = []
-    total_time = 0
     matchable_threshold = 0.5
+    images_percentage_reduction = {}
+    images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
+        total_time = 0
         query_image = query_images[i]
         # if(verbose):
         #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
@@ -302,27 +289,21 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
         elapsed_time = end - start
         total_time += elapsed_time
 
+        images_matching_time[query_image] = total_time
+        images_percentage_reduction[query_image] = 90 #this is just going to be 90% as we only pick the 10%
         matches[query_image] = np.array(good_matches)
-        matches_sum.append(len(good_matches))
 
-    if(verbose):
-        print()
-        total_all_images = np.sum(matches_sum)
-        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
-        matches_all_avg = total_all_images / len(matches_sum)
-        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
-
-    total_avg_time = total_time / len(query_images)
-    return matches, total_avg_time
+    return matches, images_matching_time, images_percentage_reduction
 
 def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, top_no = 10, verbose = True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
-    matches_sum = []
-    total_time = 0
+    images_percentage_reduction = {}
+    images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
+        total_time = 0
         query_image = query_images[i]
         # if(verbose):
         #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
@@ -385,27 +366,21 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
         elapsed_time = end - start
         total_time += elapsed_time
 
+        images_matching_time[query_image] = total_time
+        images_percentage_reduction[query_image] = 90  # this is just going to be 90% as we only pick the 10%
         matches[query_image] = np.array(good_matches)
-        matches_sum.append(len(good_matches))
 
-    if(verbose):
-        print()
-        total_all_images = np.sum(matches_sum)
-        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
-        matches_all_avg = total_all_images / len(matches_sum)
-        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
-
-    total_avg_time = total_time / len(query_images)
-    return matches, total_avg_time
+    return matches, images_matching_time, images_percentage_reduction
 
 def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, top_no = 10, verbose = True):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
-    matches_sum = []
-    total_time = 0
+    images_percentage_reduction = {}
+    images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in range(len(query_images)):
+        total_time = 0
         query_image = query_images[i]
         # if(verbose):
         #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
@@ -471,15 +446,8 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
         elapsed_time = end - start
         total_time += elapsed_time
 
+        images_matching_time[query_image] = total_time
+        images_percentage_reduction[query_image] = 90 #this is just going to be 90% as we only pick the 10%
         matches[query_image] = np.array(good_matches)
-        matches_sum.append(len(good_matches))
 
-    if(verbose):
-        print()
-        total_all_images = np.sum(matches_sum)
-        print("Total matches: " + str(total_all_images) + ", no of images " + str(len(query_images)))
-        matches_all_avg = total_all_images / len(matches_sum)
-        print("Average matches per image: " + str(matches_all_avg) + ", no of images " + str(len(query_images)))
-
-    total_avg_time = total_time / len(query_images)
-    return matches, total_avg_time
+    return matches, images_matching_time, images_percentage_reduction

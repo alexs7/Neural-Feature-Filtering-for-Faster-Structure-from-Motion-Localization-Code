@@ -3,6 +3,8 @@ import os
 import sys
 import numpy as np
 from pose_evaluator import pose_evaluate_generic_comparison_model, pose_evaluate_generic_comparison_model_Maa
+from database import COLMAPDatabase
+from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
 
 def get_matching_times(path):
     return np.loadtxt(os.path.join(path, "matching_time.txt"))
@@ -24,13 +26,29 @@ base_path = sys.argv[1]
 comparison_data_path = sys.argv[2]
 print("Base path: " + base_path)
 ml_path = os.path.join(base_path, "ML_data")
-scale = np.load(os.path.join(ml_path, "prepared_data/scale.npy"))
-query_images_ground_truth_poses = np.load(os.path.join(ml_path, "prepared_data/query_images_ground_truth_poses.npy"), allow_pickle=True).item()
 
+print("Loading Data..")
+scale = np.load(os.path.join(ml_path, "prepared_data/scale.npy"))
+db_gt_path = os.path.join(base_path, "gt/database.db")
+db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the query images descs as they do NOT exist in the LIVE db, only in GT db!
+
+# the "gt" here means ground truth (also used as query)
+query_images_bin_path = os.path.join(base_path, "gt/model/images.bin")
+query_images_path = os.path.join(base_path, "gt/query_name.txt")
+query_cameras_bin_path = os.path.join(base_path, "gt/model/cameras.bin")
+query_images = read_images_binary(query_images_bin_path)
+query_images_names = load_images_from_text_file(query_images_path)
+localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
+query_images_ground_truth_poses = get_query_images_pose_from_images(localised_query_images_names, query_images)
+K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3)  # 3 because 1 -base, 2 -live, 3 -query images
+
+# ------------------- TODO: update matching time stuff
 matching_times_pm = get_matching_times(comparison_data_path)
 good_matches_total_all_images_pm = good_matches_total_all_images(comparison_data_path)
 good_matches_avg_per_image_pm = good_matches_avg_per_image(comparison_data_path)
 percentage_reduction_avg_pm = percentage_reduction_avg(comparison_data_path)
+
+
 est_poses_results = load_est_poses_results(comparison_data_path)
 benchmark_iterations = len(est_poses_results)
 

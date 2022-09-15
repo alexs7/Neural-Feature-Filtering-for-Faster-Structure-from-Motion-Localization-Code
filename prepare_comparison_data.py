@@ -1,6 +1,6 @@
+# This file is the equivalent of model_evaluator.py and model_evaluator_comparison_models.py, but for random and baseline only
 import os
 import sys
-
 from database import COLMAPDatabase
 import numpy as np
 from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
@@ -8,7 +8,7 @@ from point3D_loader import read_points3d_default, get_points3D_xyz
 from feature_matching_generator_ML import feature_matcher_wrapper_ml
 from ransac_prosac import ransac, ransac_dist, prosac
 from get_scale import calc_scale_COLMAP_ARCORE
-from benchmark import benchmark, benchmark_ml
+from benchmark import benchmark
 from parameters import Parameters
 
 # sample command to run
@@ -34,6 +34,7 @@ print("Doing.. " + base_path)
 random_percentage = int(sys.argv[2])  # Given these features are random the errors later on will be much higher, and benchmarking might fail because there will be < 4 matches sometimes
 using_CMU_data = "CMU_data" in base_path
 ml_path = os.path.join(base_path, "ML_data")
+prepared_data_path = os.path.join(ml_path, "prepared_data")
 
 print("Setting up...")
 print("using_CMU_data: " + str(using_CMU_data))
@@ -49,9 +50,6 @@ query_images = read_images_binary(query_images_bin_path)
 query_images_names = load_images_from_text_file(query_images_path)
 localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
 query_images_ground_truth_poses = get_query_images_pose_from_images(localised_query_images_names, query_images)
-
-# for the buckets results
-image_pose_errors_all = []
 
 # live points
 # Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py" - to get the 3D points avg descs, and corresponding xyz coordinates (128 + 3) from the LIVE model.
@@ -80,48 +78,25 @@ print("Feature matching random and vanillia descs..")
 # db_gt is only used to get the SIFT features from the query images, nothing to do with the train_descriptors_live and points3D_xyz_live order. That latter order needs to be corresponding btw.
 ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 # ratio_test_val = 1 #because we use only random features here, if we use a percentage and a ratio test then features will be to few to get a pose (TODO: debug this! / discuss this)
-random_matches, featm_time_random = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=random_percentage)
-print("Feature Matching time for random samples (avg per image): " + str(featm_time_random))
+random_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True, random_limit=random_percentage)
+np.save(os.path.join(ml_path, f"images_matching_time_random_percentage_{random_percentage}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_random_percentage_{random_percentage}.npy"), images_percentage_reduction) # should be 'random_percentage' everywhere
 
 # all of them as in first publication (should be around 800 for each image)
-vanillia_matches, featm_time_vanillia = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True)
-print("Feature Matching time for vanillia samples (avg per image): " + str(featm_time_vanillia))
+vanillia_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, verbose=True)
+np.save(os.path.join(ml_path, f"images_matching_time_baseline.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_baseline.npy"), images_percentage_reduction) # should be '0' everywhere
 
-print()
 # get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
 benchmarks_iters = 1 #15 was in first publication
 
 print("Benchmarking Random, iterations: " + str(benchmarks_iters))
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, random_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
-total_time_rand = time + featm_time_random
-print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_rand, time, featm_time_random ))
-print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-random_matches_data = np.array([inlers_no, outliers, iterations, time, featm_time_random, total_time_rand, trans_errors_overall, rot_errors_overall])
-
+est_poses_results = benchmark(benchmarks_iters, ransac, random_matches, localised_query_images_names, K)
+np.save(os.path.join(ml_path, f"est_poses_results_random.npy"), est_poses_results)
 print()
 
 print("Benchmarking Vanillia..")
-inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors = benchmark_ml(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K, query_images_ground_truth_poses, scale, verbose=True)
-image_pose_errors_all.append(image_pose_errors)
-total_time_vanil = time + featm_time_vanillia
-print(" Inliers: %2.1f | Outliers: %2.1f | Iterations: %2.1f | Total Time: %2.2f | Cons. Time %2.2f | Feat. M. Time %2.2f " % (inlers_no, outliers, iterations, total_time_vanil, time, featm_time_vanillia ))
-print(" Trans Error (m): %2.2f | Rotation Error (Degrees): %2.2f" % (trans_errors_overall, rot_errors_overall))
-vanillia_matches_data = np.array([inlers_no, outliers, iterations, time, featm_time_vanillia, total_time_vanil, trans_errors_overall, rot_errors_overall])
+est_poses_results = benchmark(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K)
+np.save(os.path.join(ml_path, f"est_poses_results_baseline.npy"), est_poses_results)
 
-prepared_data_path = os.path.join(ml_path, "prepared_data")
-
-# 05/11/2021 this will need to be be uncommented
-# os.makedirs(prepared_data_path, exist_ok=True)
-# np.save(os.path.join(prepared_data_path, "query_images_ground_truth_poses.npy"), query_images_ground_truth_poses)
-# np.save(os.path.join(prepared_data_path, "localised_query_images_names.npy"), localised_query_images_names)
-# np.save(os.path.join(prepared_data_path, "points3D_xyz_live.npy"), points3D_xyz_live)
-# np.save(os.path.join(prepared_data_path, "K.npy"), K)
-# np.save(os.path.join(prepared_data_path, "scale.npy"), scale)
-# np.save(os.path.join(prepared_data_path, "random_matches.npy"), random_matches)
-# np.save(os.path.join(prepared_data_path, "vanillia_matches.npy"), vanillia_matches)
-# # these below are the files used later in model_evaluator to aggregate all results in one file
-# np.save(os.path.join(prepared_data_path, "random_matches_data_"+str(random_percentage)+".npy"), random_matches_data)
-# np.save(os.path.join(prepared_data_path, "vanillia_matches_data_"+str(random_percentage)+".npy"), vanillia_matches_data)
-
-# added on 04/11/2021
-np.save(os.path.join(prepared_data_path, "baseline_image_pose_errors_all_"+str(random_percentage)+"_base.npy"), image_pose_errors_all)
+print('Done!')

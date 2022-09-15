@@ -1,76 +1,10 @@
-# 19/05/2021 Added benchmark_ml for machine learning approaches
-import numpy as np
-from pose_evaluator import pose_evaluate, pose_evaluate_ml
-from ransac_comparison import run_comparison, run_comparison_ml, run_comparison_generic_comparison_model
+# 15/09/2022 - major refactor
+from ransac_comparison import run_comparison
 
-def benchmark(benchmarks_iters, ransac_func, matches, query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=False):
-    trans_errors_overall = []
-    rot_errors_overall = []
-    inlers_no = []
-    outliers = []
-    iterations = []
-    time = []
-
-    for i in range(benchmarks_iters):
-        if(verbose): print(" Benchmark Iters: " + str(i + 1) + "/" + str(benchmarks_iters), end="\r")
-        poses , data = run_comparison(ransac_func, matches, query_images_names, K, val_idx=val_idx)
-        trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
-
-        inlers_no.append(data.mean(axis=0)[0])
-        outliers.append(data.mean(axis=0)[1])
-        iterations.append(data.mean(axis=0)[2])
-        time.append(data.mean(axis=0)[3])
-        trans_errors_overall.append(np.nanmean(trans_errors))
-        rot_errors_overall.append(np.nanmean(rot_errors))
-
-    inlers_no = np.array(inlers_no).mean()
-    outliers = np.array(outliers).mean()
-    iterations = np.array(iterations).mean()
-    time = np.array(time).mean()
-    trans_errors_overall = np.array(trans_errors_overall).mean()
-    rot_errors_overall = np.array(rot_errors_overall).mean()
-
-    if (verbose): print()
-    return inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall
-
-# A lot of duplicated code but needed as I will need to run my previous code at one point - so not to mess it up
-def benchmark_ml(benchmarks_iters, ransac_func, matches, query_images_names, K, query_images_ground_truth_poses, scale, val_idx=None, verbose=False):
-    trans_errors_overall = []
-    rot_errors_overall = []
-    inlers_no = []
-    outliers = []
-    iterations = []
-    time = []
-
-    for i in range(benchmarks_iters):
-        if(verbose): print(" Benchmark Iters: " + str(i + 1) + "/" + str(benchmarks_iters), end="\r")
-        poses , data = run_comparison_ml(ransac_func, matches, query_images_names, K, val_idx=val_idx)
-        trans_errors, rot_errors = pose_evaluate(poses, query_images_ground_truth_poses, scale)
-
-        inlers_no.append(data.mean(axis=0)[0])
-        outliers.append(data.mean(axis=0)[1])
-        iterations.append(data.mean(axis=0)[2])
-        time.append(data.mean(axis=0)[3])
-        trans_errors_overall.append(np.nanmean(trans_errors))
-        rot_errors_overall.append(np.nanmean(rot_errors))
-
-    inlers_no = np.array(inlers_no).mean()
-    outliers = np.array(outliers).mean()
-    iterations = np.array(iterations).mean()
-    time = np.array(time).mean()
-    trans_errors_overall = np.array(trans_errors_overall).mean()
-    rot_errors_overall = np.array(rot_errors_overall).mean()
-
-    # run one more time for "image_pose_errors", poses will be set from above!
-    image_pose_errors = pose_evaluate_ml(poses, query_images_ground_truth_poses, scale)
-
-    if (verbose): print()
-    return inlers_no, outliers, iterations, time, trans_errors_overall, rot_errors_overall, image_pose_errors
-
-# 01/09/2022, This is used to estimate poses only not the errors - This code will replace the benchmark_ml too as it makses more sense to get the est poses then play around with them
-def benchmark_generic_comparison_model(benchmarks_iters, ransac_func, matches, query_images_names, K, scale, val_idx=None):
+def benchmark(benchmarks_iters, ransac_func, matches, query_images_names, K, val_idx=None):
     images_all_data = {}
     for i in range(benchmarks_iters):
-        images_data = run_comparison_generic_comparison_model(ransac_func, matches, query_images_names, K, val_idx=val_idx)
-        images_all_data[i] = images_data # [iteration] = images data from the iteration
+        images_data = run_comparison(ransac_func, matches, query_images_names, K, val_idx=val_idx)
+        # images_data = [est_pose, inliers_no, outliers_no, iterations, elapsed_time]
+        images_all_data[i] = images_data  # [iteration] = images data from the iteration
     return images_all_data
