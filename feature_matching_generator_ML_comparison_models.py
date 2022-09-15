@@ -6,6 +6,7 @@ from itertools import chain
 from os.path import exists
 import cv2
 import numpy as np
+from tqdm import tqdm
 
 from database import COLMAPDatabase
 from save_2D_points import save_debug_image
@@ -72,7 +73,7 @@ def get_image_id(db, query_image):
     image_id = str(image_id.fetchone()[0])
     return image_id
 
-def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_path, model, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, model_type=None, verbose= True):
+def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_path, model, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, model_type=None):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     image_gt_dir = os.path.join(base_path, 'gt/images/')
@@ -81,28 +82,34 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
     images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
-    for i in range(len(query_images)):
+    for i in tqdm(range(len(query_images))):
         total_time = 0
         query_image = query_images[i]
-        if(verbose):
-            print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
-
+        image_gt_path = os.path.join(image_gt_dir, query_image)
+        query_image_file = cv2.imread(image_gt_path)  # no need for cv2.COLOR_BGR2RGB here as G is in the middle anw
+        image_width = query_image_file.shape[1]
+        image_height = query_image_file.shape[0]
         image_id = get_image_id(db,query_image)
+
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         # both methods return xy
         keypoints_xy = get_keypoints_xy(db, image_id)
+        # just removing outliers, keypoints that COLMAP detected outside the frame... (a COLMAP bug maybe)
+        invalid_rows = np.argwhere((keypoints_xy[:, 0] > image_width) | (keypoints_xy[:, 1] > image_height))
+        keypoints_xy = np.delete(keypoints_xy, invalid_rows, axis =0 )
+        queryDescriptors = get_queryDescriptors(db, image_id)  # just to get their size
+        queryDescriptors = np.delete(queryDescriptors, invalid_rows, axis =0 )
+        assert(queryDescriptors.shape[0] == keypoints_xy.shape[0])
+        len_descs = queryDescriptors.shape[0]
+
         keypoints_meta_data = get_keypoints_meta_data(db, image_id) #np.c_[xy, kp_scales, kp_orientations]
         scales = keypoints_meta_data[:,1]
         orientations = keypoints_meta_data[:,2]
         xs = keypoints_xy[:,0]
         ys = keypoints_xy[:,1]
-        queryDescriptors = get_queryDescriptors(db, image_id) #just to get their size
-        len_descs = queryDescriptors.shape[0]
-
-        image_gt_path = os.path.join(image_gt_dir, query_image)
-        query_image_file = cv2.imread(image_gt_path) #no need for cv2.COLOR_BGR2RGB here as G is in the middle anw
         indxs = np.c_[np.round(ys), np.round(xs)].astype(np.int) #note the reverse here
         greenInt = query_image_file[indxs[:,0], indxs[:,1]][:,1]
+
         if(model_type == "MatchNoMatch"):
             # use extra data from MatchNoMatch paper
             test_data = np.c_[queryDescriptors, scales, orientations, xs, ys, greenInt].astype(np.float32)

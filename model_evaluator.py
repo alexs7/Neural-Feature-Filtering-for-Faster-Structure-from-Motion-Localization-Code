@@ -94,187 +94,185 @@ print("Feature matching using models..")
 # db_gt, again because we need the descs from the query images
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 
-model_names = list(parameters.model_names.values())[:-2]
-assert(len(model_names) == 20)
-model_idx = 1
+ml_methods_tested = list(parameters.ml_methods_tested.values()) #not random or baseline
+assert(len(ml_methods_tested) == 11)
 
-print(f"Getting matches using {model_names[model_idx]}..")
+ml_methods_tested_idx = 0
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_cl_top, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classifier= classification_model, top_no=random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
+ml_methods_tested_idx += 1
 
-print(f"Getting matches using {model_names[model_idx]}..")
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_cl, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_cl(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classifier= classification_model)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
+ml_methods_tested_idx += 1
 
-print(f"Getting matches using {model_names[model_idx]}..")
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_cl_rg_score_image, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_per_image, random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
+ml_methods_tested_idx += 1
 
-print(f"Getting matches using {model_names[model_idx]}..")
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_cl_rg_score_session, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_per_session, random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
+ml_methods_tested_idx += 1
 
-print(f"Getting matches using {model_names[model_idx]}..")
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_cl_rg_score_visibility, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_cl_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, classification_model, regression_model_score_visibility, random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
+ml_methods_tested_idx += 1
 
-print(f"Getting matches using {model_names[model_idx]}..")
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_rg_score_image, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_per_image, random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
+ml_methods_tested_idx += 1
 
-print(f"Getting matches using {model_names[model_idx]}..")
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_rg_score_session, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_per_session, random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
+ml_methods_tested_idx += 1
 
-print(f"Getting matches using {model_names[model_idx]}..")
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_rg_score_visibility, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_rg(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, regression_on_all_model_score_visibility, random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
+ml_methods_tested_idx += 1
 
-print(f"Getting matches using {model_names[model_idx]}..")
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_combined_score_per_image, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_per_image, random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
+ml_methods_tested_idx += 1
 
-print(f"Getting matches using {model_names[model_idx]}..")
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_combined_score_per_session, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_per_session, random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
+ml_methods_tested_idx += 1
 
-print(f"Getting matches using {model_names[model_idx]}..")
+print(f"Getting matches using {ml_methods_tested[ml_methods_tested_idx]}..")
 matches_combined_score_visibility, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_model_cb(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, combined_model_score_visibility, random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_{model_idx}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_{model_idx}.npy"), images_percentage_reduction)
-model_idx += 1
+np.save(os.path.join(ml_path, f"images_matching_time_{ml_methods_tested_idx}.npy"), images_matching_time)
+np.save(os.path.join(ml_path, f"images_percentage_reduction_{ml_methods_tested_idx}.npy"), images_percentage_reduction)
 
-assert(model_idx == 20)
+assert(ml_methods_tested_idx == 10) #total number of ml_methods_tested
 
 # again..
-model_names = list(parameters.model_names.values())[:-2]
-assert(len(model_names) == 20)
-model_idx = 1
+eval_methods = list(parameters.eval_methods_comapred.values())[:-2]
+assert(len(eval_methods) == 20)
+eval_methods_idx = 0
 
 print("Benchmarking ML model(s)..")
 benchmarks_iters = 3
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_cl_top, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_cl, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_cl_rg_score_image, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_cl_rg_score_session, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_cl_rg_score_visibility, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_rg_score_image, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_rg_score_session, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_rg_score_visibility, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_combined_score_per_image, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_combined_score_per_session, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC.. {model_names[model_idx]}")
+print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches_combined_score_visibility, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC dist.. {model_names[model_idx]}")
+print(f"RANSAC dist.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac_dist, matches_cl_rg_score_image, localised_query_images_names, K, val_idx=-1)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC dist.. {model_names[model_idx]}")
+print(f"RANSAC dist.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac_dist, matches_cl_rg_score_session, localised_query_images_names, K, val_idx=-1)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"RANSAC dist.. {model_names[model_idx]}")
+print(f"RANSAC dist.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, ransac_dist, matches_cl_rg_score_visibility, localised_query_images_names, K, val_idx=-1)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
 # NOTE: for PROSAC the matches are already sorted so just pass 1, no need to sort them again
-print(f"PROSAC.. {model_names[model_idx]}")
+print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, prosac, matches_rg_score_image, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"PROSAC.. {model_names[model_idx]}")
+print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, prosac, matches_rg_score_session, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"PROSAC.. {model_names[model_idx]}")
+print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, prosac, matches_rg_score_visibility, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"PROSAC.. {model_names[model_idx]}")
+print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, prosac, matches_combined_score_per_image, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"PROSAC.. {model_names[model_idx]}")
+print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, prosac, matches_combined_score_per_session, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
+eval_methods_idx += 1
 
-print(f"PROSAC.. {model_names[model_idx]}")
+print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(benchmarks_iters, prosac, matches_combined_score_visibility, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_{model_idx}.npy"), est_poses_results)
-model_idx += 1
+np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 
-assert(model_idx == 20)
+assert(eval_methods_idx == 19)
 
 print("Done!")

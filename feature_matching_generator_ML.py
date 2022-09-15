@@ -7,6 +7,8 @@ from itertools import chain
 import cv2
 import numpy as np
 import sys
+from tqdm import tqdm
+
 
 # creates 2d-3d matches data for ransac comparison
 def get_keypoints_xy(db, image_id):
@@ -36,18 +38,17 @@ def get_image_id(db, query_image):
     return image_id
 
 # Will use raw descs not normalised, used in prepare_comparison_data.py
-def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose = False, random_limit = -1):
+def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, random_limit = -1):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     images_percentage_reduction = {}
     images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
-    for i in range(len(query_images)):
+    for i in tqdm(range(len(query_images))):
         total_time = 0
         percentage_reduction = -1
         query_image = query_images[i]
-        if(verbose): print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image, end="\r")
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
@@ -123,11 +124,9 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
     images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
-    for i in range(len(query_images)):
+    for i in tqdm(range(len(query_images))):
         total_time = 0
         query_image = query_images[i]
-        # if(verbose):
-        #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
@@ -213,11 +212,9 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
     images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
-    for i in range(len(query_images)):
+    for i in tqdm(range(len(query_images))):
         total_time = 0
         query_image = query_images[i]
-        # if(verbose):
-        #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
@@ -295,18 +292,16 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
 
     return matches, images_matching_time, images_percentage_reduction
 
-def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, top_no = 10, verbose = True):
+def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, top_no = 10):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     images_percentage_reduction = {}
     images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
-    for i in range(len(query_images)):
+    for i in tqdm(range(len(query_images))):
         total_time = 0
         query_image = query_images[i]
-        # if(verbose):
-        #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
@@ -372,18 +367,16 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
 
     return matches, images_matching_time, images_percentage_reduction
 
-def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, top_no = 10, verbose = True):
+def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, top_no = 10):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     images_percentage_reduction = {}
     images_matching_time = {}
 
     #  go through all the test images and match their descs to the 3d points avg descs
-    for i in range(len(query_images)):
+    for i in tqdm(range(len(query_images))):
         total_time = 0
         query_image = query_images[i]
-        # if(verbose):
-        #     print("Matching image " + str(i + 1) + "/" + str(len(query_images)) + ", " + query_image)
 
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
