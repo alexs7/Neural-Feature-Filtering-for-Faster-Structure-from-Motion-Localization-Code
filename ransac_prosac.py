@@ -78,6 +78,9 @@ def ransac(matches_for_image, intrinsics):
         # TOOD: SOLVEPNP_P3P is unstable! - return identity matrix wtf ? (https://github.com/opencv/opencv/blob/3d44e9ad927f48ef0a44af97a7ed557a4fc3fe10/modules/calib3d/src/p3p.cpp#L204)
         Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_EPNP, intrinsics)
 
+        if(Rt[0:3,0:3].all() == np.eye(3).all()): #reached a degenerate case because the random_matches are not good
+            return None
+
         matches_without_random_matches = np.delete(matches_for_image, random_matches, axis=0)
         inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD, intrinsics)
 
@@ -122,6 +125,7 @@ def ransac(matches_for_image, intrinsics):
     return best_model
 
 def ransac_dist(matches_for_image, intrinsics):
+    eps = 1e-15
     s = 4  # or minimal_sample_size
     p = 0.99 # this is a typical value
     # number of iterations (http://www.cse.psu.edu/~rtc12/CSE486/lecture15.pdf and https://youtu.be/5E5n7fhLHEM?list=PLTBdjV_4f-EKeki5ps2WHqJqyQvxls4ha&t=428)
@@ -142,7 +146,10 @@ def ransac_dist(matches_for_image, intrinsics):
         img_points = matches_for_image[(random_matches), 0:2]
         obj_points = matches_for_image[(random_matches), 2:5]
 
-        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_P3P, intrinsics)
+        Rt = model_fit(img_points, obj_points, cv2.SOLVEPNP_EPNP, intrinsics)
+
+        if (Rt[0:3, 0:3].all() == np.eye(3).all()):  # reached a degenerate case because the random_matches are not good
+            return None
 
         matches_without_random_matches = np.delete(matches_for_image, random_matches, axis=0)
         inliers, _ = model_evaluate(matches_without_random_matches, Rt, ERROR_THRESHOLD, intrinsics)
@@ -158,7 +165,8 @@ def ransac_dist(matches_for_image, intrinsics):
             best_model['inliers_for_refit'] = inliers
             best_model['outliers_no'] = outliers_no
             max = inliers_no
-            e = outliers_no / len(matches_for_image)
+            e = (outliers_no + eps) / len(matches_for_image)
+
             N = np.log(1 - p) / np.log(1 - np.power((1 - e), s))
             N = int(np.floor(N))
             no_iterations = N

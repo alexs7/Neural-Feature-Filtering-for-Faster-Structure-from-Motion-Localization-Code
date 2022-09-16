@@ -133,7 +133,9 @@ def run_comparison(func, matches, test_images, intrinsics, val_idx = None):
         image = test_images[i]
         matches_for_image = matches[image]
 
-        assert(len(matches_for_image) >= 4)
+        if (len(matches_for_image) < 4): #did not get a pose move to next image
+            images_data[image] = [None, None, None, None, None]
+            continue
 
         if(val_idx is not None): #When using prosac the matches are already sorted so val_idx is None
             if(val_idx < 0):
@@ -143,7 +145,7 @@ def run_comparison(func, matches, test_images, intrinsics, val_idx = None):
         start = time.time()
         best_model = func(matches_for_image, intrinsics)
 
-        if(best_model == None):
+        if(best_model == None): #degenerate case
             print("\n Unable to get pose for image " + image)
             images_data[image] = [None, None, None, None, None]
             continue
