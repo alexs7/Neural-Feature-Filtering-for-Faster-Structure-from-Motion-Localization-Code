@@ -81,6 +81,10 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
     images_percentage_reduction = {}
     images_matching_time = {}
 
+    if (exists(comparison_data_path) == False):
+        print("comparison_data_path does not exist ! will create")
+        os.makedirs(debug_images_path, exist_ok=True)
+
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in tqdm(range(len(query_images))):
         total_time = 0
@@ -117,12 +121,6 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
             # use only SIFT
             test_data = queryDescriptors
 
-        if (exists(comparison_data_path) == False):
-            print("comparison_data_path does not exist")
-            exit()
-
-        os.makedirs(debug_images_path, exist_ok=True)
-
         start = time.time()
         # predictions_opencv = rtree_opencv.predict(test_data, cv2.ml.RAW_OUTPUT) #not working !
         predictions = model.predict(test_data)
@@ -133,7 +131,8 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
         positive_samples_no = len(np.where(predictions == 1)[0])
         percentage_reduction = (100 - positive_samples_no * 100 / len_descs)
 
-        save_debug_image(image_gt_path, keypoints_xy, predictions, debug_images_path, query_image)
+        predicted_keypoint_xy = keypoints_xy[predictions == 1]
+        save_debug_image(image_gt_path, keypoints_xy, predicted_keypoint_xy, debug_images_path, query_image)
 
         # from now on I will be using the descs and keypoints that Predicting Matchability (2014) deemed matchable
         queryDescriptors = queryDescriptors[predictions == 1]  # replacing queryDescriptors here so to keep code changes minimal

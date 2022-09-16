@@ -36,6 +36,14 @@ using_CMU_data = "CMU_data" in base_path
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 
+random_output = os.path.join(prepared_data_path, "random_output")
+if not os.path.exists(random_output):
+    os.makedirs(random_output, exist_ok=True)
+
+baseline_output = os.path.join(prepared_data_path, "baseline_output")
+if not os.path.exists(baseline_output):
+    os.makedirs(baseline_output, exist_ok=True)
+
 print("Setting up...")
 print("using_CMU_data: " + str(using_CMU_data))
 # the "gt" here means ground truth (also used as query)
@@ -75,29 +83,28 @@ else:
     print("ARCore Scale: " + str(scale))
 
 print("Feature matching random and vanillia (baseline) descs..")
-# db_gt, again because we need the descs from the query images
 
 # db_gt is only used to get the SIFT features from the query images, nothing to do with the train_descriptors_live and points3D_xyz_live order. That latter order needs to be corresponding btw.
 ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 # ratio_test_val = 1 #because we use only random features here, if we use a percentage and a ratio test then features will be to few to get a pose (TODO: debug this! / discuss this)
-random_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, random_limit=random_percentage)
-np.save(os.path.join(ml_path, f"images_matching_time_random_percentage_{random_percentage}.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_random_percentage_{random_percentage}.npy"), images_percentage_reduction) # should be 'random_percentage' everywhere
+random_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, random_output, random_limit=random_percentage)
+np.save(os.path.join(random_output, f"images_matching_time.npy"), images_matching_time)
+np.save(os.path.join(random_output, f"images_percentage_reduction.npy"), images_percentage_reduction) # should be 'random_percentage' everywhere
 
 # all of them as in first publication (should be around 800 for each image)
-vanillia_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
-np.save(os.path.join(ml_path, f"images_matching_time_baseline.npy"), images_matching_time)
-np.save(os.path.join(ml_path, f"images_percentage_reduction_baseline.npy"), images_percentage_reduction) # should be '0' everywhere
+vanillia_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, baseline_output)
+np.save(os.path.join(baseline_output, f"images_matching_time.npy"), images_matching_time)
+np.save(os.path.join(baseline_output, f"images_percentage_reduction.npy"), images_percentage_reduction) # should be '0' everywhere
 
 # get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
 benchmarks_iters = 1 #15 was in first publication (Does it matter here? 1 or 15 should be the same)
 
 print("Benchmarking Random..") #NOTE: The below will break sometimes at assert(len(matches_for_image) >= 4), because of the randonmness
 est_poses_results = benchmark(benchmarks_iters, ransac, random_matches, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_random.npy"), est_poses_results)
+np.save(os.path.join(random_output, f"est_poses_results.npy"), est_poses_results)
 
 print("Benchmarking Vanillia..")
 est_poses_results = benchmark(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K)
-np.save(os.path.join(ml_path, f"est_poses_results_baseline.npy"), est_poses_results)
+np.save(os.path.join(baseline_output, f"est_poses_results.npy"), est_poses_results)
 
 print('Done!')

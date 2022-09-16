@@ -1,13 +1,13 @@
 import cv2
 import os
 
-def save_debug_image(image_gt_path, keypoints_xy, predictions, comparison_data_path, query_image):
+def save_debug_image(image_gt_path, original_keypoints_xy, predicted_keypoints_xy, comparison_data_path, query_image):
     query_image_file = cv2.imread(image_gt_path)
     verif_img = query_image_file.copy()  # need a copy here
-    for kp in keypoints_xy:
+    for kp in original_keypoints_xy: # all (blue)
         kp = kp.astype(int)
-        cv2.circle(verif_img, (kp[0], kp[1]), 4, (0, 0, 255), -1)  # red
-    for kp in keypoints_xy[predictions == 1]:  # only positive ones
+        cv2.circle(verif_img, (kp[0], kp[1]), 4, (255, 0, 0), -1)  # blue
+    for kp in predicted_keypoints_xy:  # only positive ones (green)
         kp = kp.astype(int)
         cv2.circle(verif_img, (kp[0], kp[1]), 4, (0, 255, 0), -1)  # green
 

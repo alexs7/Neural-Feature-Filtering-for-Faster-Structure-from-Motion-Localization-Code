@@ -62,7 +62,7 @@ model_path = os.path.join(comparison_data_path_PM, "rf_model_PM.joblib")
 model = load(model_path)
 matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_path_PM, model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
 np.save(os.path.join(comparison_data_path_PM, "images_matching_time.npy"), images_matching_time)
-np.save(os.path.join(comparison_data_path_PM, "images_matching_time.npy"), images_percentage_reduction)
+np.save(os.path.join(comparison_data_path_PM, "images_percentage_reduction.npy"), images_percentage_reduction)
 
 print(" RANSAC..")
 est_poses_results = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)

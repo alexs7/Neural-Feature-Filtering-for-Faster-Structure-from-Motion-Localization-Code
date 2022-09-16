@@ -146,7 +146,6 @@ def run_comparison(func, matches, test_images, intrinsics, val_idx = None):
         best_model = func(matches_for_image, intrinsics)
 
         if(best_model == None): #degenerate case
-            print("\n Unable to get pose for image " + image)
             images_data[image] = [None, None, None, None, None]
             continue
 

@@ -1,13 +1,17 @@
 # This file is copied from my previous publication and using now with minor modification for the ML approach
 #  such as not normalising the descriptors.
 # creates 2d-3d matches data for ransac comparison
-
+import os
 import time
 from itertools import chain
+from os.path import exists
+
 import cv2
 import numpy as np
 import sys
 from tqdm import tqdm
+
+from save_2D_points import save_debug_image
 
 
 # creates 2d-3d matches data for ransac comparison
@@ -38,18 +42,23 @@ def get_image_id(db, query_image):
     return image_id
 
 # Will use raw descs not normalised, used in prepare_comparison_data.py
-def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, random_limit = -1):
+def feature_matcher_wrapper_ml(base_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, output_path, random_limit = -1):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     images_percentage_reduction = {}
     images_matching_time = {}
+    image_gt_dir = os.path.join(base_path, 'gt/images/')
+
+    debug_images_path = os.path.join(output_path, "debug_images")
+    if (exists(debug_images_path) == False):
+        print("debug_images_path does not exist! will create")
+        os.makedirs(debug_images_path, exist_ok=True)
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in tqdm(range(len(query_images))):
         total_time = 0
-        percentage_reduction = -1
         query_image = query_images[i]
-
+        image_gt_path = os.path.join(image_gt_dir, query_image)
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
@@ -62,6 +71,8 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
             random_idxs = np.random.choice(np.arange(len_descs), percentage_num, replace=False)
             keypoints_xy = keypoints_xy[random_idxs]
             queryDescriptors = queryDescriptors[random_idxs]
+
+        save_debug_image(image_gt_path, keypoints_xy, keypoints_xy, debug_images_path, query_image) #pass keypoints_xy 2 times, here as no predictions
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -97,7 +108,7 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
         elapsed_time = end - start
         total_time += elapsed_time
 
-        if (random_limit != 1):
+        if (random_limit != -1):
             percentage_reduction = 100 - random_limit  # random %
         else:
             percentage_reduction = 0  # all baseline
@@ -116,18 +127,24 @@ def feature_matcher_wrapper_ml(db, query_images, trainDescriptors, points3D_xyz,
 # combined - cb
 # For each of the above cases there is a seperate method, sadly loads of duplicate code at least it is clear to understand
 # Depending on the case, It will predict if a desc if matchable or not first, then pick "class_top" (sorted) matchable descs to do the feature matching
-def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, top_no = None):
+def feature_matcher_wrapper_model_cl(base_path, ml_path, ml_model_idx, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, top_no = None):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matchable_threshold = 0.5
     images_percentage_reduction = {}
     images_matching_time = {}
+    image_gt_dir = os.path.join(base_path, 'gt/images/')
+
+    debug_images_path = os.path.join(ml_path, f"debug_images_model_{ml_model_idx}")
+    if (exists(debug_images_path) == False):
+        print("debug_images_path does not exist! will create")
+        os.makedirs(debug_images_path, exist_ok=True)
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in tqdm(range(len(query_images))):
         total_time = 0
         query_image = query_images[i]
-
+        image_gt_path = os.path.join(image_gt_dir, query_image)
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
@@ -162,6 +179,9 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
             # here I use the "percentage_num" value because as it was generated from the initial number of "queryDescriptors"
             keypoints_xy = keypoints_xy[0:percentage_num, :]
             queryDescriptors = queryDescriptors[0:percentage_num, :]
+
+        original_keypoints = get_keypoints_xy(db, image_id)
+        save_debug_image(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, query_image) #keypoints_xy = predicted ones
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -204,18 +224,24 @@ def feature_matcher_wrapper_model_cl(db, query_images, trainDescriptors, points3
 
     return matches, images_matching_time, images_percentage_reduction
 
-def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor, top_no = 10):
+def feature_matcher_wrapper_model_cl_rg(base_path, ml_path, ml_model_idx, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, classifier, regressor, top_no = 10):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     matchable_threshold = 0.5
     images_percentage_reduction = {}
     images_matching_time = {}
+    image_gt_dir = os.path.join(base_path, 'gt/images/')
+
+    debug_images_path = os.path.join(ml_path, f"debug_images_model_{ml_model_idx}")
+    if (exists(debug_images_path) == False):
+        print("debug_images_path does not exist! will create")
+        os.makedirs(debug_images_path, exist_ok=True)
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in tqdm(range(len(query_images))):
         total_time = 0
         query_image = query_images[i]
-
+        image_gt_path = os.path.join(image_gt_dir, query_image)
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
@@ -250,6 +276,9 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
         keypoints_xy = keypoints_xy[0:percentage_num, :]
         queryDescriptors = queryDescriptors[0:percentage_num, :]
         sorted_regression_predictions = sorted_regression_predictions[0:percentage_num, :]
+
+        original_keypoints = get_keypoints_xy(db, image_id)
+        save_debug_image(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, query_image)  # keypoints_xy = predicted ones
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -292,17 +321,23 @@ def feature_matcher_wrapper_model_cl_rg(db, query_images, trainDescriptors, poin
 
     return matches, images_matching_time, images_percentage_reduction
 
-def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, top_no = 10):
+def feature_matcher_wrapper_model_rg(base_path, ml_path, ml_model_idx, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, regressor, top_no = 10):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     images_percentage_reduction = {}
     images_matching_time = {}
+    image_gt_dir = os.path.join(base_path, 'gt/images/')
+
+    debug_images_path = os.path.join(ml_path, f"debug_images_model_{ml_model_idx}")
+    if (exists(debug_images_path) == False):
+        print("debug_images_path does not exist! will create")
+        os.makedirs(debug_images_path, exist_ok=True)
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in tqdm(range(len(query_images))):
         total_time = 0
         query_image = query_images[i]
-
+        image_gt_path = os.path.join(image_gt_dir, query_image)
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
@@ -325,6 +360,9 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
         keypoints_xy = keypoints_xy[0:percentage_num, :]
         queryDescriptors = queryDescriptors[0:percentage_num, :]
         sorted_regression_predictions = sorted_regression_predictions[0:percentage_num, :]
+
+        original_keypoints = get_keypoints_xy(db, image_id)
+        save_debug_image(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, query_image)  # keypoints_xy = predicted ones
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -367,17 +405,23 @@ def feature_matcher_wrapper_model_rg(db, query_images, trainDescriptors, points3
 
     return matches, images_matching_time, images_percentage_reduction
 
-def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, top_no = 10):
+def feature_matcher_wrapper_model_cb(base_path, ml_path, ml_model_idx, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, combined_model, top_no = 10):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     images_percentage_reduction = {}
     images_matching_time = {}
+    image_gt_dir = os.path.join(base_path, 'gt/images/')
+
+    debug_images_path = os.path.join(ml_path, f"debug_images_model_{ml_model_idx}")
+    if (exists(debug_images_path) == False):
+        print("debug_images_path does not exist! will create")
+        os.makedirs(debug_images_path, exist_ok=True)
 
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in tqdm(range(len(query_images))):
         total_time = 0
         query_image = query_images[i]
-
+        image_gt_path = os.path.join(image_gt_dir, query_image)
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
         keypoints_xy = get_keypoints_xy(db, image_id)
@@ -402,6 +446,9 @@ def feature_matcher_wrapper_model_cb(db, query_images, trainDescriptors, points3
         keypoints_xy = keypoints_xy[0:percentage_num, :]
         queryDescriptors = queryDescriptors[0:percentage_num, :]
         sorted_regression_predictions = sorted_regression_predictions[0:percentage_num, :]
+
+        original_keypoints = get_keypoints_xy(db, image_id)
+        save_debug_image(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, query_image)  # keypoints_xy = predicted ones
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)

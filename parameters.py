@@ -44,21 +44,26 @@ class Parameters(object):
         # from your COLMAP model. This is valid for ARCORE only
         self.ARCORE_scale_path = os.path.join(base_path , "scale.txt")
 
-        self.ml_methods_tested = { #not comparison ones
-            "Class, top mtchs" : "Classifier w/ top 10% matches", #0
-            "Class, all mtchs" : "Classifier using all matches",  #1
-            "C & R, s.p.i" : "Classifier and Regressor w/ image score", #2
-            "C & R, s.p.s" : "Classifier and Regressor w/ score per session", #3
-            "C & R, s.p.v" : "Classifier and Regressor w/ visibility score",  #4
-            "R, s.p.i" : "Regressor w/ score per image",   #5
-            "R, s.p.s" : "Regressor w/ score per session",  #6
-            "R, s.p.v" : "Regressor w/ visibility score",  #7
-            "CB, s.p.i" : "Combined w/ score per image",  #8
-            "CB, s.p.s" : "Combined w/ score per session",  #9
-            "CB, s.p.v" : "Combined w/ visibility score",  #10
+        self.ml_models_trained = [
+            "Classifier w/ top 10% matches" ,
+            "Classifier using all matches"  ,
+            "Classifier and Regressor w/ image score" ,
+            "Classifier and Regressor w/ score per session" ,
+            "Classifier and Regressor w/ visibility score" ,
+            "Regressor w/ score per image" ,
+            "Regressor w/ score per session" ,
+            "Regressor w/ visibility score" ,
+            "Combined w/ score per image" ,
+            "Combined w/ score per session" ,
+            "Combined w/ visibility score"
+        ]
+
+        self.baseline_methods = {
+            "Rndm 10%": "ML_data/prepared_data/random_output",
+            "All (~800)": "ML_data/prepared_data/baseline_output"
         }
 
-        self.eval_methods_comapred = {
+        self.ml_methods = { # my models, full names
             "Class, top mtchs": "Classifier w/ top 10% matches",  # 0
             "Class, all mtchs": "Classifier using all matches",  # 1
             "C & R, s.p.i": "Classifier and Regressor w/ image score",  # 2
@@ -78,9 +83,36 @@ class Parameters(object):
             "PRSC R, s.p.v": "Regressor w/ visibility score, PROSAC",  # 16
             "PRSC CB, s.p.i": "Combined w/ score per image, PROSAC",  # 17
             "PRSC CB, s.p.s": "Combined w/ score per session, PROSAC",  # 18
-            "PRSC CB, s.p.v": "Combined w/ visibility score, PROSAC",  # 19
-            "Rndm 10%": "Random feature case",  # 20
-            "All (~800)": "Baseline using all features"  # 21
+            "PRSC CB, s.p.v": "Combined w/ visibility score, PROSAC"  # 19
+        }
+
+        self.ml_methods_matches_map = {  # the methods and the matches index they used
+            "Class, top mtchs": 0,
+            "Class, all mtchs": 1,
+            "C & R, s.p.i": 2,
+            "C & R, s.p.s": 3,
+            "C & R, s.p.v": 4,
+            "R, s.p.i": 5,
+            "R, s.p.s": 6,
+            "R, s.p.v": 7,
+            "CB, s.p.i": 8,
+            "CB, s.p.s": 9,
+            "CB, s.p.v": 10,
+            "Rd C & R s.p.i": 2,
+            "Rd C & R s.p.s": 3,
+            "Rd C & R s.p.v": 4,
+            "PRSC R, s.p.i": 5,
+            "PRSC R, s.p.s": 6,
+            "PRSC R, s.p.v": 7,
+            "PRSC CB, s.p.i": 8,
+            "PRSC CB, s.p.s": 9,
+            "PRSC CB, s.p.v": 10
+        }
+
+        self.comparison_methods = {
+            "Pred. M. 2014": "predicting_matchability_comparison_data",
+            "Pred. M. 2014 VRF": "ml_models_vanillia_comparison_data",
+            "M. or no M. 2020": "match_or_no_match_comparison_data"
         }
 
         self.consensus_types = ['ransac_base', 'prosac_base', 'ransac_live', 'ransac_dist_heatmap_val',

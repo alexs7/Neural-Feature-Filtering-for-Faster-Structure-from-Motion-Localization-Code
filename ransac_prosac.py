@@ -13,13 +13,13 @@ ERROR_THRESHOLD = RANSACParameters.ransac_prosac_error_threshold
 # So I have to pick up their intrinsics which they will be different from base and live.
 # TODO: in the future they will all be the same.
 
-# This is not used anymore in ransac (08/09/2022)
-def model_refit(img_points, obj_points, K):
-    # if image_points >= 4 returns 1 pose otherwise shit hits the fan
-    poses = pnp(pts_2d=img_points, pts_3d=obj_points, K=K)
-    R, t = poses[0]
-    Rt = np.r_[(np.c_[R, t]), [np.array([0, 0, 0, 1])]]
-    return Rt
+# This is not used anymore in this file (08/09/2022)
+# def model_refit(img_points, obj_points, K):
+#     # if image_points >= 4 returns 1 pose otherwise shit hits the fan
+#     poses = pnp(pts_2d=img_points, pts_3d=obj_points, K=K)
+#     R, t = poses[0]
+#     Rt = np.r_[(np.c_[R, t]), [np.array([0, 0, 0, 1])]]
+#     return Rt
 
 def model_fit(img_points, obj_points, flag_val, K):
     distCoeffs = np.zeros((5, 1))
@@ -184,7 +184,7 @@ def ransac_dist(matches_for_image, intrinsics):
 
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
-        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5], intrinsics)
+        best_model['Rt'] = model_fit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5], cv2.SOLVEPNP_EPNP, intrinsics)
 
     # 18/08/2022 save the iterations here
     # this is because a 'best_model' can be found at k = 5 for example.
@@ -334,12 +334,17 @@ def prosac(sorted_matches, intrinsics):
     #re-fit here on last inliers set you get..
 
     # if unable to get pose then just return None
+    # degenerate cases here
     if (not bool(best_model)):
+        return None
+    if (np.isnan(best_model['Rt']).any() == True):
+        return None
+    if (best_model['Rt'][0:3, 0:3].all() == np.eye(3).all()):
         return None
 
     # This will only run if the inlers of the best model are over or equal to 4
     if(best_model['inliers_for_refit'].shape[0] >= 4):
-        best_model['Rt'] = model_refit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5], intrinsics)
+        best_model['Rt'] = model_fit(best_model['inliers_for_refit'][:,0:2], best_model['inliers_for_refit'][:,2:5], cv2.SOLVEPNP_EPNP, intrinsics)
 
     # 18/08/2022 save the iterations here
     # this is because a 'best_model' can be found at t = 5 for example.

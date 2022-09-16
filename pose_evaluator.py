@@ -68,6 +68,9 @@ def pose_evaluate_generic_comparison_model(query_poses, gt_poses, scale = 1):
     image_pose_errors = {}
     for image_name, _ in query_poses.items():
         q_pose = query_poses[image_name][0]
+        if (q_pose is None):
+            print(f"{image_name} is a degenerate..")
+            continue  # go to next image, degenerate case
         gt_pose = gt_poses[image_name]
 
         # camera center errors
@@ -95,6 +98,9 @@ def pose_evaluate_generic_comparison_model_Maa(query_poses, gt_poses, scale = 1)
     image_pose_errors = {}
     for image_name, _ in query_poses.items():
         q_pose = query_poses[image_name][0]
+        if(q_pose is None):
+            print(f"{image_name} is a degenerate..")
+            continue #go to next image, degenerate case
         gt_pose = gt_poses[image_name]
 
         # camera center errors
@@ -108,7 +114,6 @@ def pose_evaluate_generic_comparison_model_Maa(query_poses, gt_poses, scale = 1)
         image_pose_errors[image_name] = [err_q, err_t]
 
     mAA = ComputeMaa([v[0] for v in image_pose_errors.values()], [v[1] for v in image_pose_errors.values()], thresholds_q, thresholds_t)
-    print(f'    Mean average Accuracy: {mAA[0]:.05f}')
     return mAA
 
 # (09/09/2022) from: https://www.kaggle.com/code/eduardtrulls/imc2022-training-data?scriptVersionId=92062607
