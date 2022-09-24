@@ -134,6 +134,7 @@ def run_comparison(func, matches, test_images, intrinsics, val_idx = None):
         matches_for_image = matches[image]
 
         if (len(matches_for_image) < 4): #did not get a pose move to next image
+            # est_pose, inliers_no, outliers_no, iterations, elapsed_time
             images_data[image] = [None, None, None, None, None]
             continue
 
