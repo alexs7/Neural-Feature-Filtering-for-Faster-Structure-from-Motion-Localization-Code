@@ -1,5 +1,4 @@
 # This file will aim to create the data for the RF model from Predicting Matchability - PM (2014) paper
-# then data.py, which is the file that fetches the data for training models
 # It will overwrite existing data (db).
 # Note: https://stackoverflow.com/questions/5189997/python-db-api-fetchone-vs-fetchmany-vs-fetchall
 # Note: https://stackoverflow.com/questions/41464752/git-rebase-interactive-the-last-n-commits

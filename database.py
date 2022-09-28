@@ -86,30 +86,6 @@ class COLMAPDatabase(sqlite3.Connection):
             conn.commit()
             return conn
         except Error as e:
-            print(e)    \
-
-    @staticmethod
-    def create_db_match_no_match_data(db_file):
-        sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
-        sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
-                                                    image_id INTEGER NOT NULL,
-                                                    sift BLOB NOT NULL,
-                                                    matched INTEGER NOT NULL,
-                                                    scale FLOAT NOT NULL,
-                                                    orientation FLOAT NOT NULL,
-                                                    x FLOAT NOT NULL,
-                                                    y FLOAT NOT NULL,
-                                                    greenInt INTEGER NOT NULL
-                                                );"""
-        conn = None
-        try:
-            conn = sqlite3.connect(db_file)
-            conn.execute(sql_drop_table_if_exists)
-            conn.commit()
-            conn.execute(sql_create_data_table)
-            conn.commit()
-            return conn
-        except Error as e:
             print(e)
 
     @staticmethod
@@ -131,3 +107,49 @@ class COLMAPDatabase(sqlite3.Connection):
             return conn
         except Error as e:
             print(e)
+
+    def add_keypoints(self, image_id, keypoints):
+        assert (len(keypoints.shape) == 2)
+        assert (keypoints.shape[1] in [2, 4, 6])
+
+        keypoints = np.asarray(keypoints, np.float32)
+        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),))
+
+    def add_descriptors(self, image_id, descriptors):
+        descriptors = np.ascontiguousarray(descriptors, np.uint8)
+        self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
+
+    def dominant_orientations_column_exists(self):
+        cols = self.execute("PRAGMA table_info('keypoints');").fetchall()
+        for col in cols:
+            if(col[1] == 'dominantOrientations'):
+                return True
+        return False
+
+    def add_dominant_orientations_column(self):
+        addColumn = "ALTER TABLE keypoints ADD COLUMN dominantOrientations BLOB"
+        self.execute(addColumn)
+
+    def replace_keypoints(self, image_id, keypoints, dominant_orientations):
+        assert (len(keypoints.shape) == 2)
+        assert (keypoints.shape[1] in [2, 4, 6])
+        assert dominant_orientations.shape[0] == len(keypoints)
+
+        # delete first
+        self.execute("DELETE FROM keypoints WHERE image_id = " + "'" + str(image_id) + "'")
+        # insert again
+        keypoints = np.asarray(keypoints, np.float32)
+        dominant_orientations = np.asarray(dominant_orientations, np.uint8) #np.uint8 is OK the array contains just int increment values
+        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),) + (self.array_to_blob(dominant_orientations),))
+
+    def replace_descriptors(self, image_id, descriptors):
+        # delete first
+        self.execute("DELETE FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
+        descriptors = np.ascontiguousarray(descriptors, np.uint8)
+        self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
+
+    def delete_all_matches(self):
+        self.execute("DELETE FROM matches")
+
+    def delete_all_two_view_geometries(self):
+        self.execute("DELETE FROM two_view_geometries")

@@ -8,6 +8,8 @@ from database import COLMAPDatabase
 from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
 from parameters import Parameters
 
+debug_method = ""
+
 def load_est_poses_results(path):
     # [pose, inliers_no, outliers_no, iterations, elapsed_time]
     return np.load(path, allow_pickle=True).item()
@@ -51,6 +53,11 @@ def get_maa_accuracy_for_all_images(est_poses_results):
             common_image_names.append(img_name)
         else:
             degenerate_names = np.append(degenerate_names, img_name)
+
+    print(degenerate_names)
+    if(debug_method == "M. or no M. 2020" or debug_method == "All (~800)"):
+        import pdb
+        pdb.set_trace()
 
     # second to get the MAA using the final degenerate_names (which will be skipped).
     for benchmark_iteration, data_from_benchmarck_iteration in est_poses_results.items():
@@ -173,23 +180,24 @@ with open(result_file_output_path, 'w', encoding='UTF8') as f:
     # My NNs
     for method_idx in range(len(my_methods)):
         print(f"Doing Method {my_methods[method_idx]}")
-        est_poses_results = load_est_poses_results(os.path.join(ml_path, f"est_poses_results_{method_idx}.npy"))
-
-        errors_maas_mean, non_degenerate_poses_percentage, degenerate_poses_percentage, valid_poses_names = get_maa_accuracy_for_all_images(est_poses_results)
-        image_errors_6dof, images_benchmark_data_mean = get_6dof_accuracy_for_all_images(est_poses_results, query_images_ground_truth_poses, valid_poses_names)
-
-        feature_matching_file_index = ml_models_matches_file_index[my_methods[method_idx]]
-        times = np.load(os.path.join(ml_path, f"images_matching_time_{feature_matching_file_index}.npy"), allow_pickle=True).item()
-        percentages = np.load(os.path.join(ml_path, f"images_percentage_reduction_{feature_matching_file_index}.npy"), allow_pickle=True).item()
-
-        csv_row_data = get_row_data(my_methods[method_idx], errors_maas_mean, image_errors_6dof,
-                                    images_benchmark_data_mean, times, percentages,
-                                    valid_poses_names, non_degenerate_poses_percentage, degenerate_poses_percentage)
-        writer.writerow(csv_row_data)
+        # est_poses_results = load_est_poses_results(os.path.join(ml_path, f"est_poses_results_{method_idx}.npy"))
+        #
+        # errors_maas_mean, non_degenerate_poses_percentage, degenerate_poses_percentage, valid_poses_names = get_maa_accuracy_for_all_images(est_poses_results)
+        # image_errors_6dof, images_benchmark_data_mean = get_6dof_accuracy_for_all_images(est_poses_results, query_images_ground_truth_poses, valid_poses_names)
+        #
+        # feature_matching_file_index = ml_models_matches_file_index[my_methods[method_idx]]
+        # times = np.load(os.path.join(ml_path, f"images_matching_time_{feature_matching_file_index}.npy"), allow_pickle=True).item()
+        # percentages = np.load(os.path.join(ml_path, f"images_percentage_reduction_{feature_matching_file_index}.npy"), allow_pickle=True).item()
+        #
+        # csv_row_data = get_row_data(my_methods[method_idx], errors_maas_mean, image_errors_6dof,
+        #                             images_benchmark_data_mean, times, percentages,
+        #                             valid_poses_names, non_degenerate_poses_percentage, degenerate_poses_percentage)
+        # writer.writerow(csv_row_data)
 
     # The other papers
     for method in comparison_methods:
         print(f"Doing Method {method}")
+        debug_method = method
         path = parameters.comparison_methods[method]
         comparison_path = os.path.join(base_path, path)
         est_poses_results = load_est_poses_results(os.path.join(comparison_path, f"est_poses_results.npy"))
@@ -207,6 +215,7 @@ with open(result_file_output_path, 'w', encoding='UTF8') as f:
     # Random and Baseline
     for method in baseline_methods:
         print(f"Doing Method {method}")
+        debug_method = method
         path = os.path.join(base_path, parameters.baseline_methods[method])
         est_poses_results = load_est_poses_results(os.path.join(path, f"est_poses_results.npy"))
 

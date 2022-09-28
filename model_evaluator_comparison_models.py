@@ -38,7 +38,6 @@ query_images_names = load_images_from_text_file(query_images_path)
 points3D_info = np.load(os.path.join(ml_path, "avg_descs_xyz_ml.npy")).astype(np.float32)
 train_descriptors_live = points3D_info[:, 0:128]
 localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
-query_images_ground_truth_poses = get_query_images_pose_from_images(localised_query_images_names, query_images)
 points3D_xyz_live = points3D_info[:,128:132]
 K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3)  # 3 because 1 -base, 2 -live, 3 -query images
 
@@ -52,21 +51,21 @@ os.makedirs(comparison_data_path_PM, exist_ok=True)
 os.makedirs(comparison_data_path_MoNM, exist_ok=True)
 os.makedirs(comparison_data_path_vl_rf, exist_ok=True)
 
-benchmarks_iters = 3
+benchmarks_iters = 1
 print("benchmarks_iters set to: " + str(benchmarks_iters))
 
 # NOTE: "model" needs to have a predict method and return predictions 0 and 1, not 0.5 or 0.12 or whatever
 
-print("Getting matches using Predicting Matchability (2014) + loading model..")
-model_path = os.path.join(comparison_data_path_PM, "rf_model_PM.joblib")
-model = load(model_path)
-matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_path_PM, model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
-np.save(os.path.join(comparison_data_path_PM, "images_matching_time.npy"), images_matching_time)
-np.save(os.path.join(comparison_data_path_PM, "images_percentage_reduction.npy"), images_percentage_reduction)
-
-print(" RANSAC..")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)
-np.save(os.path.join(comparison_data_path_PM, "est_poses_results.npy"), est_poses_results)
+# print("Getting matches using Predicting Matchability (2014) + loading model..")
+# model_path = os.path.join(comparison_data_path_PM, "rf_model_PM.joblib")
+# model = load(model_path)
+# matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_path_PM, model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
+# np.save(os.path.join(comparison_data_path_PM, "images_matching_time.npy"), images_matching_time)
+# np.save(os.path.join(comparison_data_path_PM, "images_percentage_reduction.npy"), images_percentage_reduction)
+#
+# print(" RANSAC..")
+# est_poses_results = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)
+# np.save(os.path.join(comparison_data_path_PM, "est_poses_results.npy"), est_poses_results)
 
 # ----------------------------->
 
@@ -83,16 +82,16 @@ np.save(os.path.join(comparison_data_path_MoNM, "est_poses_results.npy"), est_po
 
 # ----------------------------->
 
-print("Getting matches using vanillia RF + loading model..")
-model_path = os.path.join(comparison_data_path_vl_rf, "rf_model_vanillia_25_25.joblib")
-model = load(model_path)
-matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_path_vl_rf, model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
-np.save(os.path.join(comparison_data_path_vl_rf, "images_matching_time.npy"), images_matching_time)
-np.save(os.path.join(comparison_data_path_vl_rf, "images_percentage_reduction.npy"), images_percentage_reduction)
-
-print(" RANSAC..")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)
-np.save(os.path.join(comparison_data_path_vl_rf, "est_poses_results.npy"), est_poses_results)
+# print("Getting matches using vanillia RF + loading model..")
+# model_path = os.path.join(comparison_data_path_vl_rf, "rf_model_vanillia_25_25.joblib")
+# model = load(model_path)
+# matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_path_vl_rf, model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
+# np.save(os.path.join(comparison_data_path_vl_rf, "images_matching_time.npy"), images_matching_time)
+# np.save(os.path.join(comparison_data_path_vl_rf, "images_percentage_reduction.npy"), images_percentage_reduction)
+#
+# print(" RANSAC..")
+# est_poses_results = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)
+# np.save(os.path.join(comparison_data_path_vl_rf, "est_poses_results.npy"), est_poses_results)
 
 # ----------------------------->
 

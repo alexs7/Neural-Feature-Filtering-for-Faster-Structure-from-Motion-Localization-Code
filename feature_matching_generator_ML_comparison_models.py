@@ -80,6 +80,7 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
     debug_images_path = os.path.join(comparison_data_path, "debug_images")
     images_percentage_reduction = {}
     images_matching_time = {}
+    sift = cv2.SIFT_create()
 
     if (exists(comparison_data_path) == False):
         print("comparison_data_path does not exist ! will create")
@@ -96,7 +97,7 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
         image_id = get_image_id(db,query_image)
 
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
-        # both methods return xy
+        # both methods return x,y
         keypoints_xy = get_keypoints_xy(db, image_id)
         # just removing outliers, keypoints that COLMAP detected outside the frame... (a COLMAP bug maybe)
         invalid_rows = np.argwhere((keypoints_xy[:, 0] > image_width) | (keypoints_xy[:, 1] > image_height))
@@ -106,9 +107,9 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
         assert(queryDescriptors.shape[0] == keypoints_xy.shape[0])
         len_descs = queryDescriptors.shape[0]
 
-        keypoints_meta_data = get_keypoints_meta_data(db, image_id) #np.c_[xy, kp_scales, kp_orientations]
-        scales = keypoints_meta_data[:,1]
-        orientations = keypoints_meta_data[:,2]
+        keypoints_meta_data = get_keypoints_meta_data(db, image_id) #np.c_[x, y, kp_scales, kp_orientations]
+        scales = keypoints_meta_data[:,2]
+        orientations = keypoints_meta_data[:,3]
         xs = keypoints_xy[:,0]
         ys = keypoints_xy[:,1]
         indxs = np.c_[np.round(ys), np.round(xs)].astype(np.int) #note the reverse here
@@ -116,10 +117,19 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
 
         if(model_type == "MatchNoMatch"):
             # use extra data from MatchNoMatch paper
-            test_data = np.c_[queryDescriptors, scales, orientations, xs, ys, greenInt].astype(np.float32)
+            # scales (1), orientations (1), xs (1), ys (1), greenInt (1)]
+            test_data = np.c_[scales, orientations, xs, ys, greenInt].astype(np.float32)
         else:
             # use only SIFT
             test_data = queryDescriptors
+
+        import pdb
+        pdb.set_trace()
+
+        query_image_file_copy = query_image_file.copy()
+        mask = np.zeros([query_image_file_copy.shape[0], query_image_file_copy.shape[1]])
+        kps = sift.detect(query_image_file_copy, mask)
+        kps = sift.compute(query_image_file_copy, my_kps)
 
         start = time.time()
         # predictions_opencv = rtree_opencv.predict(test_data, cv2.ml.RAW_OUTPUT) #not working !
@@ -132,9 +142,13 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
         percentage_reduction = (100 - positive_samples_no * 100 / len_descs)
 
         predicted_keypoint_xy = keypoints_xy[predictions == 1]
+
         save_debug_image(image_gt_path, keypoints_xy, predicted_keypoint_xy, debug_images_path, query_image)
 
-        # from now on I will be using the descs and keypoints that Predicting Matchability (2014) deemed matchable
+        import pdb
+        pdb.set_trace()
+
+        # from now on I will be using the descs and keypoints that Predicting Matchability (2014) / MatchNoMatch 2020 deemed matchable
         queryDescriptors = queryDescriptors[predictions == 1]  # replacing queryDescriptors here so to keep code changes minimal
         keypoints_xy = keypoints_xy[predictions == 1]  # replacing keypoints_xy as they are mapped to queryDescriptors
 

@@ -57,7 +57,6 @@ db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the 
 query_images = read_images_binary(query_images_bin_path)
 query_images_names = load_images_from_text_file(query_images_path)
 localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
-query_images_ground_truth_poses = get_query_images_pose_from_images(localised_query_images_names, query_images)
 
 # live points
 # Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py" - to get the 3D points avg descs, and corresponding xyz coordinates (128 + 3) from the LIVE model.
@@ -82,16 +81,18 @@ else:
     scale = calc_scale_COLMAP_ARCORE(ar_core_poses_path, colmap_poses_path)
     print("ARCore Scale: " + str(scale))
 
-print("Feature matching random and vanillia (baseline) descs..")
 
 # db_gt is only used to get the SIFT features from the query images, nothing to do with the train_descriptors_live and points3D_xyz_live order. That latter order needs to be corresponding btw.
 ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 # ratio_test_val = 1 #because we use only random features here, if we use a percentage and a ratio test then features will be to few to get a pose (TODO: debug this! / discuss this)
+
+print("Feature matching random descs..")
 random_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, random_output, random_limit=random_percentage)
 np.save(os.path.join(random_output, f"images_matching_time.npy"), images_matching_time)
 np.save(os.path.join(random_output, f"images_percentage_reduction.npy"), images_percentage_reduction) # should be 'random_percentage' everywhere
 
 # all of them as in first publication (should be around 800 for each image)
+print("Feature matching vanillia (baseline) descs..")
 vanillia_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, baseline_output)
 np.save(os.path.join(baseline_output, f"images_matching_time.npy"), images_matching_time)
 np.save(os.path.join(baseline_output, f"images_percentage_reduction.npy"), images_percentage_reduction) # should be '0' everywhere

@@ -157,18 +157,8 @@ def image_localised(name, images):
             return image_id
     return image_id
 
-# This was copied from feature_matcher_single_image.py
-def get_queryDescriptors(db, image_id):
-    query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
-    query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
-    query_image_descriptors_data = db.blob_to_array(query_image_descriptors_data, np.uint8)
-    descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
-    query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
-
-    row_sums = query_image_descriptors_data.sum(axis=1)
-    query_image_descriptors_data = query_image_descriptors_data / row_sums[:, np.newaxis]
-    queryDescriptors = query_image_descriptors_data.astype(np.float32)
-    return queryDescriptors
+def is_image_from_base(image_name):
+    return len(image_name.split('/')) < 2
 
 # This was copied from feature_matcher_single_image.py
 def get_image_id(db, query_image):
@@ -279,6 +269,12 @@ def get_all_images_names_from_db(db):
     image_names_tuples = image_names.fetchall()
     image_names = [image_names_tuple[0] for image_names_tuple in image_names_tuples]
     return image_names
+
+def get_image_name_from_db_with_id(db, image_id):
+    image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'").fetchone()[0]
+    if(len(image_name.split("/")) > 1):
+        return image_name.split("/")[1]
+    return image_name
 
 def get_images_names_bin(images_bin_path):
     images_names = []
@@ -428,3 +424,26 @@ def QuaternionFromMatrix(matrix):
         np.negative(q, q)
 
     return q
+
+def get_keypoints_data_and_dominantOrientations(db, image_id):
+    db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + image_id + "'")
+    db_row = db_row.fetchone()
+    if(db_row == None):
+        return None
+    rows = int(db_row[0])
+    cols = int(db_row[1])
+    data = db.blob_to_array(db_row[2], np.float32).reshape(rows, cols)
+    dominantOrientations = db.blob_to_array(db_row[3], np.uint8).reshape(rows, 1)
+    return rows, cols, data, dominantOrientations
+
+# This was updated - 13/10/2022, was named 'get_queryDescriptors'
+def get_descriptors(db, image_id):
+    db_row = db.execute("SELECT rows, cols, data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
+    db_row = db_row.fetchone()
+    if(db_row == None):
+        return None
+    rows = int(db_row[0])
+    cols = int(db_row[1])
+    descs = db_row[2]
+    descs = db.blob_to_array(descs, np.uint8).reshape(rows, cols)
+    return rows, cols, descs

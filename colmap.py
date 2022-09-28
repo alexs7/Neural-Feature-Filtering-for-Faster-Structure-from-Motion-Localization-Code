@@ -89,7 +89,7 @@ def vocab_tree_matcher(database_path, match_list_path=None, ini_save_path=None, 
     else:
         colmap_ini = override_ini_parameters(colmap_ini, {
             'database_path': database_path.replace('\\', '/'),
-            'VocabTreeMatching.match_list_path': match_list_path.replace('\\', '/')
+            'VocabTreeMatching.match_list_path': match_list_path.replace('\\', '/') #used then you already have a reconstruction as COLMAP faq states
         })
 
     # Save INI file.
@@ -155,6 +155,36 @@ def mapper(database_path, image_path, output_path, ini_save_path=None, params=No
 
     # Call COLMAP.
     colmap_command = [colmap_bin, "mapper", "--project_path", ini_save_path]
+    # print(colmap_command)
+    subprocess.check_call(colmap_command)
+
+def point_triangulator(database_path, image_path, input_path, output_path, ini_save_path=None, params=None):
+
+    # Find and read template INI.
+    input_ini_file = os.path.join('template_inis', 'colmap_point_triangulator.ini')
+    with open(input_ini_file, 'r') as f:
+        colmap_ini = f.read()
+
+    if not os.path.exists(output_path):
+        os.makedirs(output_path, exist_ok=True)
+
+    # Update some parameters, if requested.
+    colmap_ini = override_ini_parameters(colmap_ini, params)
+
+    # Add database and image directory to the INI.
+    # NB. Forward slashes in paths are expected by the GUI.
+    colmap_ini = override_ini_parameters(colmap_ini, {
+        'database_path': database_path.replace('\\', '/'),
+        'image_path': image_path.replace('\\', '/'),
+        'input_path': input_path.replace('\\', '/'),
+        'output_path': output_path.replace('\\', '/'),
+    })
+
+    # Save INI file.
+    ini_save_path = save_ini(colmap_ini, ini_save_path)
+
+    # Call COLMAP.
+    colmap_command = [colmap_bin, "point_triangulator", "--project_path", ini_save_path]
     # print(colmap_command)
     subprocess.check_call(colmap_command)
 
