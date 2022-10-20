@@ -6,6 +6,8 @@
 # I clear the old data, keypoints descriptors, and keep the poses (check COLMAP FAQ).
 # You will need to run this on the CYENS machine as it has pycolmap and colmap installed - because of docker I can't run them on Bath Uni
 # To start we need to copy base,live,gt to CYENS then run this script for each base,live,gt ; (scp -r -P 11568 base live gt  alex@4.tcp.eu.ngrok.io:/home/alex/uni/models_for_match_no_match/CMU_slice_3/)
+# When the script is done then move the generated files back to bath servers, scp -r CMU_slice_3 ar2056@weatherwax.cs.bath.ac.uk:/mnt/fast1/ar2056/mnm_match_data
+# Due to user ownerships I have to move them to ar2056@weatherwax.cs.bath.ac.uk:/mnt/fast1/ar2056/ then to the approriate folder.
 
 # Once done copy back to the appropriate CMU or Coop data folder for MnM in weatherwax
 

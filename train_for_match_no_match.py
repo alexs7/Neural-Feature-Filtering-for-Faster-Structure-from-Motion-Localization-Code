@@ -15,42 +15,33 @@ base_path = sys.argv[1]
 print("Base path: " + base_path)
 
 data_path = os.path.join(base_path, "match_or_no_match_comparison_data")
-
-# OpenCV model
-# NOTE (31/08/2022) The OpenCV RF model has problem with predict() - it just returns zeros:
-priors = np.array([0.4, 0.6]).reshape([1,2])
-rtree = cv2.ml.RTrees_create()
-rtree.setMinSampleCount(2)
-rtree.setRegressionAccuracy(0)
-rtree.setUseSurrogates(False)
-rtree.setPriors(priors)
-rtree.setCalculateVarImportance(True)
-rtree.setActiveVarCount(2)
-rtree.setMaxDepth(5)
-rtree.setTermCriteria(( cv2.TERM_CRITERIA_MAX_ITER, 5, 0 ))
-
 rdata = getTrainingDataForMatchNoMatch(data_path)
 
-X = rdata[:,:133].astype(np.float32) # [sift (128), scales (1), orientations (1), xs (1), ys (1), greenInt (1)]
-# https://stackoverflow.com/questions/36440266/how-to-use-opencv-rtrees-for-binary-classification
-y = rdata[:,133].astype(np.int64) # this needs to be int32 (only opencv) for classification
-
-X = X[:,128:] #removing SIFT (not used in paper)
 # SkLearn Model
-rf = RandomForestClassifier(n_estimators = 5, max_depth = 5, min_samples_split = 2, n_jobs=-1) # roughly np.sqrt(X.shape[1])
-rf_default = RandomForestClassifier(n_jobs=-1) # roughly np.sqrt(X.shape[1])
+rf = RandomForestClassifier(n_estimators = 5, max_depth = 5, min_samples_split = 2, n_jobs=-1)
+X = rdata[:,0:8]
+y = rdata[:,8]
 
-print("Training 5 by 5..")
+print("Training 5 by 5.. MnM Paper")
 rf.fit(X, y)
-
-print("Training Default..")
-rf_default.fit(X, y)
 
 print("Dumping model (s)..")
 dump(rf, os.path.join(data_path, "rf_match_no_match_sk.joblib"))
-dump(rf, os.path.join(data_path, "rf_match_no_match_sk_default.joblib"))
 
 print("Done!")
+
+# OpenCV model
+# NOTE (31/08/2022) The OpenCV RF model has problem with predict() - it just returns zeros:
+# priors = np.array([0.4, 0.6]).reshape([1,2])
+# rtree = cv2.ml.RTrees_create()
+# rtree.setMinSampleCount(2)
+# rtree.setRegressionAccuracy(0)
+# rtree.setUseSurrogates(False)
+# rtree.setPriors(priors)
+# rtree.setCalculateVarImportance(True)
+# rtree.setActiveVarCount(2)
+# rtree.setMaxDepth(5)
+# rtree.setTermCriteria(( cv2.TERM_CRITERIA_MAX_ITER, 5, 0 ))
 
 # old opencv model from paper - not used
 # # https://stackoverflow.com/questions/53181119/python-opencv-rtrees-does-not-load-properly
