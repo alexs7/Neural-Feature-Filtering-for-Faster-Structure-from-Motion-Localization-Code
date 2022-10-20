@@ -9,7 +9,8 @@
 # When the script is done then move the generated files back to bath servers, scp -r CMU_slice_3 ar2056@weatherwax.cs.bath.ac.uk:/mnt/fast1/ar2056/mnm_match_data
 # Due to user ownerships I have to move them to ar2056@weatherwax.cs.bath.ac.uk:/mnt/fast1/ar2056/ then to the approriate folder.
 
-# Once done copy back to the appropriate CMU or Coop data folder for MnM in weatherwax
+# Once done copy back to the appropriate CMU or Coop data folder for MnM in weatherwax and run:
+# python3 get_points_3D_mean_desc_single_model_ml.py colmap_data/CMU_data/slice3_mnm/live/database.db colmap_data/CMU_data/slice3_mnm/live/output_opencv_sift_model/images.bin colmap_data/CMU_data/slice3_mnm/live/output_opencv_sift_model/points3D.bin colmap_data/CMU_data/slice3_mnm/avg_descs_xyz_ml.npy
 
 import glob
 import os

@@ -8,8 +8,6 @@ from database import COLMAPDatabase
 from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
 from parameters import Parameters
 
-debug_method = ""
-
 def load_est_poses_results(path):
     # [pose, inliers_no, outliers_no, iterations, elapsed_time]
     return np.load(path, allow_pickle=True).item()
@@ -25,7 +23,7 @@ def check_for_degenerate_poses(all_benchmark_data):
                 deg_names += [image_name]
     return np.unique(np.array(deg_names))
 
-def get_maa_accuracy_for_all_images(est_poses_results):
+def get_maa_accuracy_for_all_images(est_poses_results, query_imgs_gt_poses):
     image_errors_maas = np.empty([0, 3]) #hold the mean for each benchmark iterations
     all_valid_poses_names = np.array([]) #hold the valid images for each benchmark iterations
     all_images_names = list(est_poses_results[0].keys())
@@ -40,10 +38,10 @@ def get_maa_accuracy_for_all_images(est_poses_results):
     # but the pose from iteration 3 not. I discard the image completely as it affect the total average maa.
     all_valid_poses_names_from_all_benchmarks = {}
     # fill it with 0
-    for q_img_name in list(query_images_ground_truth_poses.keys()):
+    for q_img_name in list(query_imgs_gt_poses.keys()):
         all_valid_poses_names_from_all_benchmarks[q_img_name] = 0
     for benchmark_iteration, data_from_benchmarck_iteration in est_poses_results.items():
-        _, valid_poses_names = pose_evaluate_generic_comparison_model_Maa(data_from_benchmarck_iteration, query_images_ground_truth_poses, degenerate_names, scale)
+        _, valid_poses_names = pose_evaluate_generic_comparison_model_Maa(data_from_benchmarck_iteration, query_imgs_gt_poses, degenerate_names, scale)
         for v_img in valid_poses_names:
             all_valid_poses_names_from_all_benchmarks[v_img] += 1
 
@@ -54,15 +52,10 @@ def get_maa_accuracy_for_all_images(est_poses_results):
         else:
             degenerate_names = np.append(degenerate_names, img_name)
 
-    print(degenerate_names)
-    if(debug_method == "M. or no M. 2020" or debug_method == "All (~800)"):
-        import pdb
-        pdb.set_trace()
-
     # second to get the MAA using the final degenerate_names (which will be skipped).
     for benchmark_iteration, data_from_benchmarck_iteration in est_poses_results.items():
         # using new metric from (https://www.kaggle.com/code/eduardtrulls/imc2022-training-data#kln-486)
-        images_mean_maa, valid_poses_names = pose_evaluate_generic_comparison_model_Maa(data_from_benchmarck_iteration, query_images_ground_truth_poses, degenerate_names, scale)
+        images_mean_maa, valid_poses_names = pose_evaluate_generic_comparison_model_Maa(data_from_benchmarck_iteration, query_imgs_gt_poses, degenerate_names, scale)
         # # the valid_poses_names should be found across all benchmark_iteration, not only some!
         image_errors_maas = np.r_[image_errors_maas, np.array([np.mean(images_mean_maa[1]), np.mean(images_mean_maa[2]), np.mean(images_mean_maa[3])]).reshape(1, 3)]
         all_valid_poses_names = np.append(all_valid_poses_names, valid_poses_names)
@@ -146,7 +139,10 @@ def get_row_data(method, errors_maas_mean, image_errors_6dof_mean,
     return data_row
 
 base_path = sys.argv[1]
+base_path_mnm = sys.argv[2]
 print("Base path: " + base_path)
+print("Base (MnM) path: " + base_path_mnm)
+
 ml_path = os.path.join(base_path, "ML_data")
 result_file_output_path = os.path.join(base_path, "results_2022.csv")
 
@@ -165,6 +161,11 @@ query_images_names = load_images_from_text_file(query_images_path)
 localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
 query_images_ground_truth_poses = get_query_images_pose_from_images(localised_query_images_names, query_images)
 K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3)  # 3 because 1 -base, 2 -live, 3 -query images
+
+# MnM data
+query_images_bin_path_mnm = os.path.join(base_path_mnm, "gt/output_opencv_sift_model/images.bin")
+localised_query_images_names_mnm = get_localised_image_by_names(query_images_names, query_images_bin_path_mnm)
+query_images_ground_truth_poses_mnm = get_query_images_pose_from_images(localised_query_images_names_mnm, query_images)
 
 # Do my ml_methods first
 my_methods = list(parameters.ml_methods.keys())
@@ -197,13 +198,17 @@ with open(result_file_output_path, 'w', encoding='UTF8') as f:
     # The other papers
     for method in comparison_methods:
         print(f"Doing Method {method}")
-        debug_method = method
+        if method == "M. or no M. 2020":
+            gt_poses = query_images_ground_truth_poses_mnm
+        else:
+            gt_poses = query_images_ground_truth_poses
+
         path = parameters.comparison_methods[method]
         comparison_path = os.path.join(base_path, path)
         est_poses_results = load_est_poses_results(os.path.join(comparison_path, f"est_poses_results.npy"))
 
-        errors_maas_mean, non_degenerate_poses_percentage, degenerate_poses_percentage, valid_poses_names = get_maa_accuracy_for_all_images(est_poses_results)
-        image_errors_6dof, images_benchmark_data_mean = get_6dof_accuracy_for_all_images(est_poses_results, query_images_ground_truth_poses, valid_poses_names)
+        errors_maas_mean, non_degenerate_poses_percentage, degenerate_poses_percentage, valid_poses_names = get_maa_accuracy_for_all_images(est_poses_results, gt_poses)
+        image_errors_6dof, images_benchmark_data_mean = get_6dof_accuracy_for_all_images(est_poses_results, gt_poses, valid_poses_names)
 
         times = np.load(os.path.join(comparison_path, f"images_matching_time.npy"), allow_pickle=True).item()
         percentages = np.load(os.path.join(comparison_path, f"images_percentage_reduction.npy"), allow_pickle=True).item()
@@ -215,11 +220,10 @@ with open(result_file_output_path, 'w', encoding='UTF8') as f:
     # Random and Baseline
     for method in baseline_methods:
         print(f"Doing Method {method}")
-        debug_method = method
         path = os.path.join(base_path, parameters.baseline_methods[method])
         est_poses_results = load_est_poses_results(os.path.join(path, f"est_poses_results.npy"))
 
-        errors_maas_mean, non_degenerate_poses_percentage, degenerate_poses_percentage, valid_poses_names = get_maa_accuracy_for_all_images(est_poses_results)
+        errors_maas_mean, non_degenerate_poses_percentage, degenerate_poses_percentage, valid_poses_names = get_maa_accuracy_for_all_images(est_poses_results, query_images_ground_truth_poses)
         image_errors_6dof, images_benchmark_data_mean = get_6dof_accuracy_for_all_images(est_poses_results, query_images_ground_truth_poses, valid_poses_names)
 
         times = np.load(os.path.join(path, f"images_matching_time.npy"), allow_pickle=True).item()

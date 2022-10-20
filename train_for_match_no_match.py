@@ -19,14 +19,15 @@ rdata = getTrainingDataForMatchNoMatch(data_path)
 
 # SkLearn Model
 rf = RandomForestClassifier(n_estimators = 5, max_depth = 5, min_samples_split = 2, n_jobs=-1)
+# [xs, ys, octaves, angles, sizes, responses, dominantOrientations, green_intensities, matcheds]
 X = rdata[:,0:8]
 y = rdata[:,8]
 
-print("Training 5 by 5.. MnM Paper")
+print("Training 5 by 5 RF.. MnM Paper")
 rf.fit(X, y)
 
 print("Dumping model (s)..")
-dump(rf, os.path.join(data_path, "rf_match_no_match_sk.joblib"))
+dump(rf, os.path.join(data_path, "rf_model.joblib"))
 
 print("Done!")
 

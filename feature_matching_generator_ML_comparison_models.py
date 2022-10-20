@@ -11,41 +11,28 @@ from tqdm import tqdm
 from database import COLMAPDatabase
 from save_2D_points import save_debug_image
 
-def compute_kp_scales(kp_data):
-    scales = np.empty([kp_data.shape[0],1])
-    for i in range(kp_data.shape[0]):
-        a11 = kp_data[i][2]
-        a12 = kp_data[i][3]
-        a21 = kp_data[i][4]
-        a22 = kp_data[i][5]
-        scale = (np.sqrt(a11 * a11 + a21 * a21) + np.sqrt(a12 * a12 + a22 * a22)) / 2
-        scales[i,:] = scale
-    return scales
-
-def compute_kp_orientations(kp_data):
-    orientations = np.empty([kp_data.shape[0],1])
-    for i in range(kp_data.shape[0]):
-        a11 = kp_data[i][2]
-        # a12 = kp_data[i][3]
-        a21 = kp_data[i][4]
-        # a22 = kp_data[i][5]
-        orientation = np.arctan2(a21, a11)
-        orientations[i,:] = orientation
-    return orientations
-
-def get_keypoints_meta_data(db, img_id):
-    kp_data = db.execute("SELECT rows, cols, data FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
-    cols = kp_data[1]
-    rows = kp_data[0]
-    kp_data = COLMAPDatabase.blob_to_array(kp_data[2], np.float32)
-    kp_data = kp_data.reshape([rows, cols])
-    # Note: https://math.stackexchange.com/questions/13150/extracting-rotation-scale-values-from-2d-transformation-matrix
-    # https://github.com/colmap/colmap/issues/1219
-    # https://stackoverflow.com/questions/45159314/decompose-2d-transformation-matrix
-    kp_scales = compute_kp_scales(kp_data)
-    kp_orientations = compute_kp_orientations(kp_data)
-    xy = kp_data[:,0:2]
-    return np.c_[xy, kp_scales, kp_orientations]
+def get_keypoints_data(db, img_id, model_type=None):
+    if(model_type=="MatchNoMatch"):
+        # it is a row, with many keypoints (blob)
+        kp_db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
+        cols = kp_db_row[1]
+        rows = kp_db_row[0]
+        # x, y, octave, angle, size, response
+        kp_data = COLMAPDatabase.blob_to_array(kp_db_row[2], np.float32)
+        kp_data = kp_data.reshape([rows, cols])
+        dominantOrientations = COLMAPDatabase.blob_to_array(kp_db_row[3], np.uint8)
+        dominantOrientations = dominantOrientations.reshape([rows, 1])
+        # xs, ys, octaves, angles, sizes, responses, dominantOrientations
+        return np.c_[kp_data, dominantOrientations]
+    else:
+        # it is a row, with many keypoints (blob)
+        kp_db_row = db.execute("SELECT rows, cols, data FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
+        cols = kp_db_row[1]
+        rows = kp_db_row[0]
+        kp_data = COLMAPDatabase.blob_to_array(kp_db_row[2], np.float32)
+        kp_data = kp_data.reshape([rows, cols])
+        # I only care about x and y here
+        return kp_data
 
 def get_keypoints_xy(db, image_id):
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
@@ -80,7 +67,6 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
     debug_images_path = os.path.join(comparison_data_path, "debug_images")
     images_percentage_reduction = {}
     images_matching_time = {}
-    sift = cv2.SIFT_create()
 
     if (exists(comparison_data_path) == False):
         print("comparison_data_path does not exist ! will create")
@@ -96,57 +82,39 @@ def feature_matcher_wrapper_generic_comparison_model(base_path, comparison_data_
         image_height = query_image_file.shape[0]
         image_id = get_image_id(db,query_image)
 
-        # keypoints data (first keypoint correspond to the first descriptor etc etc)
-        # both methods return x,y
-        keypoints_xy = get_keypoints_xy(db, image_id)
-        # just removing outliers, keypoints that COLMAP detected outside the frame... (a COLMAP bug maybe)
-        invalid_rows = np.argwhere((keypoints_xy[:, 0] > image_width) | (keypoints_xy[:, 1] > image_height))
-        keypoints_xy = np.delete(keypoints_xy, invalid_rows, axis =0 )
-        queryDescriptors = get_queryDescriptors(db, image_id)  # just to get their size
-        queryDescriptors = np.delete(queryDescriptors, invalid_rows, axis =0 )
-        assert(queryDescriptors.shape[0] == keypoints_xy.shape[0])
+        queryDescriptors = get_queryDescriptors(db, image_id)
+        keypoints_data = get_keypoints_data(db, image_id, model_type)
+        xs = keypoints_data[:, 0]
+        ys = keypoints_data[:, 1]
+        indxs = np.c_[np.round(ys), np.round(xs)].astype(np.int)  # note the reverse here
+        greenInt = query_image_file[indxs[:, 0], indxs[:, 1]][:, 1]
+        test_data = np.c_[keypoints_data, greenInt, queryDescriptors]
         len_descs = queryDescriptors.shape[0]
 
-        keypoints_meta_data = get_keypoints_meta_data(db, image_id) #np.c_[x, y, kp_scales, kp_orientations]
-        scales = keypoints_meta_data[:,2]
-        orientations = keypoints_meta_data[:,3]
-        xs = keypoints_xy[:,0]
-        ys = keypoints_xy[:,1]
-        indxs = np.c_[np.round(ys), np.round(xs)].astype(np.int) #note the reverse here
-        greenInt = query_image_file[indxs[:,0], indxs[:,1]][:,1]
+        invalid_rows = np.argwhere((test_data[:, 0] > image_width) | (test_data[:, 1] > image_height))
+
+        test_data = np.delete(queryDescriptors, invalid_rows, axis=0)
 
         if(model_type == "MatchNoMatch"):
-            # use extra data from MatchNoMatch paper
-            # scales (1), orientations (1), xs (1), ys (1), greenInt (1)]
-            test_data = np.c_[scales, orientations, xs, ys, greenInt].astype(np.float32)
+            query_data = test_data[:, 0:8] # x, y, octave, angle, size, response, dominantOrientation, green_intensity
         else:
-            # use only SIFT
-            test_data = queryDescriptors
-
-        import pdb
-        pdb.set_trace()
-
-        query_image_file_copy = query_image_file.copy()
-        mask = np.zeros([query_image_file_copy.shape[0], query_image_file_copy.shape[1]])
-        kps = sift.detect(query_image_file_copy, mask)
-        kps = sift.compute(query_image_file_copy, my_kps)
+            query_data = test_data[:, :128] #sift
 
         start = time.time()
         # predictions_opencv = rtree_opencv.predict(test_data, cv2.ml.RAW_OUTPUT) #not working !
-        predictions = model.predict(test_data)
+        predictions = model.predict(query_data)
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
 
         positive_samples_no = len(np.where(predictions == 1)[0])
         percentage_reduction = (100 - positive_samples_no * 100 / len_descs)
+        assert(predictions.shape[0] == test_data.shape[0])
 
-        predicted_keypoint_xy = keypoints_xy[predictions == 1]
+        predicted_keypoint_xy = test_data[predictions == 1] #predictions and test_data must have the same rows
 
+        keypoints_xy = test_data[:,0:2]
         save_debug_image(image_gt_path, keypoints_xy, predicted_keypoint_xy, debug_images_path, query_image)
-
-        import pdb
-        pdb.set_trace()
 
         # from now on I will be using the descs and keypoints that Predicting Matchability (2014) / MatchNoMatch 2020 deemed matchable
         queryDescriptors = queryDescriptors[predictions == 1]  # replacing queryDescriptors here so to keep code changes minimal

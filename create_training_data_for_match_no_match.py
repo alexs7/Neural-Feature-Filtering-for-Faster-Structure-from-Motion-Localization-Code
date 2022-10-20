@@ -10,6 +10,7 @@ import random
 from tqdm import tqdm
 from query_image import read_images_binary
 
+# similar code is used in feature_matching_generator_ML_comparison_models.py
 def get_image_keypoints_data(db, img_id):
     kp_db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
     cols = kp_db_row[1]

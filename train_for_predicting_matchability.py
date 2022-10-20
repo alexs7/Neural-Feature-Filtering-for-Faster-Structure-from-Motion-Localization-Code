@@ -39,6 +39,6 @@ print("Training..")
 rf.fit(X, y)
 
 print("Dumping model..")
-dump(rf, os.path.join(data_path, "rf_model_PM.joblib"))
+dump(rf, os.path.join(data_path, "rf_model.joblib"))
 
 print("Done!")

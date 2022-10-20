@@ -10,17 +10,19 @@
 # 4 - output filename
 # python3 get_points_3D_mean_desc_single_model_ml.py colmap_data/CMU_data/slice3/live/database.db colmap_data/CMU_data/slice3/live/model/images.bin colmap_data/CMU_data/slice3/live/model/points3D.bin colmap_data/CMU_data/slice3/ML_data/avg_descs_xyz_ml.npy
 
+# 21/10/2022: For OpenCV models (MnM paper) use "output_opencv_sift_model" in the command
+
 import sys
 import numpy as np
 from database import COLMAPDatabase
-from point3D_loader import read_points3d_default, index_dict
+from point3D_loader import read_points3d_default
 from query_image import read_images_binary
 
 def get_point_info(points3D, db):
     no = 0
     points_info = np.empty([0, 131]) #(SIFT + xyz)
 
-    for k,v in points3D.items():
+    for k, v in points3D.items():
         no += 1
         point_id = v.id
         points3D_descs = np.empty([0, 128])

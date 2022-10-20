@@ -111,7 +111,6 @@ class Parameters(object):
 
         self.comparison_methods = {
             "Pred. M. 2014": "predicting_matchability_comparison_data",
-            "Pred. M. 2014 VRF": "ml_models_vanillia_comparison_data",
             "M. or no M. 2020": "match_or_no_match_comparison_data"
         }
 
