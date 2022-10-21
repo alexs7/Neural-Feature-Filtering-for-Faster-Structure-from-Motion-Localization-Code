@@ -74,30 +74,10 @@ def getCombinedData(db_path, score_name):
 
     return sift_vecs, scores, classes
 
-def getTrainingDataForPredictingMatchability(base_path, random_samples_no):
+def getTrainingAndTestDataForMatchNoMatch(base_path):
     print("Getting data..")
-    predicting_matchability_db_path = os.path.join(base_path, "training_data.db")
-    training_data_db = COLMAPDatabase.connect(predicting_matchability_db_path)
-
-    matched = training_data_db.execute("SELECT sift FROM data WHERE matched = 1").fetchall()
-    unmatched = training_data_db.execute("SELECT sift FROM data WHERE matched = 0").fetchall()
-
-    sift_matched = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in matched)
-    sift_matched = np.array(list(sift_matched))
-    sift_unmatched = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in unmatched)
-    sift_unmatched = np.array(list(sift_unmatched))
-
-    if(sift_matched.shape[0] < random_samples_no): #if less samples are available
-        random_samples_no = sift_matched.shape[0]
-
-    random_idxs = np.random.choice(np.arange(sift_matched.shape[0]), random_samples_no, replace=False)
-    random_pos_samples = sift_matched[random_idxs,:]
-    random_neg_samples = sift_unmatched[random_idxs,:]
-
-    return random_pos_samples, random_neg_samples
-
-def getTrainingDataForMatchNoMatch(base_path):
-    print("Getting data..")
+    # the database here was created to hold OpenCV data + plus the other
+    # data orientations etc
     match_no_match_db_path = os.path.join(base_path, "training_data.db")
     training_data_db = COLMAPDatabase.connect(match_no_match_db_path)
     raw_data = training_data_db.execute("SELECT * FROM data").fetchall()
@@ -121,5 +101,14 @@ def getTrainingDataForMatchNoMatch(base_path):
     green_intensities = np.array(list(green_intensity))
     matched = (row[8] for row in raw_data)
     matcheds = np.array(list(matched)) #weird variable name
+    testSamples = (row[9] for row in raw_data) #is it a test sample ?
+    testSamples = np.array(list(testSamples))
+    imageIDs = (row[10] for row in raw_data)  # is it a test sample ?
+    imageIDs = np.array(list(imageIDs))
 
-    return np.c_[xs, ys, octaves, angles, sizes, responses, dominantOrientations, green_intensities, matcheds]
+    data = np.c_[xs, ys, octaves, angles, sizes, responses, dominantOrientations, green_intensities, matcheds, testSamples, imageIDs]
+
+    shuffled_idxs = np.random.permutation(data.shape[0])
+    data_shuffled = data[shuffled_idxs]
+
+    return data_shuffled

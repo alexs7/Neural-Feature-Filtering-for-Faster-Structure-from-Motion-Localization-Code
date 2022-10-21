@@ -1,4 +1,4 @@
-# This file is the equivalent of model_evaluator.py and model_evaluator_comparison_models.py, but for random and baseline only
+# This file is the equivalent of model_evaluator.py and model_evaluator_comparison_models_*.py, but for random and baseline only
 import os
 import sys
 from database import COLMAPDatabase

@@ -8,19 +8,45 @@ from database import pair_id_to_image_ids
 import numpy as np
 import random
 from tqdm import tqdm
-from query_image import read_images_binary
+from point3D_loader import read_points3d_default
+from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_image_id
 
 # similar code is used in feature_matching_generator_ML_comparison_models.py
-def get_image_keypoints_data(db, img_id):
+def get_image_data(db, points3D, images, img_id, img_file):
+    image = images[img_id] #only localised images
     kp_db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
     cols = kp_db_row[1]
     rows = kp_db_row[0]
+
+    assert (image.xys.shape[0] == image.point3D_ids.shape[0] == rows)  # just for my sanity
     # x, y, octave, angle, size, response
     kp_data = COLMAPDatabase.blob_to_array(kp_db_row[2], np.float32)
     kp_data = kp_data.reshape([rows, cols])
     dominantOrientations = COLMAPDatabase.blob_to_array(kp_db_row[3], np.uint8)
     dominantOrientations = dominantOrientations.reshape([rows, 1])
-    return np.c_[kp_data, dominantOrientations]
+
+    matched_values = [] #for each keypoint (x,y)/desc same thing
+    green_intensities = [] #for each keypoint (x,y)/desc same thing
+
+    for i in range(image.xys.shape[0]):  # can loop through descs or img_data.xys - same thing
+        current_point3D_id = image.point3D_ids[i]
+        x = image.xys[i][0]
+        y = image.xys[i][1]
+        if (current_point3D_id == -1):  # means feature is unmatched
+            matched = 0
+            green_intensity = img_file[int(y), int(x)][1] # reverse indexing
+        else:
+            # this is to make sure that xy belong to the right pointd3D
+            assert i in points3D[current_point3D_id].point2D_idxs
+            matched = 1
+            green_intensity = img_file[int(y), int(x)][1] # reverse indexing
+        matched_values.append(matched)
+        green_intensities.append(green_intensity)
+
+    matched_values = np.array(matched_values).reshape(rows, 1)
+    green_intensities = np.array(green_intensities).reshape(rows, 1)
+
+    return np.c_[kp_data, dominantOrientations, green_intensities, matched_values]
 
 def get_full_path(lpath, bpath, name):
     if (('session' in name) == True):
@@ -43,15 +69,15 @@ def get_subset_of_pairs(all_pair_ids, no):
     pbar.close()
     return pair_ids
 
-def createDataForMatchNoMatchMatchabilityComparison(mnm_base_path, output_path, pairs_limit = -1):
+def createDataForMatchNoMatchMatchabilityComparison(mnm_base_path, base_path, output_path, pairs_limit = -1):
 
     db_live_mnm_path = os.path.join(mnm_base_path, "live/database.db")
     db_live_mnm = COLMAPDatabase.connect(db_live_mnm_path)
     live_model_images_mnm = read_images_binary(os.path.join(mnm_base_path, "live/output_opencv_sift_model/images.bin"))
+    live_points_3D_mnm = read_points3d_default(os.path.join(mnm_base_path, "live/output_opencv_sift_model/points3D.bin"))
     image_live_dir_mnm = os.path.join(mnm_base_path, 'live/images/')
     image_base_dir_mnm = os.path.join(mnm_base_path, 'base/images/')
 
-    print("Getting Pairs")
     if (pairs_limit == -1):
         print(f'Getting all pairs..')
         pair_ids = db_live_mnm.execute("SELECT pair_id FROM matches").fetchall()
@@ -61,80 +87,101 @@ def createDataForMatchNoMatchMatchabilityComparison(mnm_base_path, output_path, 
         pair_ids = get_subset_of_pairs(all_pair_ids, pairs_limit)  # as in paper
 
     print("Creating data..")
-    training_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_path, "training_data.db"))
-    training_data_db.execute("BEGIN")
+    training_and_test_data_db = COLMAPDatabase.create_db_match_no_match_data(os.path.join(output_path, "training_data.db"))
+    training_and_test_data_db.execute("BEGIN")
+
+    # This is to avoid cases such as (1.0, 2), (1.0, 3) .. to double adding 1.0 etc
+    # and also (3.0, 1) when its reveresed if it can be
+    # we need two lists here
+    all_images_id = []
 
     for pair in tqdm(pair_ids):
         pair_id = pair[0]
-        img_id_1, img_id_2 = pair_id_to_image_ids(pair_id)
-
-        # when a db image has not been localised ...
-        if((img_id_1 not in live_model_images_mnm) or (img_id_2 not in live_model_images_mnm)):
-            continue
-
-        img_1_file_name = live_model_images_mnm[img_id_1].name
-        img_2_file_name = live_model_images_mnm[img_id_2].name
-
-        img_1_file = cv2.imread(get_full_path(image_live_dir_mnm, image_base_dir_mnm, img_1_file_name))
-        img_2_file = cv2.imread(get_full_path(image_live_dir_mnm, image_base_dir_mnm, img_2_file_name))
-
         pair_data = db_live_mnm.execute("SELECT rows, data FROM matches WHERE pair_id = " + "'" + str(pair_id) + "'").fetchone()
         rows = pair_data[0]
+        if (rows < 1):  # no matches in this pair, no idea why COLMAP stores it...
+            continue
+        img_id_1, img_id_2 = pair_id_to_image_ids(pair_id)
+        if(img_id_1 not in all_images_id):
+            all_images_id.append(img_id_1)
+        if (img_id_2 not in all_images_id):
+            all_images_id.append(img_id_2)
 
-        if(rows < 1): #no matches in this pair, no idea why COLMAP stores it...
+    # This code follows similar structure from App.cpp (the c++ paper code)
+    print("Inserting Train Data..")
+    for img_id in tqdm(all_images_id):
+        # when a db image has not been localised ...
+        if((img_id not in live_model_images_mnm)):
             continue
 
-        cols = 2 #for each image
-        zero_based_indices = COLMAPDatabase.blob_to_array(pair_data[1], np.uint32).reshape([rows, cols])
-        zero_based_indices_left = zero_based_indices[:, 0]
-        zero_based_indices_right = zero_based_indices[:, 1]
+        img_file_name = live_model_images_mnm[img_id].name
+        img_file = cv2.imread(get_full_path(image_live_dir_mnm, image_base_dir_mnm, img_file_name))
+        training_data_img = get_image_data(db_live_mnm, live_points_3D_mnm, live_model_images_mnm, img_id, img_file)
 
-        keypoints_data_img_1 = get_image_keypoints_data(db_live_mnm, img_id_1)
-        keypoints_data_img_2 = get_image_keypoints_data(db_live_mnm, img_id_2)
+        for i in range(len(training_data_img)):
+            sample = training_data_img[i, :]
+            x = sample[0]
+            y = sample[1]
+            octave = sample[2]
+            angle = sample[3]
+            size = sample[4]
+            response = sample[5]
+            dominantOrientation = sample[6]
+            green_intensity = sample[7]
+            matched = sample[8] #can use astype(np.int64) here
+            testSample = 0
+            # xs, ys, octaves, angles, sizes, responses, dominantOrientations, greenInt
+            training_and_test_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       (float(x),) + (float(y),) + (float(octave),) + (float(angle),) + (float(size),) + (float(response),) + (int(dominantOrientation),) + (
+                           float(green_intensity),) + (matched,) + (testSample,) + (img_id,))
 
-        keypoints_data_img_1_matched = keypoints_data_img_1[zero_based_indices_left]
-        keypoints_data_img_1_unmatched = np.delete(keypoints_data_img_1, zero_based_indices_left, axis=0)
+    # add test data too (gt = query as we know)
+    print("Inserting Test Data..")
+    query_images_path = os.path.join(base_path, "gt/query_name.txt") #these are the same anw
+    query_images_names = load_images_from_text_file(query_images_path)
+    db_gt_mnm_path = os.path.join(mnm_base_path, "gt/database.db") #openCV db + extra MnM data
+    db_gt_mnm = COLMAPDatabase.connect(db_gt_mnm_path)  # remember this database holds the OpenCV descriptors
+    query_images_bin_path_mnm = os.path.join(mnm_base_path, "gt/output_opencv_sift_model/images.bin")
+    localised_query_images_names_mnm = get_localised_image_by_names(query_images_names, query_images_bin_path_mnm)
+    image_gt_dir_mnm = os.path.join(base_path, 'gt/images/') # or mnm_base_path should be the same
+    gt_points_3D_mnm = read_points3d_default(os.path.join(mnm_base_path, "gt/output_opencv_sift_model/points3D.bin"))
+    gt_model_images_mnm = read_images_binary(query_images_bin_path_mnm)
 
-        keypoints_data_img_2_matched = keypoints_data_img_2[zero_based_indices_right]
-        keypoints_data_img_2_unmatched = np.delete(keypoints_data_img_2, zero_based_indices_right, axis=0)
+    for i in tqdm(range(len(localised_query_images_names_mnm))):
+        img_name = localised_query_images_names_mnm[i]
+        image_gt_path = os.path.join(image_gt_dir_mnm, img_name)
+        qt_image_file = cv2.imread(image_gt_path)  # no need for cv2.COLOR_BGR2RGB here as G is in the middle anw
+        image_id = int(get_image_id(db_gt_mnm, img_name))
+        test_data_img = get_image_data(db_gt_mnm, gt_points_3D_mnm, gt_model_images_mnm, image_id, qt_image_file)
 
-        all_kps = [(keypoints_data_img_1_matched, img_1_file),
-                   (keypoints_data_img_1_unmatched, img_1_file),
-                   (keypoints_data_img_2_matched, img_2_file),
-                   (keypoints_data_img_2_unmatched, img_2_file)]
-
-        for i in range(len(all_kps)):
-            kps_data = all_kps[i][0]
-            img_file = all_kps[i][1]
-            if (i % 2) == 0:
-                matched = 1 # keypoints_data_img_1_matched, keypoints_data_img_2_matched
-            else:
-                matched = 0
-            for i in range(kps_data.shape[0]): # or kps_decs same
-                sample = kps_data[i,:]
-                # x, y, octave, angle, size, response, dominantOrientation, green_intensity, matched
-                x = sample[0]
-                y = sample[1]
-                octave = sample[2]
-                angle = sample[3]
-                size = sample[4]
-                response = sample[5]
-                dominantOrientation = sample[6]
-                green_intensity = img_file[int(y), int(x)][1]  # reverse indexing
-                training_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                         (float(x),) + (float(y),) + (float(octave),) + (float(angle),) + (float(size),) + (float(response),) + (int(dominantOrientation),) + (float(green_intensity),) + (matched,))
+        for i in range(len(test_data_img)):
+            sample = test_data_img[i, :]
+            x = sample[0]
+            y = sample[1]
+            octave = sample[2]
+            angle = sample[3]
+            size = sample[4]
+            response = sample[5]
+            dominantOrientation = sample[6]
+            green_intensity = sample[7]
+            matched = sample[8] #can use astype(np.int64) here
+            testSample = 1
+            # xs, ys, octaves, angles, sizes, responses, dominantOrientations, greenInt
+            training_and_test_data_db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                       (float(x),) + (float(y),) + (float(octave),) + (float(angle),) + (float(size),) + (float(response),) + (int(dominantOrientation),) + (
+                           float(green_intensity),) + (matched,) + (testSample,) + (image_id,))
 
     print("Committing..")
-    training_data_db.commit()
-    print("Generating Stats..")
-    stats = training_data_db.execute("SELECT * FROM data").fetchall()
-    matched = training_data_db.execute("SELECT * FROM data WHERE matched = 1").fetchall()
-    unmatched = training_data_db.execute("SELECT * FROM data WHERE matched = 0").fetchall()
+    training_and_test_data_db.commit()
+    print("Generating Stats (only for training data)..")
+    stats = training_and_test_data_db.execute("SELECT * FROM data WHERE testSample = 0").fetchall()
+    matched = training_and_test_data_db.execute("SELECT * FROM data WHERE matched = 1 AND testSample = 0").fetchall()
+    unmatched = training_and_test_data_db.execute("SELECT * FROM data WHERE matched = 0 AND testSample = 0").fetchall()
 
     print("Total samples: " + str(len(stats)))
     print("Total matched samples: " + str(len(matched)))
     print("Total unmatched samples: " + str(len(unmatched)))
-    print("% of matched samples: " + str(len(matched) * 100 / len(unmatched)))
+    print("% of matched samples: " + str(len(matched) * 100 / len(stats)))
 
     print("Done!")
 
@@ -142,6 +189,7 @@ base_path = sys.argv[1]
 mnm_base_path = sys.argv[2] # this is that data generated from format_data_for_match_no_match.py
 pairs_limit = int(sys.argv[3])
 print("Base (MnM) path: " + mnm_base_path)
+# will store the training_data and test_data in base_path for convenience
 output_path = os.path.join(base_path, "match_or_no_match_comparison_data")
 os.makedirs(output_path, exist_ok = True)
-createDataForMatchNoMatchMatchabilityComparison(mnm_base_path, output_path, pairs_limit)
+createDataForMatchNoMatchMatchabilityComparison(mnm_base_path, base_path, output_path, pairs_limit)

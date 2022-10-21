@@ -1,4 +1,4 @@
-# This file will be used to analyse results from model_evaluator.py, model_evaluator_comparison_models.py
+# This file will be used to analyse results from model_evaluator.py, model_evaluator_comparison_models_*.py
 import csv
 import os
 import sys
@@ -181,19 +181,19 @@ with open(result_file_output_path, 'w', encoding='UTF8') as f:
     # My NNs
     for method_idx in range(len(my_methods)):
         print(f"Doing Method {my_methods[method_idx]}")
-        # est_poses_results = load_est_poses_results(os.path.join(ml_path, f"est_poses_results_{method_idx}.npy"))
-        #
-        # errors_maas_mean, non_degenerate_poses_percentage, degenerate_poses_percentage, valid_poses_names = get_maa_accuracy_for_all_images(est_poses_results)
-        # image_errors_6dof, images_benchmark_data_mean = get_6dof_accuracy_for_all_images(est_poses_results, query_images_ground_truth_poses, valid_poses_names)
-        #
-        # feature_matching_file_index = ml_models_matches_file_index[my_methods[method_idx]]
-        # times = np.load(os.path.join(ml_path, f"images_matching_time_{feature_matching_file_index}.npy"), allow_pickle=True).item()
-        # percentages = np.load(os.path.join(ml_path, f"images_percentage_reduction_{feature_matching_file_index}.npy"), allow_pickle=True).item()
-        #
-        # csv_row_data = get_row_data(my_methods[method_idx], errors_maas_mean, image_errors_6dof,
-        #                             images_benchmark_data_mean, times, percentages,
-        #                             valid_poses_names, non_degenerate_poses_percentage, degenerate_poses_percentage)
-        # writer.writerow(csv_row_data)
+        est_poses_results = load_est_poses_results(os.path.join(ml_path, f"est_poses_results_{method_idx}.npy"))
+
+        errors_maas_mean, non_degenerate_poses_percentage, degenerate_poses_percentage, valid_poses_names = get_maa_accuracy_for_all_images(est_poses_results, query_images_ground_truth_poses)
+        image_errors_6dof, images_benchmark_data_mean = get_6dof_accuracy_for_all_images(est_poses_results, query_images_ground_truth_poses, valid_poses_names)
+
+        feature_matching_file_index = ml_models_matches_file_index[my_methods[method_idx]]
+        times = np.load(os.path.join(ml_path, f"images_matching_time_{feature_matching_file_index}.npy"), allow_pickle=True).item()
+        percentages = np.load(os.path.join(ml_path, f"images_percentage_reduction_{feature_matching_file_index}.npy"), allow_pickle=True).item()
+
+        csv_row_data = get_row_data(my_methods[method_idx], errors_maas_mean, image_errors_6dof,
+                                    images_benchmark_data_mean, times, percentages,
+                                    valid_poses_names, non_degenerate_poses_percentage, degenerate_poses_percentage)
+        writer.writerow(csv_row_data)
 
     # The other papers
     for method in comparison_methods:

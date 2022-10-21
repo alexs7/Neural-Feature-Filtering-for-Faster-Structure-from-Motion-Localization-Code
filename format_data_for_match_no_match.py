@@ -121,6 +121,9 @@ for image_name in tqdm(image_names):
     kps_plain = []
     kps, des = sift.detectAndCompute(img,None)
     # as in paper ~2000 for map, ~800 for query
+    # this might lead to same number of features in the database for the base images.
+    # For example if more than reconstr_features_limit are detected for multiple images
+    # then they will be reconstr_features_limit for multiple images
     kps = kps[0:reconstr_features_limit]
     des = des[0:reconstr_features_limit]
     dominant_orientations = countDominantOrientations(kps)

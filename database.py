@@ -73,7 +73,6 @@ class COLMAPDatabase(sqlite3.Connection):
     def create_db_predicting_matchability_data(db_file):
         sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
         sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
-                                                    image_id INTEGER NOT NULL,
                                                     sift BLOB NOT NULL,
                                                     matched INTEGER NOT NULL
                                                 );"""
@@ -101,7 +100,9 @@ class COLMAPDatabase(sqlite3.Connection):
                                                     response FLOAT NOT NULL,
                                                     domOrientations INTEGER NOT NULL,
                                                     green FLOAT NOT NULL,
-                                                    matched INTEGER NOT NULL
+                                                    matched INTEGER NOT NULL,
+                                                    testSample INTEGER NOT NULL,
+                                                    imageId INTEGER NOT NULL
                                                     );"""
         conn = None
         try:
