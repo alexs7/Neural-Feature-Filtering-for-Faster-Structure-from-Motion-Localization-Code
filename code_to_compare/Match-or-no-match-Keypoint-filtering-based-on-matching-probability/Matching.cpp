@@ -24,7 +24,6 @@ void Matching::detectAndDescribe(const cv::Mat & img, std::vector<cv::KeyPoint>&
 	pImageSIFT->compute(img, imgKps, imgDesc);
 }
 
-
 // Print the calculated matches
 void Matching::printMatches(const cv::Mat & source, const cv::Mat & target, const std::vector<cv::KeyPoint> &srcKps, const std::vector<cv::KeyPoint> &tarKps, const std::vector< cv::DMatch >& matches, cv::String const& KindOfMatches)
 {

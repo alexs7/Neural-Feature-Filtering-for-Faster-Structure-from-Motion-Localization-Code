@@ -30,7 +30,7 @@
 
 #include <opencv2/opencv.hpp>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char** argv) {
 
 	// INPUTS *********************************************************************************************
 	/// For Training and Testing phase: Amount of features which define the classifier architecture. (8=proposed, 128=Predicting matchability 2014)
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 	for (double k = 0; k < iter; k++)
 	{
 		cv::String name;
-        std::cout << "change src for image " << fn[k] << std::endl;;
+        std::cout << "change src for image " << fn[k];
         testImageInputSrc = imread(fn[k]);
         name = fn[k];
 
@@ -118,60 +118,60 @@ int main(int argc, char *argv[]) {
             }
         }
 
-// Write out keypoints for further SFM. Avoid it if not needed to prevent performance.
-        // Write out for VSFM
-        FILE* file1;
-
-        // Create proper sift file name
-        const char *b = ".sift";
-        std::string c = rawname + b;
-        std::string rawnameSift = c.insert(0, "Sift/"); //TODO: Need to create dir Sift manually - Alex
-        const char *nameSift = rawnameSift.c_str();
-
-        file1 = fopen(nameSift, "w");
-        int n1 = testDescSrcPred.rows;
-        int d1 = testDescSrcPred.cols;
-        fprintf(file1, "%d %d\n", n1, d1);
-        for (int i = 0; i < n1; i++) {
-        	// TODO - maybe first x and then y
-        	fprintf(file1, "%f %f %f %f", testKpsSrcCut[i].pt.y, testKpsSrcCut[i].pt.x,	testKpsSrcCut[i].octave, testKpsSrcCut[i].angle);
-
-        	for (int j = 0; j < d1; j++)
-        	{
-        		if (j % 128 == 0)
-        			fprintf(file1, "\n");
-        		fprintf(file1, " %d", (int)(testDescSrcPred.at<float>(i, j)));
-        	}
-        	fprintf(file1, "\n");
-
-        }
-
-        // Write out for ColMap
-        FILE* file2;
-
-        // Create proper sift file name
-        const char *b2 = ".jpg.txt";
-        std::string c2 = rawname + b2;
-        std::string rawnameSift2 = c2.insert(0, "Sift/");
-        const char *nameSift2 = rawnameSift2.c_str();
-
-        file2 = fopen(nameSift2, "w");
-        int n2 = testDescSrcPred.rows;
-        int d2 = testDescSrcPred.cols;
-        // fprintf(file2, "%d %d\n", n2, d2); //TODO: Removed to make parsing with numpy easier - Alex
-        for (int i = 0; i < n2; i++) {
-        	// first y and then x
-        	fprintf(file2, "%f %f %f %f", testKpsSrcCut[i].pt.x, testKpsSrcCut[i].pt.y, testKpsSrcCut[i].octave, testKpsSrcCut[i].angle);
-
-        	for (int j = 0; j < d2; j++)
-        	{
-        		//if (j % 128 == 0)
-        		//	fprintf(file1, "\n");
-        		fprintf(file2, " %d", (int)(testDescSrcPred.at<float>(i, j)));
-        	}
-        	fprintf(file2, "\n");
-
-        }
+// Write out keypoints for further SFM. Avoid it if not needed to prevent performance. 
+//        // Write out for VSFM
+//        FILE* file1;
+//
+//        // Create proper sift file name
+//        const char *b = ".sift";
+//        std::string c = rawname + b;
+//        std::string rawnameSift = c.insert(0, "Sift/");
+//        const char *nameSift = rawnameSift.c_str();
+//
+//        file1 = fopen(nameSift, "w");
+//        int n1 = testDescSrcPred.rows;
+//        int d1 = testDescSrcPred.cols;
+//        fprintf(file1, "%d %d\n", n1, d1);
+//        for (int i = 0; i < n1; i++) {
+//        	// TODO - maybe first x and then y
+//        	fprintf(file1, "%f %f %f %f", testKpsSrcCut[i].pt.y, testKpsSrcCut[i].pt.x,	testKpsSrcCut[i].octave, testKpsSrcCut[i].angle);
+//
+//        	for (int j = 0; j < d1; j++)
+//        	{
+//        		if (j % 128 == 0)
+//        			fprintf(file1, "\n");
+//        		fprintf(file1, " %d", (int)(testDescSrcPred.at<float>(i, j)));
+//        	}
+//        	fprintf(file1, "\n");
+//
+//        }
+//
+//        // Write out for ColMap
+//        FILE* file2;
+//
+//        // Create proper sift file name
+//        const char *b2 = ".jpg.txt";
+//        std::string c2 = rawname + b2;
+//        std::string rawnameSift2 = c2.insert(0, "Sift/");
+//        const char *nameSift2 = rawnameSift2.c_str();
+//
+//        file2 = fopen(nameSift2, "w");
+//        int n2 = testDescSrcPred.rows;
+//        int d2 = testDescSrcPred.cols;
+//        fprintf(file2, "%d %d\n", n2, d2);
+//        for (int i = 0; i < n2; i++) {
+//        	// first y and then x
+//        	fprintf(file2, "%f %f %f %f", testKpsSrcCut[i].pt.x, testKpsSrcCut[i].pt.y, testKpsSrcCut[i].octave, testKpsSrcCut[i].angle);
+//
+//        	for (int j = 0; j < d2; j++)
+//        	{
+//        		//if (j % 128 == 0)
+//        		//	fprintf(file1, "\n");
+//        		fprintf(file2, " %d", (int)(testDescSrcPred.at<float>(i, j)));
+//        	}
+//        	fprintf(file2, "\n");
+//
+//        }
 
         std::cout << "Predicted matchable keypoints in test (source) image = " << testDescSrcPred.rows << " (out of " << testKpsSrc.size() << ")" << std::endl;
 	}//End of testing
