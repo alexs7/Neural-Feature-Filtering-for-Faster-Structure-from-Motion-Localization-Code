@@ -1,15 +1,20 @@
-# Run this file before creating the data for MnM - (2020) paper
+# Run this file before creating the data for MnM - (2020) paper, and run it on the CYENS machine. Need to create the folders CMU_slice_*/Coop manually
 # This file will aim to create the data for the RF model from Match no Match, MnM - (2020) paper
-# It will extract OpenCV features and insert them in colmap's database and run the triangulator again for the base only.
-# For the live and gt model, I just run the image _registrator.
+# It will extract OpenCV SIFT features and insert them in colmap's database and run the triangulator again for the base only.
+# For the live and gt model, I just run the image _registrator, same as my first publication
 # The base model is triangulated using the already known camera poses from the original model
 # I clear the old data, keypoints descriptors, and keep the poses (check COLMAP FAQ).
 # You will need to run this on the CYENS machine as it has pycolmap and colmap installed - because of docker I can't run them on Bath Uni
-# To start we need to copy base,live,gt to CYENS then run this script for each base,live,gt ; (scp -r -P 11568 base live gt  alex@4.tcp.eu.ngrok.io:/home/alex/uni/models_for_match_no_match/CMU_slice_3/)
+# To start we need to copy base,live,gt to CYENS then run this script for each base,live,gt ; (scp -r -P 11568 base live gt  alex@4.tcp.eu.ngrok.io:/home/alex/uni/opencv_sift_models_for_match_no_match/CMU_slice_3/)
 # When the script is done then move the generated files back to bath servers, scp -r CMU_slice_3 ar2056@weatherwax.cs.bath.ac.uk:/mnt/fast1/ar2056/mnm_match_data
-# Due to user ownerships I have to move them to ar2056@weatherwax.cs.bath.ac.uk:/mnt/fast1/ar2056/ then to the approriate folder.
+# Due to user ownerships I have to move them to ar2056@weatherwax.cs.bath.ac.uk:/mnt/fast1/ar2056/ then to the appropriate folder.
 
+# Also read below for more permission notes:
 # Once done copy back to the appropriate CMU or Coop data folder for MnM in weatherwax and run:
+# you might get permissions issues so run this:
+# scp -r CMU_slice_3 ar2056@weatherwax.cs.bath.ac.uk:/mnt/fast1/ar2056/mnm_match_data_from_CYENS_machine, then copy files to appropriate directories
+
+# Then get the 3D points averaged descriptors
 # python3 get_points_3D_mean_desc_single_model_ml.py colmap_data/CMU_data/slice3_mnm/live/database.db colmap_data/CMU_data/slice3_mnm/live/output_opencv_sift_model/images.bin colmap_data/CMU_data/slice3_mnm/live/output_opencv_sift_model/points3D.bin colmap_data/CMU_data/slice3_mnm/avg_descs_xyz_ml.npy
 
 import glob
@@ -90,7 +95,6 @@ images_gt_path = os.path.join(model_gt_path, "images")
 sift = cv2.SIFT_create()
 
 # look at cmu_sparse_reconstuctor.py, for help
-
 # Note: use images names from database to locate them for opencv feature extraction
 
 # 1 - replace base model features with openCV sift (including matches too)
@@ -124,8 +128,13 @@ for image_name in tqdm(image_names):
     # this might lead to same number of features in the database for the base images.
     # For example if more than reconstr_features_limit are detected for multiple images
     # then they will be reconstr_features_limit for multiple images
-    kps = kps[0:reconstr_features_limit]
-    des = des[0:reconstr_features_limit]
+    idxs = np.arange(len(kps))
+    np.random.shuffle(idxs)
+    rnd_idxs = idxs[0:reconstr_features_limit] #random idxs
+    kps = np.array(kps)
+    kps = kps[rnd_idxs] #replace with random
+    des = np.array(des)
+    des = des[rnd_idxs] #replace with random
     dominant_orientations = countDominantOrientations(kps)
 
     kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
@@ -160,7 +169,7 @@ if(live_db.dominant_orientations_column_exists() == False):
 
 print("Extracting data from images (live only - ignoring the ones base as we already extracted data from them)..")
 
-for image_name in image_names:
+for image_name in tqdm(image_names):
     # we need to loop though all the live images here (including base too ofc)
     image_id = get_image_id(live_db, image_name)
     # check if image exists in base - which means its keypoints and descs have been already replaced, from previous iterations
@@ -171,13 +180,18 @@ for image_name in image_names:
 
     if((base_db_keypoints == None) or (base_db_descriptors == None)): #need to replace the kps and descs then in the live db
         # at this point we are looking at a live image_id only.
-        print(f'for image id = {image_id}, kps, des, and dominant_orientations has not be computed so will computer them and replace them in the live db')
+        # print(f'for image id = {image_id}, kps, des, and dominant_orientations has not be computed so will compute them and replace them in the live db')
         img = cv2.imread(os.path.join(images_live_path, image_name))
         kps_plain = []
         kps, des = sift.detectAndCompute(img,None)
         # as in paper ~2000 for map, ~800 for query
-        kps = kps[0:query_features_limit]
-        des = des[0:query_features_limit]
+        idxs = np.arange(len(kps))
+        np.random.shuffle(idxs)
+        rnd_idxs = idxs[0:query_features_limit]  # random idxs query one here
+        kps = np.array(kps)
+        kps = kps[rnd_idxs]  # replace with random
+        des = np.array(des)
+        des = des[rnd_idxs]  # replace with random
         dominant_orientations = countDominantOrientations(kps)
 
         kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
@@ -188,7 +202,7 @@ for image_name in image_names:
     else:
         # copy from base db the descriptors and keypoints already extracted to the live db
         # no need to re-compute dominant_orientations, sift kps and des
-        print(f'for image id = {image_id}, kps, des, and dominant_orientations has already computed so will load them from previous database, i.e. base')
+        # print(f'for image id = {image_id}, kps, des, and dominant_orientations has already computed so will load them from previous database, i.e. base')
         kps = base_db_keypoints[2]
         dominant_orientations = base_db_keypoints[3]
         kps_plain = []
@@ -225,7 +239,7 @@ if(gt_db.dominant_orientations_column_exists() == False):
 
 print("Extracting data from images (gt only - ignoring the ones from live and base as we already extracted data from them)..")
 
-for image_name in image_names:
+for image_name in tqdm(image_names):
     # we need to loop though all the gt images here (including live and base ofc)
     image_id = get_image_id(gt_db, image_name)
     # check if image exists in live - which means its keypoints and descs have been already replaced, from previous iterations
@@ -236,13 +250,20 @@ for image_name in image_names:
 
     if((live_db_keypoints == None) or (live_db_descriptors == None)): #need to replace the kps and descs then
         # at this point we are looking at a gt image_id only.
-        print(f'for image id = {image_id}, kps, des, and dominant_orientations has not be computed so will computer them and replace them in the gt db')
+        # print(f'for image id = {image_id}, kps, des, and dominant_orientations has not be computed so will computer them and replace them in the gt db')
         img = cv2.imread(os.path.join(images_gt_path, image_name))
         kps_plain = []
-        kps, des = sift.detectAndCompute(img,None)
+        # here we keep all of the query descriptors.
+        # This is because these descriptors will be used for training. The more the better.
+        kps, des = sift.detectAndCompute(img, None)
         # as in paper ~2000 for map, ~800 for query
-        kps = kps[0:query_features_limit]
-        des = des[0:query_features_limit]
+        idxs = np.arange(len(kps))
+        np.random.shuffle(idxs)
+        rnd_idxs = idxs[0:query_features_limit]  # random idxs query one here
+        kps = np.array(kps)
+        kps = kps[rnd_idxs]  # replace with random
+        des = np.array(des)
+        des = des[rnd_idxs]  # replace with random
         dominant_orientations = countDominantOrientations(kps)
 
         kps_plain += [[kps[i].pt[0], kps[i].pt[1], kps[i].octave, kps[i].angle, kps[i].size, kps[i].response] for i in range(len(kps))]
@@ -253,7 +274,7 @@ for image_name in image_names:
     else:
         # copy from live db the descriptors and keypoints already extracted to the gt db
         # no need to re-compute dominant_orientations, sift kps and des
-        print(f'for image id = {image_id}, kps, des, and dominant_orientations has already computed so will load them from previous database, i.e. live')
+        # print(f'for image id = {image_id}, kps, des, and dominant_orientations has already computed so will load them from previous database, i.e. live')
         kps = live_db_keypoints[2]
         dominant_orientations = live_db_keypoints[3]
         kps_plain = []
@@ -272,6 +293,8 @@ colmap.vocab_tree_matcher(qt_db_path)
 
 # 6 - register the new gt images against the live opencv sift model
 live_opencv_sift_model_path = os.path.join(model_live_path, 'output_opencv_sift_model')  #live model but with opencv sift features
-colmap.image_registrator(qt_db_path, live_opencv_sift_model_path, os.path.join(model_gt_path, 'output_opencv_sift_model'))
+colmap.image_registrator(qt_db_path,
+                         live_opencv_sift_model_path,
+                         os.path.join(model_gt_path, 'output_opencv_sift_model'))
 
 print('Gt Model done!')

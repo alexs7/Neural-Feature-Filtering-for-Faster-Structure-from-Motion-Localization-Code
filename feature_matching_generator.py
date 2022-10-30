@@ -1,20 +1,11 @@
 from itertools import chain
 import cv2
 import numpy as np
+from query_image import get_image_id, get_keypoints_xy
 
-# creates 2d-3d matches data for ransac comparison
-def get_keypoints_xy(db, image_id):
-    query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-    query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
-    query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-    query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
-    query_image_keypoints_data = db.blob_to_array(query_image_keypoints_data, np.float32)
-    query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
-    query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows, query_image_keypoints_data_cols)
-    query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
-    return query_image_keypoints_data_xy
 
 # indexing is the same as points3D indexing for trainDescriptors
+# NOTE: 23/11/2022 - might want to replace this with the method in query_image.py
 def get_queryDescriptors(db, image_id):
     query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
     query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
@@ -26,11 +17,6 @@ def get_queryDescriptors(db, image_id):
     query_image_descriptors_data = query_image_descriptors_data / row_sums[:, np.newaxis]
     queryDescriptors = query_image_descriptors_data.astype(np.float32)
     return queryDescriptors
-
-def get_image_id(db, query_image):
-    image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + query_image + "'")
-    image_id = str(image_id.fetchone()[0])
-    return image_id
 
 def feature_matcher_wrapper(db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, verbose = False, points_scores_array=None):
     # create image_name <-> matches, dict - easier to work with

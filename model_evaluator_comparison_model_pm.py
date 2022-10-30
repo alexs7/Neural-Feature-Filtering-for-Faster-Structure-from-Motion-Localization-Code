@@ -11,11 +11,11 @@ from query_image import read_images_binary, load_images_from_text_file, get_loca
 
 # This file is run after tranining the comparison models.
 # The order is:
-# 1 - TODO: complete this
+# 1 - run create_training_data_predicting_matchability.py, creates data for your python model and the original code C++
+# 2 - train_for_predicting_matchability.py, or run train the original random forest
+# 3 - then this file
 # Read the original file model_evaluator.py for notes.
 # Similarly to model_evaluator.py, run in sequence NOT parallel
-# This file was added to evaluate:
-# 1 - Predicting Matchability - PM (2014) paper - trained on their data (getting N neighbours for images that has N back/forw neighbours and the desc is matched if the kp is matched to a point)
 
 base_path = sys.argv[1]
 print("Base path: " + base_path)
@@ -23,7 +23,7 @@ print("Base path: " + base_path)
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 
-# The directory should be already created from previous scripts, train_for_comparison_models_on_my_3D_data.py, create_training_data_predicting_matchability.py, create_training_data_for_match_no_match.py
+# The directory should be already created from previous scripts, create_training_data_predicting_matchability.py, create_training_data_and_train_for_match_no_match.py
 comparison_data_path_PM = os.path.join(base_path, "predicting_matchability_comparison_data")
 
 if((os.path.exists(comparison_data_path_PM) == False)):

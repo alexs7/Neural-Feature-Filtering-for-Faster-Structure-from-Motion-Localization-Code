@@ -1,5 +1,6 @@
 # This file is used to evaluate the MnM model 2020.
 import os
+import cv2
 from joblib import load
 from feature_matching_generator_ML_comparison_models import feature_matcher_wrapper_generic_comparison_model_mnm
 from database import COLMAPDatabase
@@ -11,11 +12,14 @@ from query_image import read_images_binary, load_images_from_text_file, get_loca
 
 # This file is run after tranining the comparison models.
 # The order is:
-# 1 - TODO: complete this
+# 1 - run format_data_for_match_no_match.py (on CYENS machine)
+# 2 - create_training_data_and_train_for_match_no_match.py
+# 3 - the training is done by the author's code (C++).
+#   1 - the code is compiled and runs on weatherwax in the code_to_compare_dir
+#   2 - run ./matchornomatch from the build folder, but make sure the right code in main.cpp is uncommented (I run getTrainedData and trainForest)
+# 4 - then this file
 # Read the original file model_evaluator.py for notes.
 # Similarly to model_evaluator.py, run in sequence NOT parallel
-# This file was added to evaluate:
-# 1 - Match or No Match: Keypoint Filtering based on Matching Probability - MoNM (2020) paper - trained on all pairs. A keypoint is matched if there is a 3D point matched to it
 # In this file I get the matches then benchmark, and repeat not like in model_evaluator.py where I get all matches then benchmark
 
 base_path = sys.argv[1]
@@ -26,7 +30,7 @@ print("Base (MnM, OpenCV) path: " + base_path_mnm)
 ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 
-# The directory should be already created from previous scripts, train_for_comparison_models_on_my_3D_data.py, create_training_data_predicting_matchability.py, create_training_data_for_match_no_match.py
+# The directory should be already created from previous scripts, create_training_data_predicting_matchability.py, create_training_data_and_train_for_match_no_match.py
 comparison_data_path_MoNM = os.path.join(base_path, "match_or_no_match_comparison_data")
 
 if((os.path.exists(comparison_data_path_MoNM) == False)):
@@ -62,9 +66,10 @@ print("benchmarks_iters set to: " + str(benchmarks_iters))
 
 # ----------------------------->
 
-print("Getting matches using Match or No Match: Keypoint Filtering based on Matching Probability + loading model..")
-model_path = os.path.join(comparison_data_path_MoNM, "rf_model.joblib")
-model = load(model_path)
+print("Getting matches using Match or No Match: Keypoint Filtering based on Matching Probability + loading model (OpenCV)..")
+model_path_opencv = "/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/Trained model.xml"
+model = cv2.ml.RTrees_load(model_path_opencv)
+
 # for MnM it doesn't matter if you use "base_path" or "base_path_mnm" it just reads the same images (live).
 matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model_mnm(base_path_mnm, comparison_data_path_MoNM, model, db_gt_mnm, localised_query_images_names_mnm, train_descriptors_live_mnm, points3D_xyz_live_mnm, ratio_test_val)
 np.save(os.path.join(comparison_data_path_MoNM, "images_matching_time.npy"), images_matching_time)

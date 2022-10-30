@@ -46,8 +46,8 @@ int main(int argc, char** argv) {
 	cv::String trainedModel = "Trained model.xml";
 
 	// File directory for ground truth features (variables) and labels (If no ground truth available, leave it blank)
-	//cv::String testFeaturesLabelsFile = "Ground Truth";
-	cv::String testFeaturesLabelsFile = "";
+	cv::String testFeaturesLabelsFile = "Ground Truth";
+//	cv::String testFeaturesLabelsFile = "";
 
 	// Testing images folder directory ("Test Images" is the default folder)
 	cv::String TestImagesDirectory = "Test Images";
@@ -58,7 +58,8 @@ int main(int argc, char** argv) {
 
 	/// Τraining phase
 	// Please uncomment the following lines to obtain your own trained model.
-//	App::getTrainedData(dirTrainingImages, n_featuresWrtMethod);
+	App::getTrainedData(dirTrainingImages, n_featuresWrtMethod);
+	exit(0);
 //	App::trainForest(dirTrainingData, n_featuresWrtMethod);
 	// End of training
 
@@ -118,7 +119,7 @@ int main(int argc, char** argv) {
             }
         }
 
-// Write out keypoints for further SFM. Avoid it if not needed to prevent performance. 
+// Write out keypoints for further SFM. Avoid it if not needed to prevent performance.
 //        // Write out for VSFM
 //        FILE* file1;
 //

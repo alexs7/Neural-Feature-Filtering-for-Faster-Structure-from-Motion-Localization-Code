@@ -84,15 +84,16 @@ else:
 
 # db_gt is only used to get the SIFT features from the query images, nothing to do with the train_descriptors_live and points3D_xyz_live order. That latter order needs to be corresponding btw.
 ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
-# ratio_test_val = 1 #because we use only random features here, if we use a percentage and a ratio test then features will be to few to get a pose (TODO: debug this! / discuss this)
+rand_ratio_test_val = 1 #because we use only random features here, if we use a percentage and a ratio test then features will be to few to get a pose (TODO: debug this! / discuss this)
 
 print("Feature matching random descs..")
-random_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, random_output, random_limit=random_percentage)
+random_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, rand_ratio_test_val, random_output, random_limit=random_percentage)
 np.save(os.path.join(random_output, f"images_matching_time.npy"), images_matching_time)
 np.save(os.path.join(random_output, f"images_percentage_reduction.npy"), images_percentage_reduction) # should be 'random_percentage' everywhere
 
 # all of them as in first publication (should be around 800 for each image)
 print("Feature matching vanillia (baseline) descs..")
+# Note that this is using a ratio_test_val which reduces the descs number. The comparison methods do not.
 vanillia_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, baseline_output)
 np.save(os.path.join(baseline_output, f"images_matching_time.npy"), images_matching_time)
 np.save(os.path.join(baseline_output, f"images_percentage_reduction.npy"), images_percentage_reduction) # should be '0' everywhere

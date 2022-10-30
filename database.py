@@ -98,10 +98,9 @@ class COLMAPDatabase(sqlite3.Connection):
                                                     angle FLOAT NOT NULL,
                                                     size FLOAT NOT NULL,
                                                     response FLOAT NOT NULL,
-                                                    domOrientations INTEGER NOT NULL,
+                                                    domOrientations FLOAT NOT NULL,
                                                     green FLOAT NOT NULL,
                                                     matched INTEGER NOT NULL,
-                                                    testSample INTEGER NOT NULL,
                                                     imageId INTEGER NOT NULL
                                                     );"""
         conn = None

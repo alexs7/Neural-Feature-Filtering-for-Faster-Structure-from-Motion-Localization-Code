@@ -33,3 +33,12 @@ plots/CMU*
 plots/Coop*
 code_to_compare/Predicting_Matchability/VLFeat_SIFT/test_images/
 code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build
+code_to_compare/Predicting_Matchability/rforest/rforest
+code_to_compare/Predicting_Matchability/rforest/pos*.txt
+code_to_compare/Predicting_Matchability/rforest/neg*.txt
+code_to_compare/Predicting_Matchability/rforest/rforest*.gz
+code_to_compare/Predicting_Matchability/rforest/descs.txt
+code_to_compare/Predicting_Matchability/rforest/res.txt
+code_to_compare/Predicting_Matchability/rforest/descs_test.txt
+code_to_compare/Predicting_Matchability/rforest/rforest_*.txt
+

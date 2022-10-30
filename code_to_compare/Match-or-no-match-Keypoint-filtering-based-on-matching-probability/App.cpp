@@ -90,7 +90,7 @@ void App::getTrainedData(const cv::String & TrainingImagesDirectory, const int f
 		// Apply pairwise matching to obtain reliable matches
 		cv::Mat inlierMatches;
 		std::vector<cv::DMatch> matches, initialMatches;
-		matching.matchStereoPair(imgSrc, imgSrc, imgSrcKps, imgTarKps, imgSrcDesc, imgTarDesc, initialMatches, matches, inlierMatches);
+		matching.matchStereoPair(imgSrc, imgTar, imgSrcKps, imgTarKps, imgSrcDesc, imgTarDesc, initialMatches, matches, inlierMatches);
 
 		// Define Labels for each image
 		int n_imgSrc = imgSrcDesc.rows;
@@ -159,8 +159,18 @@ void App::getTrainedData(const cv::String & TrainingImagesDirectory, const int f
 		// Shuffle data
 		cv::Mat shuffledData0 = shuffle(Data0);
 		cv::Mat balancedData0;
-		for (int y = 0; y < balancedData1.rows; y++) {
-			balancedData0.push_back(shuffledData0.row(y));
+		// Alex (Me) 19/11/2022 - this will fail if shuffledData0 < balancedData1 (when you have more positive examples than negative)
+		// so I added an if condition
+		if(balancedData1.rows <= shuffledData0.rows){
+            for (int y = 0; y < balancedData1.rows; y++) {
+                balancedData0.push_back(shuffledData0.row(y));
+            }
+		}else{ // Alex (Me) 19/11/2022 - loop though the shuffledData0, which size is less than balancedData1
+            cv::Mat shuffledData1 = shuffle(balancedData1); // balancedData1 is larger than Data0
+            cv::Mat balancedData1;
+		    for (int y = 0; y < Data0.rows; y++) {
+                balancedData1.push_back(shuffledData1.row(y));
+            }
 		}
 
 		// Store tha balanced (Training data) data in a CSV file.

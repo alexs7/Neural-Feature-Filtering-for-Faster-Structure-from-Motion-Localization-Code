@@ -60,7 +60,7 @@ def get_maa_accuracy_for_all_images(est_poses_results, query_imgs_gt_poses):
         image_errors_maas = np.r_[image_errors_maas, np.array([np.mean(images_mean_maa[1]), np.mean(images_mean_maa[2]), np.mean(images_mean_maa[3])]).reshape(1, 3)]
         all_valid_poses_names = np.append(all_valid_poses_names, valid_poses_names)
 
-    degenerate_poses_percentage = len(degenerate_names) / len(all_images_names) * 100
+    degenerate_poses_percentage = len(degenerate_names) / len(all_images_names) * 100 #TODO: Is this correct?
     non_degenerate_poses_percentage = 100 - degenerate_poses_percentage
 
     # mean across the rows (https://stackoverflow.com/questions/40200070/what-does-axis-0-do-in-numpys-sum-function)
@@ -85,9 +85,6 @@ def get_6dof_accuracy_for_all_images(est_poses_results, query_images_ground_trut
         for benchmark_iteration_idx, data_from_benchmark_iteration in est_poses_results.items():
             q_pose = data_from_benchmark_iteration[image_name][0]  # [0], need the pose only
             error_t, error_r = pose_evaluate_generic_comparison_model(q_pose, gt_pose, scale)
-            if(error_t > 500):
-                import pdb
-                pdb.set_trace()
             error_t_all += [error_t]
             error_r_all += [error_r]
             # the rest of the data here
@@ -164,8 +161,9 @@ K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3)  # 3 because 1 -ba
 
 # MnM data
 query_images_bin_path_mnm = os.path.join(base_path_mnm, "gt/output_opencv_sift_model/images.bin")
+query_images_mnm = read_images_binary(query_images_bin_path_mnm)
 localised_query_images_names_mnm = get_localised_image_by_names(query_images_names, query_images_bin_path_mnm)
-query_images_ground_truth_poses_mnm = get_query_images_pose_from_images(localised_query_images_names_mnm, query_images)
+query_images_ground_truth_poses_mnm = get_query_images_pose_from_images(localised_query_images_names_mnm, query_images_mnm)
 
 # Do my ml_methods first
 my_methods = list(parameters.ml_methods.keys())

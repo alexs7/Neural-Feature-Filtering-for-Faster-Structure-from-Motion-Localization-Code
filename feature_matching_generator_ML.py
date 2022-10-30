@@ -5,41 +5,12 @@ import os
 import time
 from itertools import chain
 from os.path import exists
-
 import cv2
 import numpy as np
 import sys
 from tqdm import tqdm
-
+from query_image import get_image_id, get_keypoints_xy, get_queryDescriptors
 from save_2D_points import save_debug_image
-
-
-# creates 2d-3d matches data for ransac comparison
-def get_keypoints_xy(db, image_id):
-    query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-    query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
-    query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-    query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
-    query_image_keypoints_data = db.blob_to_array(query_image_keypoints_data, np.float32)
-    query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
-    query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows, query_image_keypoints_data_cols)
-    query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
-    return query_image_keypoints_data_xy
-
-# indexing is the same as points3D indexing for trainDescriptors - NOTE: This does not normalised the descriptors!
-def get_queryDescriptors(db, image_id):
-    query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
-    query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
-    query_image_descriptors_data = db.blob_to_array(query_image_descriptors_data, np.uint8)
-    descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
-    query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
-    queryDescriptors = query_image_descriptors_data.astype(np.float32)
-    return queryDescriptors
-
-def get_image_id(db, query_image):
-    image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + query_image + "'")
-    image_id = str(image_id.fetchone()[0])
-    return image_id
 
 # Will use raw descs not normalised, used in prepare_comparison_data.py
 def feature_matcher_wrapper_ml(base_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, output_path, random_limit = -1):
@@ -51,7 +22,7 @@ def feature_matcher_wrapper_ml(base_path, db, query_images, trainDescriptors, po
 
     debug_images_path = os.path.join(output_path, "debug_images")
     if (exists(debug_images_path) == False):
-        print("debug_images_path does not exist! will create")
+        print("debug_images_path does not exist! will create") #same images here will keep be overwritten no need to delete
         os.makedirs(debug_images_path, exist_ok=True)
 
     #  go through all the test images and match their descs to the 3d points avg descs
@@ -66,13 +37,17 @@ def feature_matcher_wrapper_ml(base_path, db, query_images, trainDescriptors, po
 
         if(random_limit != -1):
             # len(queryDescriptors) or len(keypoints_xy) - should return the number or rows and be the same.
-            len_descs = queryDescriptors.shape[0]
+            len_descs = keypoints_xy.shape[0]
             percentage_num = int(len_descs * random_limit / 100)
-            random_idxs = np.random.choice(np.arange(len_descs), percentage_num, replace=False)
-            keypoints_xy = keypoints_xy[random_idxs]
-            queryDescriptors = queryDescriptors[random_idxs]
-
-        save_debug_image(image_gt_path, keypoints_xy, keypoints_xy, debug_images_path, query_image) #pass keypoints_xy 2 times, here as no predictions
+            keypoints_idxs = np.arange(len_descs)
+            np.random.shuffle(keypoints_idxs)
+            rnd_idx = keypoints_idxs[:percentage_num]
+            # save here, before keypoints_xy get overwritten
+            save_debug_image(image_gt_path, keypoints_xy, keypoints_xy[rnd_idx], debug_images_path, query_image)  # random
+            keypoints_xy = keypoints_xy[rnd_idx]
+            queryDescriptors = queryDescriptors[rnd_idx]
+        else:
+            save_debug_image(image_gt_path, keypoints_xy, keypoints_xy, debug_images_path, query_image) #pass keypoints_xy 2 times, here as no predictions
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)

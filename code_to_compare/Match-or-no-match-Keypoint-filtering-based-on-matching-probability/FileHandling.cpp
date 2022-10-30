@@ -21,6 +21,10 @@ cv::String FileHandling::nameCSV(const cv::String & filenameNoNumber, const int&
 	else if (number >= 100 && number < 1000) {
 		CSVfile = filenameNoNumber + std::to_string(number);
 	}
+
+    // 11/11/2022 - Alexandros overwrite
+	CSVfile = filenameNoNumber + std::to_string(number);
+
 	return CSVfile;
 }
 

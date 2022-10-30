@@ -1,9 +1,12 @@
+import os
+import shutil
 import time
 
 import cv2
 import numpy as np
 import struct
 import collections
+from database import COLMAPDatabase
 
 CameraModel = collections.namedtuple(
     "CameraModel", ["model_id", "model_name", "num_params"])
@@ -425,6 +428,7 @@ def QuaternionFromMatrix(matrix):
 
     return q
 
+# This is purely a db calling method, it does not fetch the green channel - you need the image for that
 def get_keypoints_data_and_dominantOrientations(db, image_id):
     db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + image_id + "'")
     db_row = db_row.fetchone()
@@ -453,3 +457,82 @@ def get_image_name_only(image_name):
     if(len(image_name) > 1):
         return image_name[1].split(".")[0]
     return image_name[0].split(".")[0]
+
+def get_image_name_only_with_extension(image_name):
+    return image_name.split("/")[1]
+
+def is_image_base(img_name):
+    return len(img_name.split("/")) == 1
+
+# This is used for MnM paper similar code is used in feature_matching_generator_ML_comparison_models.py
+def get_image_data(db, points3D, images, img_id, img_file):
+    image = images[img_id] #only localised images
+    kp_db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
+    cols = kp_db_row[1]
+    rows = kp_db_row[0]
+
+    assert (image.xys.shape[0] == image.point3D_ids.shape[0] == rows)  # just for my sanity
+    # x, y, octave, angle, size, response
+    kp_data = COLMAPDatabase.blob_to_array(kp_db_row[2], np.float32)
+    kp_data = kp_data.reshape([rows, cols])
+    dominantOrientations = COLMAPDatabase.blob_to_array(kp_db_row[3], np.uint8)
+    dominantOrientations = dominantOrientations.reshape([rows, 1])
+
+    matched_values = [] #for each keypoint (x,y)/desc same thing
+    green_intensities = [] #for each keypoint (x,y)/desc same thing
+
+    for i in range(image.xys.shape[0]):  # can loop through descs or img_data.xys - same thing
+        current_point3D_id = image.point3D_ids[i]
+        x = image.xys[i][0]
+        y = image.xys[i][1]
+        if (current_point3D_id == -1):  # means feature is unmatched
+            matched = 0
+            green_intensity = img_file[int(y), int(x)][1] # reverse indexing
+        else:
+            # this is to make sure that xy belong to the right pointd3D
+            assert i in points3D[current_point3D_id].point2D_idxs
+            matched = 1
+            green_intensity = img_file[int(y), int(x)][1] # reverse indexing
+        matched_values.append(matched)
+        green_intensities.append(green_intensity)
+
+    matched_values = np.array(matched_values).reshape(rows, 1)
+    green_intensities = np.array(green_intensities).reshape(rows, 1)
+
+    image_data = np.c_[kp_data, green_intensities, dominantOrientations, matched_values]
+    return image_data
+
+def get_keypoints_data(db, img_id, image_file):
+    # it is a row, with many keypoints (blob)
+    kp_db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
+    cols = kp_db_row[1]
+    rows = kp_db_row[0]
+    # x, y, octave, angle, size, response
+    kp_data = COLMAPDatabase.blob_to_array(kp_db_row[2], np.float32)
+    kp_data = kp_data.reshape([rows, cols])
+    xs = kp_data[:,0]
+    ys = kp_data[:,1]
+    dominantOrientations = COLMAPDatabase.blob_to_array(kp_db_row[3], np.uint8)
+    dominantOrientations = dominantOrientations.reshape([rows, 1])
+    indxs = np.c_[np.round(ys), np.round(xs)].astype(np.int)
+    greenInt = image_file[(indxs[:, 0], indxs[:, 1])][:, 1]
+
+    # xs, ys, octaves, angles, sizes, responses, greenInt, dominantOrientations
+    return np.c_[kp_data, greenInt, dominantOrientations]
+
+def clear_folder(folder_path):
+    print(f"Deleting {folder_path}")
+    if (os.path.exists(folder_path)):
+        shutil.rmtree(folder_path)
+    os.makedirs(folder_path, exist_ok=True)
+    pass
+
+# indexing is the same as points3D indexing for trainDescriptors - NOTE: This does not normalised the descriptors!
+def get_queryDescriptors(db, image_id):
+    query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
+    query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
+    query_image_descriptors_data = db.blob_to_array(query_image_descriptors_data, np.uint8)
+    descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
+    query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
+    queryDescriptors = query_image_descriptors_data.astype(np.float32)
+    return queryDescriptors

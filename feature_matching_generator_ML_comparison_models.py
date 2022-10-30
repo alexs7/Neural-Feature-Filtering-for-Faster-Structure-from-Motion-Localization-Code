@@ -1,72 +1,39 @@
 # This file was added to create 2D-3D matches for Match or No Match: Keypoint Filtering based on Matching Probability (2020) paper,
 # for Predicting Matchability (2014) paper and for a vanillia RF model. Maybe I can add more models, fuck knows
 import os
+import subprocess
 import time
 from itertools import chain
 from os.path import exists
 import cv2
 import numpy as np
 from tqdm import tqdm
-
-from database import COLMAPDatabase
+from query_image import get_image_id, get_keypoints_xy, get_keypoints_data, get_queryDescriptors
 from save_2D_points import save_debug_image
 
-def get_keypoints_data(db, img_id, image_file):
-    # it is a row, with many keypoints (blob)
-    kp_db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
-    cols = kp_db_row[1]
-    rows = kp_db_row[0]
-    # x, y, octave, angle, size, response
-    kp_data = COLMAPDatabase.blob_to_array(kp_db_row[2], np.float32)
-    kp_data = kp_data.reshape([rows, cols])
-    xs = kp_data[:,0]
-    ys = kp_data[:,1]
-    dominantOrientations = COLMAPDatabase.blob_to_array(kp_db_row[3], np.uint8)
-    dominantOrientations = dominantOrientations.reshape([rows, 1])
-    indxs = np.c_[np.round(ys), np.round(xs)].astype(np.int)
-    greenInt = image_file[(indxs[:, 0], indxs[:, 1])][:, 1]
+def save_to_file_for_original_tool_prediction(all_descs, descs_path):
+    with open(os.path.join(descs_path), 'w') as f:
+        for desc in all_descs:
+            row = ' '.join([str(num) for num in desc[0:128].astype(np.uint8)])
+            f.write(f"{row}\n")
 
-    # xs, ys, octaves, angles, sizes, responses, dominantOrientations, greenInt
-    return np.c_[kp_data, dominantOrientations, greenInt]
-
-def get_keypoints_xy(db, image_id):
-    query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-    query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
-    query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
-    query_image_keypoints_data_cols = int(query_image_keypoints_data_cols.fetchone()[0])
-    query_image_keypoints_data = db.blob_to_array(query_image_keypoints_data, np.float32)
-    query_image_keypoints_data_rows = int(np.shape(query_image_keypoints_data)[0] / query_image_keypoints_data_cols)
-    query_image_keypoints_data = query_image_keypoints_data.reshape(query_image_keypoints_data_rows, query_image_keypoints_data_cols)
-    query_image_keypoints_data_xy = query_image_keypoints_data[:, 0:2]
-    return query_image_keypoints_data_xy
-
-# indexing is the same as points3D indexing for trainDescriptors - NOTE: This does not normalised the descriptors!
-def get_queryDescriptors(db, image_id):
-    query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
-    query_image_descriptors_data = query_image_descriptors_data.fetchone()[0]
-    query_image_descriptors_data = db.blob_to_array(query_image_descriptors_data, np.uint8)
-    descs_rows = int(np.shape(query_image_descriptors_data)[0] / 128)
-    query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
-    queryDescriptors = query_image_descriptors_data.astype(np.float32)
-    return queryDescriptors
-
-def get_image_id(db, query_image):
-    image_id = db.execute("SELECT image_id FROM images WHERE name = " + "'" + query_image + "'")
-    image_id = str(image_id.fetchone()[0])
-    return image_id
-
-# Two methods below are duplicated of each other - for now it is easier to implement. TODO: Refactor (27/10/2022)
-
-def feature_matcher_wrapper_generic_comparison_model_mnm(base_path, comparison_data_path, model, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val):
-    # NOTE: This method uses OpenCV descriptors saved, in a seperate folder
-    matches = {}     # create image_name <-> matches, dict - easier to work with
+def feature_matcher_wrapper_generic_comparison_model_pm(base_path, comparison_data_path, model, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val):
+    # create image_name <-> matches, dict - easier to work with
+    matches = {}
     image_gt_dir = os.path.join(base_path, 'gt/images/')
     debug_images_path = os.path.join(comparison_data_path, "debug_images")
     images_percentage_reduction = {}
     images_matching_time = {}
 
-    if (exists(comparison_data_path) == False):
-        print("comparison_data_path does not exist ! will create")
+    original_tool_path = "/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Predicting_Matchability/rforest"
+    original_rforest_model_path = os.path.join(original_tool_path, "rforest.gz")
+    original_test_descs_path = os.path.join(original_tool_path, "descs.txt")
+    original_output_results_path = os.path.join(original_tool_path, "res.txt")
+    original_tool_predict_command = os.path.join(original_tool_path, "./rforest")
+    original_tool_test_time_path = "test_time.txt" #milliseconds
+
+    if (exists(debug_images_path) == False):
+        print("debug_images_path does not exist ! will create") #same images here will keep be overwritten no need to delete
         os.makedirs(debug_images_path, exist_ok=True)
 
     #  go through all the test images and match their descs to the 3d points avg descs
@@ -74,23 +41,25 @@ def feature_matcher_wrapper_generic_comparison_model_mnm(base_path, comparison_d
         total_time = 0
         query_image = query_images[i]
         image_gt_path = os.path.join(image_gt_dir, query_image)
-        query_image_file = cv2.imread(image_gt_path)  # no need for cv2.COLOR_BGR2RGB here as G is in the middle anw
         image_id = get_image_id(db,query_image)
 
+        keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
-        keypoints_data = get_keypoints_data(db, image_id, query_image_file)
-        len_descs = keypoints_data.shape[0]
-        keypoints_xy = keypoints_data[:,0:2]
+        len_descs = queryDescriptors.shape[0]
 
-        # just a couple of checks
-        assert len(keypoints_xy) == len(queryDescriptors)
-        assert len(keypoints_data) == len(keypoints_xy)
+        save_to_file_for_original_tool_prediction(queryDescriptors, original_test_descs_path)
+        # rforest.exe -f rforest.gz -i desc.txt -o res.txt
+        original_tool_exec = [original_tool_predict_command, "-f", original_rforest_model_path, "-i", original_test_descs_path, "-o", original_output_results_path]
 
-        start = time.time()
-        predictions = model.predict(keypoints_data)
-        end = time.time()
-        elapsed_time = end - start
+        subprocess.check_call(original_tool_exec)
+        elapsed_time = np.loadtxt(original_tool_test_time_path)/1000 #produced by the tool (in milliseconds)
         total_time += elapsed_time
+        os.remove(original_tool_test_time_path)  #remove it now.
+
+        # from tool doc: (the first and the second columns correspond to labels 0 and 1, respectively).
+        predictions = np.loadtxt(original_output_results_path)
+        predictions = predictions[:,1] #only care about the positive ones
+        predictions[np.where(predictions > 0.5)] = 1 #this will set the values we want (> 0.5) to 1, the rest we don't care
 
         positive_samples_no = len(np.where(predictions == 1)[0])
         percentage_reduction = (100 - positive_samples_no * 100 / len_descs)
@@ -142,16 +111,17 @@ def feature_matcher_wrapper_generic_comparison_model_mnm(base_path, comparison_d
 
     return matches, images_matching_time, images_percentage_reduction
 
-def feature_matcher_wrapper_generic_comparison_model_pm(base_path, comparison_data_path, model, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val):
-    # create image_name <-> matches, dict - easier to work with
-    matches = {}
+# Two methods below are duplicated of each other - for now it is easier to implement. TODO: Refactor (27/10/2022)
+def feature_matcher_wrapper_generic_comparison_model_mnm(base_path, comparison_data_path, model, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val):
+    # NOTE: This method uses OpenCV descriptors saved, in a seperate folder
+    matches = {}     # create image_name <-> matches, dict - easier to work with
     image_gt_dir = os.path.join(base_path, 'gt/images/')
     debug_images_path = os.path.join(comparison_data_path, "debug_images")
     images_percentage_reduction = {}
     images_matching_time = {}
 
-    if (exists(comparison_data_path) == False):
-        print("comparison_data_path does not exist ! will create")
+    if (exists(debug_images_path) == False):
+        print("debug_images_path does not exist ! will create") #same images here will keep be overwritten no need to delete
         os.makedirs(debug_images_path, exist_ok=True)
 
     #  go through all the test images and match their descs to the 3d points avg descs
@@ -159,17 +129,25 @@ def feature_matcher_wrapper_generic_comparison_model_pm(base_path, comparison_da
         total_time = 0
         query_image = query_images[i]
         image_gt_path = os.path.join(image_gt_dir, query_image)
+        query_image_file = cv2.imread(image_gt_path)  # no need for cv2.COLOR_BGR2RGB here as G is in the middle anw
         image_id = get_image_id(db,query_image)
 
-        keypoints_xy = get_keypoints_xy(db, image_id)
         queryDescriptors = get_queryDescriptors(db, image_id)
-        len_descs = queryDescriptors.shape[0]
+        keypoints_data = get_keypoints_data(db, image_id, query_image_file)
+        len_descs = keypoints_data.shape[0]
+        keypoints_xy = keypoints_data[:,0:2]
+
+        # just a couple of checks
+        assert len(keypoints_xy) == len(queryDescriptors)
+        assert len(keypoints_data) == len(keypoints_xy)
 
         start = time.time()
-        predictions = model.predict(queryDescriptors)
+        _ , predictions = model.predict(keypoints_data) #array of arrays
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
+
+        predictions = np.array(predictions.ravel()).astype(np.uint8)
 
         positive_samples_no = len(np.where(predictions == 1)[0])
         percentage_reduction = (100 - positive_samples_no * 100 / len_descs)
@@ -191,7 +169,8 @@ def feature_matcher_wrapper_generic_comparison_model_pm(base_path, comparison_da
         for m, n in temp_matches:
             assert(m.distance <= n.distance)
             # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
-            if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
+            # 02/11/2022, added a = here to make is <=, because 1 fucking image returns exactly the same m and n distance.
+            if (m.distance <= ratio_test_val * n.distance): #and (score_m > score_n):
                 if(m.queryIdx >= keypoints_xy.shape[0]): #keypoints_xy.shape[0] always same as classifier_predictions.shape[0]
                     raise Exception("m.queryIdx error!")
                 if (m.trainIdx >= points3D_xyz.shape[0]):
