@@ -447,3 +447,9 @@ def get_descriptors(db, image_id):
     descs = db_row[2]
     descs = db.blob_to_array(descs, np.uint8).reshape(rows, cols)
     return rows, cols, descs
+
+def get_image_name_only(image_name):
+    image_name = image_name.split("/")
+    if(len(image_name) > 1):
+        return image_name[1].split(".")[0]
+    return image_name[0].split(".")[0]

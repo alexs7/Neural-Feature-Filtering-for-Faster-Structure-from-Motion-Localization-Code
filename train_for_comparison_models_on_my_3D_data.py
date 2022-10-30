@@ -1,3 +1,4 @@
+# Not used from 30/11/2022
 # This file will load the training data for my original Neural Networks.
 # This will be used to compare the models from Predicting Matchability and Match no Match but with my own data this time.
 # This means to use their models but my data. My data uses 3D points averages descriptors, not matches between images - remember ?
