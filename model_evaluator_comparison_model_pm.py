@@ -7,26 +7,27 @@ import numpy as np
 from ransac_prosac import ransac
 from benchmark import benchmark
 import sys
-from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_intrinsics_from_camera_bin
+from query_image import load_images_from_text_file, get_localised_image_by_names, get_intrinsics_from_camera_bin
 
 # This file is run after tranining the comparison models.
 # The order is:
 # 1 - run create_training_data_predicting_matchability.py, creates data for your python model and the original code C++
-# 2 - train_for_predicting_matchability.py, or run train the original random forest
-# 3 - then this file
+# 2 - train_for_predicting_matchability.py (choose the python model as it returns similar results to the original tool)
+# 3 - choose a model based of test_all_models_on_3D_gt_data.py csv file produced (after looking at the numbers).
+# 4 - then this file
+
 # Read the original file model_evaluator.py for notes.
 # Similarly to model_evaluator.py, run in sequence NOT parallel
 
 base_path = sys.argv[1]
 print("Base path: " + base_path)
+no_samples = sys.argv[2] #the model was trained on
 
 ml_path = os.path.join(base_path, "ML_data")
-prepared_data_path = os.path.join(ml_path, "prepared_data")
-
 # The directory should be already created from previous scripts, create_training_data_predicting_matchability.py, create_training_data_and_train_for_match_no_match.py
-comparison_data_path_PM = os.path.join(base_path, "predicting_matchability_comparison_data")
+comparison_data_path = os.path.join(base_path, "predicting_matchability_comparison_data")
 
-if((os.path.exists(comparison_data_path_PM) == False)):
+if((os.path.exists(comparison_data_path) == False)):
     raise Exception("One of the dirs is not created!")
 
 print("Loading Data.. for PM")
@@ -48,22 +49,21 @@ points3D_xyz_live = points3D_info[:,128:132]
 # evaluation starts here
 print("Feature matching using models..")
 # db_gt, again because we need the descs from the query images
+# PM paper explains why the ratio test should noe be used, so cite that
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
 
-benchmarks_iters = 1
-print("benchmarks_iters set to: " + str(benchmarks_iters))
-
 # NOTE: "model" needs to have a predict method and return predictions 0 and 1, not 0.5 or 0.12 or whatever
-
 print("Getting matches using Predicting Matchability (2014) + loading model..")
-model_path = os.path.join(comparison_data_path_PM, "rf_model.joblib")
+model_path = os.path.join(comparison_data_path, f"rforest_{no_samples}.joblib")
 model = load(model_path)
-matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model_pm(base_path, comparison_data_path_PM, model, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val)
-np.save(os.path.join(comparison_data_path_PM, "images_matching_time.npy"), images_matching_time)
-np.save(os.path.join(comparison_data_path_PM, "images_percentage_reduction.npy"), images_percentage_reduction)
+matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model_pm(base_path, comparison_data_path, model,
+                                                                                                                 db_gt, localised_query_images_names,
+                                                                                                                 train_descriptors_live, points3D_xyz_live, ratio_test_val)
+np.save(os.path.join(comparison_data_path, "images_matching_time.npy"), images_matching_time)
+np.save(os.path.join(comparison_data_path, "images_percentage_reduction.npy"), images_percentage_reduction)
 
 print(" RANSAC..")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names, K)
-np.save(os.path.join(comparison_data_path_PM, "est_poses_results.npy"), est_poses_results)
+est_poses_results = benchmark(ransac, matches, localised_query_images_names, K)
+np.save(os.path.join(comparison_data_path, "est_poses_results.npy"), est_poses_results)
 
 print("Done!")

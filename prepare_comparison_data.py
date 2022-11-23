@@ -3,7 +3,8 @@ import os
 import sys
 from database import COLMAPDatabase
 import numpy as np
-from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin
+from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_query_images_pose_from_images, get_intrinsics_from_camera_bin, \
+    clear_folder
 from point3D_loader import read_points3d_default, get_points3D_xyz
 from feature_matching_generator_ML import feature_matcher_wrapper_ml
 from ransac_prosac import ransac, ransac_dist, prosac
@@ -37,12 +38,13 @@ ml_path = os.path.join(base_path, "ML_data")
 prepared_data_path = os.path.join(ml_path, "prepared_data")
 
 random_output = os.path.join(prepared_data_path, "random_output")
-if not os.path.exists(random_output):
-    os.makedirs(random_output, exist_ok=True)
-
+clear_folder(random_output)
 baseline_output = os.path.join(prepared_data_path, "baseline_output")
-if not os.path.exists(baseline_output):
-    os.makedirs(baseline_output, exist_ok=True)
+clear_folder(baseline_output)
+random_output_debug_images = os.path.join(random_output, "debug_images")
+clear_folder(random_output_debug_images)
+baseline_output_debug_images = os.path.join(baseline_output, "debug_images")
+clear_folder(baseline_output_debug_images)
 
 print("Setting up...")
 print("using_CMU_data: " + str(using_CMU_data))
@@ -71,42 +73,46 @@ train_descriptors_live = points3D_info[:, 0:128]
 K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3)  # 3 because 1 -base, 2 -live, 3 -query images
 
 # scale here is not used here, but I kept it for future references.
-if(using_CMU_data):
-    scale = 1
-    print("CMU Scale: " + str(scale))
-else:
-    # for ar_core data
-    ar_core_poses_path =  os.path.join(ml_path, "arcore_data/data_all/") #these poses here need to match the frames from the gt images of course
-    colmap_poses_path = query_images_bin_path  # just for clarity purposes
-    scale = calc_scale_COLMAP_ARCORE(ar_core_poses_path, colmap_poses_path)
-    print("ARCore Scale: " + str(scale))
+# if(using_CMU_data):
+#     scale = 1
+#     print("CMU Scale: " + str(scale))
+# else:
+#     # for ar_core data
+#     ar_core_poses_path =  os.path.join(ml_path, "arcore_data/data_all/") #these poses here need to match the frames from the gt images of course
+#     colmap_poses_path = query_images_bin_path  # just for clarity purposes
+#     scale = calc_scale_COLMAP_ARCORE(ar_core_poses_path, colmap_poses_path)
+#     print("ARCore Scale: " + str(scale))
 
 
 # db_gt is only used to get the SIFT features from the query images, nothing to do with the train_descriptors_live and points3D_xyz_live order. That latter order needs to be corresponding btw.
-ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
+ratio_test_val = 0.9  # 0.9 as previous publication, 1.0 to test all features (no ratio test), also MnM paper 2020 uses 0.9 and the Carl Toft paper
 rand_ratio_test_val = 1 #because we use only random features here, if we use a percentage and a ratio test then features will be to few to get a pose (TODO: debug this! / discuss this)
 
 print("Feature matching random descs..")
-random_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, rand_ratio_test_val, random_output, random_limit=random_percentage)
+random_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names,
+                                                                                               train_descriptors_live, points3D_xyz_live, rand_ratio_test_val,
+                                                                                               random_output_debug_images, random_limit=random_percentage)
 np.save(os.path.join(random_output, f"images_matching_time.npy"), images_matching_time)
-np.save(os.path.join(random_output, f"images_percentage_reduction.npy"), images_percentage_reduction) # should be 'random_percentage' everywhere
+np.save(os.path.join(random_output, f"images_percentage_reduction.npy"), images_percentage_reduction)
+
+# get the benchmark data here for random features and the 800 from previous publication
+print("Benchmarking Random..") #NOTE: The below will break sometimes at assert(len(matches_for_image) >= 4), because of the randonmness
+est_poses_results = benchmark(ransac, random_matches, localised_query_images_names, K)
+np.save(os.path.join(random_output, f"est_poses_results.npy"), est_poses_results)
+
 
 # all of them as in first publication (should be around 800 for each image)
 print("Feature matching vanillia (baseline) descs..")
 # Note that this is using a ratio_test_val which reduces the descs number. The comparison methods do not.
-vanillia_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names, train_descriptors_live, points3D_xyz_live, ratio_test_val, baseline_output)
+vanillia_matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_ml(base_path, db_gt, localised_query_images_names,
+                                                                                                 train_descriptors_live, points3D_xyz_live, ratio_test_val,
+                                                                                                 baseline_output_debug_images)
 np.save(os.path.join(baseline_output, f"images_matching_time.npy"), images_matching_time)
 np.save(os.path.join(baseline_output, f"images_percentage_reduction.npy"), images_percentage_reduction) # should be '0' everywhere
 
-# get the benchmark data here for random features and the 800 from previous publication - will return the average values for each image
-benchmarks_iters = 1 #15 was in first publication (Does it matter here? 1 or 15 should be the same)
-
-print("Benchmarking Random..") #NOTE: The below will break sometimes at assert(len(matches_for_image) >= 4), because of the randonmness
-est_poses_results = benchmark(benchmarks_iters, ransac, random_matches, localised_query_images_names, K)
-np.save(os.path.join(random_output, f"est_poses_results.npy"), est_poses_results)
-
 print("Benchmarking Vanillia..")
-est_poses_results = benchmark(benchmarks_iters, ransac, vanillia_matches, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, vanillia_matches, localised_query_images_names, K)
 np.save(os.path.join(baseline_output, f"est_poses_results.npy"), est_poses_results)
+
 
 print('Done!')

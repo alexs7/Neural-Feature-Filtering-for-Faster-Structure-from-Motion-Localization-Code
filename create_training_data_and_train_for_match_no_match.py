@@ -11,8 +11,8 @@
 # 1 - Run format_data_for_match_no_match.py on CYENS machine, transfer data back to weatherwax
 # 2 - get_points_3D_mean_desc_single_model_ml.py, on weatherwax
 # 3 - Run create_gt_data_for_match_no_match.py to generate GT data once.
-# 3 - Run this file, create_training_data_and_train_for_match_no_match.py with a "no_samples" param
-# 4 - Look at test_match_no_match_tool.py first and run that
+# 3 - Run this file, create_training_data_and_train_for_match_no_match.py with some "no_samples" params
+# 4 - Look at test_all_models_on_3D_gt_data.py then and run that
 
 import os
 import shutil

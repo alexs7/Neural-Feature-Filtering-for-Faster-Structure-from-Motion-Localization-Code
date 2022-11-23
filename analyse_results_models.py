@@ -1,4 +1,4 @@
-# This file will be used to analyse results from model_evaluator.py, model_evaluator_comparison_models_*.py
+# This file will be used to analyse results in model_evaluator.py, model_evaluator_comparison_models_*.py
 import csv
 import os
 import sys
@@ -144,7 +144,7 @@ ml_path = os.path.join(base_path, "ML_data")
 result_file_output_path = os.path.join(base_path, "results_2022.csv")
 
 print("Loading Data..")
-scale = np.load(os.path.join(ml_path, "prepared_data/scale.npy"))
+scale = np.load(os.path.join(ml_path, "prepared_data/scale.npy")) # can use, calc_scale_COLMAP_ARCORE(ar_core_poses_path, colmap_poses_path), for ARCore data
 db_gt_path = os.path.join(base_path, "gt/database.db")
 db_gt = COLMAPDatabase.connect(db_gt_path)  # you need this database to get the query images descs as they do NOT exist in the LIVE db, only in GT db!
 

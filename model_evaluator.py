@@ -169,107 +169,106 @@ eval_methods = list(parameters.ml_methods.keys())
 assert(len(eval_methods) == 20)
 
 print("Benchmarking ML model(s)..") #At this point I combine consensus methods and matches (20 combination in total)
-benchmarks_iters = 3
 
 eval_methods_idx = 0
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_cl_top, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_cl_top, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_cl, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_cl, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_cl_rg_score_image, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_cl_rg_score_image, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_cl_rg_score_session, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_cl_rg_score_session, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_cl_rg_score_visibility, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_cl_rg_score_visibility, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_rg_score_image, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_rg_score_image, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_rg_score_session, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_rg_score_session, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_rg_score_visibility, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_rg_score_visibility, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_combined_score_per_image, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_combined_score_per_image, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_combined_score_per_session, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_combined_score_per_session, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches_combined_score_visibility, localised_query_images_names, K)
+est_poses_results = benchmark(ransac, matches_combined_score_visibility, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC dist.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac_dist, matches_cl_rg_score_image, localised_query_images_names, K, val_idx=-1)
+est_poses_results = benchmark(ransac_dist, matches_cl_rg_score_image, localised_query_images_names, K, val_idx=-1)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC dist.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac_dist, matches_cl_rg_score_session, localised_query_images_names, K, val_idx=-1)
+est_poses_results = benchmark(ransac_dist, matches_cl_rg_score_session, localised_query_images_names, K, val_idx=-1)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"RANSAC dist.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, ransac_dist, matches_cl_rg_score_visibility, localised_query_images_names, K, val_idx=-1)
+est_poses_results = benchmark(ransac_dist, matches_cl_rg_score_visibility, localised_query_images_names, K, val_idx=-1)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 # NOTE: for PROSAC the matches are already sorted so just pass 1, no need to sort them again
 print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, prosac, matches_rg_score_image, localised_query_images_names, K)
+est_poses_results = benchmark(prosac, matches_rg_score_image, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, prosac, matches_rg_score_session, localised_query_images_names, K)
+est_poses_results = benchmark(prosac, matches_rg_score_session, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, prosac, matches_rg_score_visibility, localised_query_images_names, K)
+est_poses_results = benchmark(prosac, matches_rg_score_visibility, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, prosac, matches_combined_score_per_image, localised_query_images_names, K)
+est_poses_results = benchmark(prosac, matches_combined_score_per_image, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, prosac, matches_combined_score_per_session, localised_query_images_names, K)
+est_poses_results = benchmark(prosac, matches_combined_score_per_session, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
 print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
-est_poses_results = benchmark(benchmarks_iters, prosac, matches_combined_score_visibility, localised_query_images_names, K)
+est_poses_results = benchmark(prosac, matches_combined_score_visibility, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 
 assert(eval_methods_idx == 19)

@@ -1,7 +1,7 @@
 # This file will load all models from test_match_no_match_tool.py and test_predicting_matchability_tool.py and my NN classifier and
-# generate the confusion matrixm recall, and precision numbers, csv file
-# The difference from test_match_no_match_tool.py is that I test on my own 3D data which makes more sense.
-# There is not much difference with test_predicting_matchability_tool.py (training on same data) but I use the python model here only.
+# generate the confusion matrix recall, and precision number, etc csv file
+# The difference from test_match_no_match_tool.py is that I test on my own 3D data which makes more sense. So the test_match_no_match_tool.py is not used anymore
+# There is not much difference with test_predicting_matchability_tool.py (training on same data) but I use the python model here only (which performs the same as the C++ tool).
 # Here all the models are test at once so easier to examine results.
 
 # A minor note here is that you can use the GT data definition from the papers to evaluate the models from your paper but,
@@ -10,6 +10,7 @@
 # But! because you use matches from the COLMAP two views geometry table to train both models from the papers it is fine because
 # each match in that table is used in the 3D recostruction - so it has most probably a 3D point matched to it.
 
+# After you are happy with the results from here you can move on to the model_evaluator*.py files
 # Use this file to pick the best performing model for the model_evaluator scripts.
 
 import csv

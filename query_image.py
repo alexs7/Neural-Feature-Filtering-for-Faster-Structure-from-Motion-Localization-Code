@@ -1,7 +1,7 @@
 import os
 import shutil
 import time
-
+from itertools import chain
 import cv2
 import numpy as np
 import struct
@@ -459,6 +459,8 @@ def get_image_name_only(image_name):
     return image_name[0].split(".")[0]
 
 def get_image_name_only_with_extension(image_name):
+    if(is_image_base(image_name)):
+        return image_name
     return image_name.split("/")[1]
 
 def is_image_base(img_name):
@@ -536,3 +538,37 @@ def get_queryDescriptors(db, image_id):
     query_image_descriptors_data = query_image_descriptors_data.reshape([descs_rows, 128])
     queryDescriptors = query_image_descriptors_data.astype(np.float32)
     return queryDescriptors
+
+def match(queryDescriptors, trainDescriptors, keypoints_xy, points3D_xyz, ratio_test_val, k=2):
+    matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
+    # Matching on trainDescriptors (remember these are the means of the 3D points)
+
+    temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=k)
+
+    # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
+    # m the closest, n is the second closest
+    good_matches = []
+    for m, n in temp_matches:
+        assert (m.distance <= n.distance)
+        # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
+        if (m.distance < ratio_test_val * n.distance):  # and (score_m > score_n):
+            if (m.queryIdx >= keypoints_xy.shape[0]):  # keypoints_xy.shape[0] always same as classifier_predictions.shape[0]
+                raise Exception("m.queryIdx error!")
+            if (m.trainIdx >= points3D_xyz.shape[0]):
+                raise Exception("m.trainIdx error!")
+            # idx1.append(m.queryIdx)
+            # idx2.append(m.trainIdx)
+            scores = []
+            xy2D = keypoints_xy[m.queryIdx, :].tolist()
+            xyz3D = points3D_xyz[m.trainIdx, :].tolist()
+
+            match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
+            match_data = list(chain(*match_data))
+            good_matches.append(match_data)
+
+    # sanity check
+    if (ratio_test_val == 1.0):
+        if (len(good_matches) != len(temp_matches)):
+            print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
+
+    return good_matches

@@ -1,24 +1,16 @@
 # This file is used to evaluate the MnM model 2020.
 import os
-import cv2
-from joblib import load
-from feature_matching_generator_ML_comparison_models import feature_matcher_wrapper_generic_comparison_model_mnm
-from database import COLMAPDatabase
-import numpy as np
-from ransac_prosac import ransac
-from benchmark import benchmark
 import sys
-from query_image import read_images_binary, load_images_from_text_file, get_localised_image_by_names, get_intrinsics_from_camera_bin
+import cv2
+import numpy as np
+from benchmark import benchmark
+from database import COLMAPDatabase
+from feature_matching_generator_ML_comparison_models import feature_matcher_wrapper_generic_comparison_model_mnm
+from query_image import load_images_from_text_file, get_localised_image_by_names, get_intrinsics_from_camera_bin
+from ransac_prosac import ransac
 
-# This file is run after tranining the comparison models.
-# The order is:
-# 1 - run format_data_for_match_no_match.py (on CYENS machine)
-# 2 - create_training_data_and_train_for_match_no_match.py
-# 3 - the training is done by the author's code (C++).
-#   1 - the code is compiled and runs on weatherwax in the code_to_compare_dir
-#   2 - run ./matchornomatch from the build folder, but make sure the right code in main.cpp is uncommented (I run getTrainedData and trainForest)
-# 4 - then this file
 # Read the original file model_evaluator.py for notes.
+# Read also the original file create_training_data_and_train_for_match_no_match.py for notes.
 # Similarly to model_evaluator.py, run in sequence NOT parallel
 # In this file I get the matches then benchmark, and repeat not like in model_evaluator.py where I get all matches then benchmark
 
@@ -26,14 +18,12 @@ base_path = sys.argv[1]
 base_path_mnm = sys.argv[2]
 print("Base path: " + base_path)
 print("Base (MnM, OpenCV) path: " + base_path_mnm)
-
-ml_path = os.path.join(base_path, "ML_data")
-prepared_data_path = os.path.join(ml_path, "prepared_data")
+no_samples = sys.argv[3] #the model was trained on
 
 # The directory should be already created from previous scripts, create_training_data_predicting_matchability.py, create_training_data_and_train_for_match_no_match.py
-comparison_data_path_MoNM = os.path.join(base_path, "match_or_no_match_comparison_data")
+comparison_data_path = os.path.join(base_path, "match_or_no_match_comparison_data")
 
-if((os.path.exists(comparison_data_path_MoNM) == False)):
+if((os.path.exists(comparison_data_path) == False)):
     raise Exception("One of the dirs is not created!")
 
 print("Loading Data..")
@@ -56,29 +46,25 @@ points3D_xyz_live_mnm = points3D_info_mnm[:,128:132]
 # evaluation starts here
 print("Feature matching using models..")
 # db_gt, again because we need the descs from the query images
+# PM (look at  MnM paper too) explains why the ratio test should not be used, so cite that
 ratio_test_val = 1  # 0.9 as previous publication, 1.0 to test all features (no ratio test)
-
-benchmarks_iters = 1
-print("benchmarks_iters set to: " + str(benchmarks_iters))
 
 # NOTE: "model" needs to have a predict method and return predictions 0 and 1, not 0.5 or 0.12 or whatever
 # NOTE: MnM needs to use the directories "*_mnm" as they contain the original data + the OpenCV data, in the databases and in "output_opencv_sift_model" (for base, live, gt)
 
-# ----------------------------->
-
 print("Getting matches using Match or No Match: Keypoint Filtering based on Matching Probability + loading model (OpenCV)..")
-model_path_opencv = "/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Match-or-no-match-Keypoint-filtering-based-on-matching-probability/build/Trained model.xml"
-model = cv2.ml.RTrees_load(model_path_opencv)
+model_path = os.path.join(comparison_data_path, f"Trained model {no_samples}.xml")
+model = cv2.ml.RTrees_load(model_path)
 
 # for MnM it doesn't matter if you use "base_path" or "base_path_mnm" it just reads the same images (live).
-matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model_mnm(base_path_mnm, comparison_data_path_MoNM, model, db_gt_mnm, localised_query_images_names_mnm, train_descriptors_live_mnm, points3D_xyz_live_mnm, ratio_test_val)
-np.save(os.path.join(comparison_data_path_MoNM, "images_matching_time.npy"), images_matching_time)
-np.save(os.path.join(comparison_data_path_MoNM, "images_percentage_reduction.npy"), images_percentage_reduction)
+matches, images_matching_time, images_percentage_reduction = feature_matcher_wrapper_generic_comparison_model_mnm(base_path_mnm, comparison_data_path, model,
+                                                                                                                  db_gt_mnm, localised_query_images_names_mnm,
+                                                                                                                  train_descriptors_live_mnm, points3D_xyz_live_mnm, ratio_test_val)
+np.save(os.path.join(comparison_data_path, "images_matching_time.npy"), images_matching_time)
+np.save(os.path.join(comparison_data_path, "images_percentage_reduction.npy"), images_percentage_reduction)
 
 print(" RANSAC..")
-est_poses_results = benchmark(benchmarks_iters, ransac, matches, localised_query_images_names_mnm, K)
-np.save(os.path.join(comparison_data_path_MoNM, "est_poses_results.npy"), est_poses_results)
-
-# ----------------------------->
+est_poses_results = benchmark(ransac, matches, localised_query_images_names_mnm, K)
+np.save(os.path.join(comparison_data_path, "est_poses_results.npy"), est_poses_results)
 
 print("Done!")

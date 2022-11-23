@@ -20,9 +20,11 @@ mnm_base_path = sys.argv[2] # this is that data generated from format_data_for_m
 gt_images_path = [x for x in Path(os.path.join(base_path,"gt/images/")).iterdir() if x.is_dir()][0] #i.e. colmap_data/CMU_data/slice3/gt/images/session_7
 print("gt_images_path: " + str(gt_images_path))
 nn_model_path = sys.argv[3] # i.e. "colmap_data/tensorboard_results/classification_Extended_CMU_slice3/early_stop_model/"
+pm_no_samples = sys.argv[4] # the samples the model was trained on
+mnm_no_samples = sys.argv[5] # the samples the model was trained on
 debug_images_path = os.path.join(base_path, "ML_data", "debug_images")
-sklearn_model_path = os.path.join(os.path.join(base_path, "predicting_matchability_comparison_data"), f"rforest_2000.joblib")
-mnm_model_path = os.path.join(base_path, "match_or_no_match_comparison_data", f"Trained model 4000.xml")
+sklearn_model_path = os.path.join(os.path.join(base_path, "predicting_matchability_comparison_data"), f"rforest_{pm_no_samples}.joblib")
+mnm_model_path = os.path.join(base_path, "match_or_no_match_comparison_data", f"Trained model {mnm_no_samples}.xml")
 
 clear_folder(debug_images_path)
 
@@ -49,6 +51,8 @@ for name in tqdm(query_images_names):
     original_image_path = os.path.join(gt_images_path, get_image_name_only_with_extension(name))
 
     # PM
+    # Note the model trained on the 500 samples performs worse visually on the model that
+    # was trained on the 2000 samples
     keypoints_xy_pm = get_keypoints_xy(db_gt, image_id)
     queryDescriptors = get_queryDescriptors(db_gt, image_id)
     predictions = rf.predict(queryDescriptors)

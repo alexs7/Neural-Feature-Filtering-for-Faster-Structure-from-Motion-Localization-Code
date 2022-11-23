@@ -9,26 +9,21 @@ import cv2
 import numpy as np
 import sys
 from tqdm import tqdm
-from query_image import get_image_id, get_keypoints_xy, get_queryDescriptors
-from save_2D_points import save_debug_image
+from query_image import get_image_id, get_keypoints_xy, get_queryDescriptors, get_image_name_only_with_extension, match
+from save_2D_points import save_debug_image_simple
 
 # Will use raw descs not normalised, used in prepare_comparison_data.py
-def feature_matcher_wrapper_ml(base_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, output_path, random_limit = -1):
+def feature_matcher_wrapper_ml(base_path, db, query_images, trainDescriptors, points3D_xyz, ratio_test_val, debug_images_path, random_limit = -1):
     # create image_name <-> matches, dict - easier to work with
     matches = {}
     images_percentage_reduction = {}
     images_matching_time = {}
     image_gt_dir = os.path.join(base_path, 'gt/images/')
 
-    debug_images_path = os.path.join(output_path, "debug_images")
-    if (exists(debug_images_path) == False):
-        print("debug_images_path does not exist! will create") #same images here will keep be overwritten no need to delete
-        os.makedirs(debug_images_path, exist_ok=True)
-
     #  go through all the test images and match their descs to the 3d points avg descs
     for i in tqdm(range(len(query_images))):
         total_time = 0
-        query_image = query_images[i]
+        query_image = query_images[i] #name
         image_gt_path = os.path.join(image_gt_dir, query_image)
         image_id = get_image_id(db,query_image)
         # keypoints data (first keypoint correspond to the first descriptor etc etc)
@@ -43,42 +38,14 @@ def feature_matcher_wrapper_ml(base_path, db, query_images, trainDescriptors, po
             np.random.shuffle(keypoints_idxs)
             rnd_idx = keypoints_idxs[:percentage_num]
             # save here, before keypoints_xy get overwritten
-            save_debug_image(image_gt_path, keypoints_xy, keypoints_xy[rnd_idx], debug_images_path, query_image)  # random
+            save_debug_image_simple(image_gt_path, keypoints_xy, keypoints_xy[rnd_idx], debug_images_path, get_image_name_only_with_extension(query_image))  # random
             keypoints_xy = keypoints_xy[rnd_idx]
             queryDescriptors = queryDescriptors[rnd_idx]
         else:
-            save_debug_image(image_gt_path, keypoints_xy, keypoints_xy, debug_images_path, query_image) #pass keypoints_xy 2 times, here as no predictions
+            save_debug_image_simple(image_gt_path, keypoints_xy, keypoints_xy, debug_images_path, get_image_name_only_with_extension(query_image)) #pass keypoints_xy 2 times, here as no predictions
 
-        matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
-        # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()
-        temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
-
-        # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
-        # m the closest, n is the second closest
-        good_matches = []
-        for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
-            assert(m.distance <=  n.distance)
-            # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
-            if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
-                if(m.queryIdx >= keypoints_xy.shape[0]): #keypoints_xy.shape[0] always same as queryDescriptors.shape[0]
-                    raise Exception("m.queryIdx error!")
-                if (m.trainIdx >= points3D_xyz.shape[0]):
-                    raise Exception("m.trainIdx error!")
-                # idx1.append(m.queryIdx)
-                # idx2.append(m.trainIdx)
-                scores = []
-                xy2D = keypoints_xy[m.queryIdx, :].tolist()
-                xyz3D = points3D_xyz[m.trainIdx, :].tolist()
-
-                match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
-                match_data = list(chain(*match_data))
-                good_matches.append(match_data)
-
-        # sanity check
-        if(ratio_test_val == 1.0):
-            assert len(good_matches) == len(temp_matches)
-
+        good_matches = match(queryDescriptors, trainDescriptors, keypoints_xy, points3D_xyz, ratio_test_val, k=2)
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
@@ -156,39 +123,10 @@ def feature_matcher_wrapper_model_cl(base_path, ml_path, ml_model_idx, db, query
             queryDescriptors = queryDescriptors[0:percentage_num, :]
 
         original_keypoints = get_keypoints_xy(db, image_id)
-        save_debug_image(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, query_image) #keypoints_xy = predicted ones
+        save_debug_image_simple(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, get_image_name_only_with_extension(query_image)) #keypoints_xy = predicted ones
 
-        matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
-        # Matching on trainDescriptors (remember these are the means of the 3D points)
         start = time.time()
-        temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=2)
-
-        # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
-        # m the closest, n is the second closest
-        good_matches = []
-        for m, n in temp_matches: # TODO: maybe consider what you have at this point? and add it to the if condition ?
-            assert(m.distance <= n.distance) #TODO: maybe count how many pass the ratio test VS how many they dont without the NN ?
-            # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
-            if (m.distance < ratio_test_val * n.distance): #and (score_m > score_n):
-                if(m.queryIdx >= keypoints_xy.shape[0]): #keypoints_xy.shape[0] always same as classifier_predictions.shape[0]
-                    raise Exception("m.queryIdx error!")
-                if (m.trainIdx >= points3D_xyz.shape[0]):
-                    raise Exception("m.trainIdx error!")
-                # idx1.append(m.queryIdx)
-                # idx2.append(m.trainIdx)
-                scores = []
-                xy2D = keypoints_xy[m.queryIdx, :].tolist()
-                xyz3D = points3D_xyz[m.trainIdx, :].tolist()
-
-                # TODO: add a flag and predict a score for each match to use later in PROSAC
-                match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
-                match_data = list(chain(*match_data))
-                good_matches.append(match_data)
-
-        # sanity check
-        if (ratio_test_val == 1.0):
-            assert len(good_matches) == len(temp_matches)
-
+        good_matches = match(queryDescriptors, trainDescriptors, keypoints_xy, points3D_xyz, ratio_test_val, k=2)
         end = time.time()
         elapsed_time = end - start
         total_time += elapsed_time
@@ -253,7 +191,7 @@ def feature_matcher_wrapper_model_cl_rg(base_path, ml_path, ml_model_idx, db, qu
         sorted_regression_predictions = sorted_regression_predictions[0:percentage_num, :]
 
         original_keypoints = get_keypoints_xy(db, image_id)
-        save_debug_image(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, query_image)  # keypoints_xy = predicted ones
+        save_debug_image_simple(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, get_image_name_only_with_extension(query_image))  # keypoints_xy = predicted ones
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -291,7 +229,7 @@ def feature_matcher_wrapper_model_cl_rg(base_path, ml_path, ml_model_idx, db, qu
         total_time += elapsed_time
 
         images_matching_time[query_image] = total_time
-        images_percentage_reduction[query_image] = 90 #this is just going to be 90% as we only pick the 10%
+        images_percentage_reduction[query_image] = 100 - top_no
         matches[query_image] = np.array(good_matches)
 
     return matches, images_matching_time, images_percentage_reduction
@@ -337,7 +275,7 @@ def feature_matcher_wrapper_model_rg(base_path, ml_path, ml_model_idx, db, query
         sorted_regression_predictions = sorted_regression_predictions[0:percentage_num, :]
 
         original_keypoints = get_keypoints_xy(db, image_id)
-        save_debug_image(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, query_image)  # keypoints_xy = predicted ones
+        save_debug_image_simple(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, get_image_name_only_with_extension(query_image))  # keypoints_xy = predicted ones
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -375,7 +313,7 @@ def feature_matcher_wrapper_model_rg(base_path, ml_path, ml_model_idx, db, query
         total_time += elapsed_time
 
         images_matching_time[query_image] = total_time
-        images_percentage_reduction[query_image] = 90  # this is just going to be 90% as we only pick the 10%
+        images_percentage_reduction[query_image] = 100 - top_no
         matches[query_image] = np.array(good_matches)
 
     return matches, images_matching_time, images_percentage_reduction
@@ -423,7 +361,7 @@ def feature_matcher_wrapper_model_cb(base_path, ml_path, ml_model_idx, db, query
         sorted_regression_predictions = sorted_regression_predictions[0:percentage_num, :]
 
         original_keypoints = get_keypoints_xy(db, image_id)
-        save_debug_image(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, query_image)  # keypoints_xy = predicted ones
+        save_debug_image_simple(image_gt_path, original_keypoints, keypoints_xy, debug_images_path, get_image_name_only_with_extension(query_image))  # keypoints_xy = predicted ones
 
         matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
         # Matching on trainDescriptors (remember these are the means of the 3D points)
@@ -462,7 +400,7 @@ def feature_matcher_wrapper_model_cb(base_path, ml_path, ml_model_idx, db, query
         total_time += elapsed_time
 
         images_matching_time[query_image] = total_time
-        images_percentage_reduction[query_image] = 90 #this is just going to be 90% as we only pick the 10%
+        images_percentage_reduction[query_image] = 100 - top_no
         matches[query_image] = np.array(good_matches)
 
     return matches, images_matching_time, images_percentage_reduction
