@@ -50,7 +50,7 @@ def pose_evaluate_generic_comparison_model(query_pose, ground_truth_pose, scale)
     gt_pose_R = ground_truth_pose[0:3, 0:3]
     # NOTE: arccos returns radians - but I convert it to angles
     a_rad = np.arccos((np.trace(np.dot(np.linalg.inv(gt_pose_R), q_pose_R)) - 1) / 2)
-    a_deg = np.degrees(a_rad)
+    a_deg = np.absolute(np.degrees(a_rad))
 
     return dist, a_deg
 

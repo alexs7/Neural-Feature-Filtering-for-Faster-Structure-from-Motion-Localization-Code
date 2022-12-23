@@ -1,7 +1,9 @@
 # This file will load the training data from create_training_data_predicting_matchability.py
-# Train a RF classifier according to the paper, and save the model
+# Train a RF classifier (sklearn and original c++ tool) according to the paper, and save the model
 # to run for all datasets in parallel:
 # python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice3 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice4 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice6 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice10 & python3 train_for_predicting_matchability.py colmap_data/CMU_data/slice11 & python3 train_for_predicting_matchability.py colmap_data/Coop_data/slice1 &
+
+# TODO: 22/12/2022 comment out the original tool since I am running this on the CYENS machine (the original tool is on the weatherwax)
 
 import os
 import subprocess
@@ -37,12 +39,6 @@ y_train = y_train.astype(np.uint8)
 # random_state, https://stackoverflow.com/questions/39158003/confused-about-random-state-in-decision-tree-of-scikit-learn
 # parameters are set from paper Section 3.2
 rf = RandomForestClassifier(n_estimators = 25, max_depth = 25, n_jobs=-1)
-
-# 21/11/2022 - Just keeping old weighted code here
-# classes = np.array([0,1])
-# class_weight = compute_class_weight(class_weight='balanced', classes=classes, y=y_train)
-# class_weight_dict = dict(zip(classes, class_weight))
-# rf_weighted = RandomForestClassifier(n_estimators = 25, max_depth = 25, n_jobs=-1, class_weight = class_weight_dict)
 
 print("Training sklearn model (s)..")
 rf.fit(X_train, y_train)

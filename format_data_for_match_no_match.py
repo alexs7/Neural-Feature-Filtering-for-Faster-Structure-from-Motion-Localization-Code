@@ -1,7 +1,7 @@
-# Run this file before creating the data for MnM - (2020) paper, and run it on the CYENS machine. Need to create the folders CMU_slice_*/Coop manually
+# Run this file before creating the data for MnM - (2020) paper, and run it on the CYENS machine.
 # This file will aim to create the data for the RF model from Match no Match, MnM - (2020) paper
 # It will extract OpenCV SIFT features and insert them in colmap's database and run the triangulator again for the base only.
-# For the live and gt model, I just run the image _registrator, same as my first publication
+# For the live and gt model, I just run the colmap's image_registrator, same as my first publication.
 # The base model is triangulated using the already known camera poses from the original model
 # I clear the old data, keypoints descriptors, and keep the poses (check COLMAP FAQ).
 # You will need to run this on the CYENS machine as it has pycolmap and colmap installed - because of docker I can't run them on Bath Uni
@@ -14,8 +14,14 @@
 # you might get permissions issues so run this:
 # scp -r CMU_slice_3 ar2056@weatherwax.cs.bath.ac.uk:/mnt/fast1/ar2056/mnm_match_data_from_CYENS_machine, then copy files to appropriate directories
 
+# NOTE: 22/12/2022 The data can be kept on the CYENS machine. All the data is there now.
+
 # Then get the 3D points averaged descriptors
 # python3 get_points_3D_mean_desc_single_model_ml.py colmap_data/CMU_data/slice3_mnm/live/database.db colmap_data/CMU_data/slice3_mnm/live/output_opencv_sift_model/images.bin colmap_data/CMU_data/slice3_mnm/live/output_opencv_sift_model/points3D.bin colmap_data/CMU_data/slice3_mnm/avg_descs_xyz_ml.npy
+
+# TODO: 26/11/2022: Pick up the same query_features_limit, reconstr_features_limit as in the live db (reference values)
+# TODO: use the colmap exhaustive_matcher with --SiftMatching.use_gpu 1 for the query stage
+# TODO: or train your own as here: https://github.com/colmap/colmap/issues/866
 
 import glob
 import os
@@ -29,6 +35,7 @@ from database import pair_id_to_image_ids
 import numpy as np
 import random
 from tqdm import tqdm
+from helper import remove_folder_safe
 from parameters import Parameters
 from point3D_loader import read_points3d_default
 from query_image import is_image_from_base, read_images_binary, get_image_name_from_db_with_id, get_all_images_names_from_db, get_image_id, \
@@ -86,6 +93,7 @@ def countDominantOrientations(keypoints):
     return domOrientations
 
 base_path = sys.argv[1] #/home/alex/uni/models_for_match_no_match/CMU_slice_3/
+remove_folder_safe(base_path)
 model_base_path = os.path.join(base_path, "base")
 model_live_path = os.path.join(base_path, "live")
 model_gt_path = os.path.join(base_path, "gt")

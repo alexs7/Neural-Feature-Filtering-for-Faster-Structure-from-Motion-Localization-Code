@@ -241,7 +241,7 @@ est_poses_results = benchmark(ransac_dist, matches_cl_rg_score_visibility, local
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)
 eval_methods_idx += 1
 
-# NOTE: for PROSAC the matches are already sorted so just pass 1, no need to sort them again
+# NOTE: for PROSAC the matches are already sorted, from the NN output, no need to sort them again
 print(f"PROSAC.. {eval_methods[eval_methods_idx]}")
 est_poses_results = benchmark(prosac, matches_rg_score_image, localised_query_images_names, K)
 np.save(os.path.join(ml_path, f"est_poses_results_{eval_methods_idx}.npy"), est_poses_results)

@@ -10,7 +10,7 @@
 # To summarise:
 # 1 - Run this file to generate the data for your sklearn model (.db) and the original tool rforest (.txt)
 # 2 - Run "train_for_predicting_matchability.py"
-# 3 - Run "test_predicting_matchability_tool.py"
+# 3 - Run "test_all_models_on_3D_gt_data.py"
 
 import os
 import sys

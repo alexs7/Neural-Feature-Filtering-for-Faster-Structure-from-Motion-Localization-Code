@@ -3,7 +3,6 @@ import os
 class Parameters(object):
 
     def __init__(self, base_path):
-        self.benchmarks_iters = 15
         self.avg_descs_base_path = os.path.join(base_path , "avg_descs_base.npy")
         self.avg_descs_live_path = os.path.join(base_path ,"avg_descs_live.npy")
 

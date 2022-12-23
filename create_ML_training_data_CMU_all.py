@@ -1,3 +1,7 @@
+# NOTE: 22/12/2022
+# This file has been used again to generate training data using the first 18 CMU slices
+# validate on 2 and test on 2 slices. TODO: Continue from here ..
+
 import os
 import pdb
 import sys

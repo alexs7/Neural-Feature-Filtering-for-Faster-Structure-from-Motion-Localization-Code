@@ -1,4 +1,4 @@
-# This file will be used to analyse results in model_evaluator.py, model_evaluator_comparison_models_*.py
+# This file will be used to analyse results from model_evaluator.py, model_evaluator_comparison_models_*.py
 import csv
 import os
 import sys
