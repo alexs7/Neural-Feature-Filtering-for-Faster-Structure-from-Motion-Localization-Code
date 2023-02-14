@@ -4,7 +4,7 @@ import subprocess
 
 # This file is used to train all the required networks, but using all the CMU session's data
 # it takes as a parameter a directory where the dataset is located (colmap_data/CMU_data/), and the name of the model to create
-# before this you will need to run get_points_3D_mean_desc_single_model_ml.py - just a reminder for later on when you run the evaluator
+# before this you will need to run get_points_3D_mean_desc_single_model_ml_mnm.py - just a reminder for later on when you run the evaluator
 
 # Example command:
 # python3 train_all_networks_CMU_all.py colmap_data/CMU_data/ Extended_CMU_all

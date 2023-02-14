@@ -30,7 +30,7 @@
 
 #include <opencv2/opencv.hpp>
 
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
 
 	// INPUTS *********************************************************************************************
 	/// For Training and Testing phase: Amount of features which define the classifier architecture. (8=proposed, 128=Predicting matchability 2014)
@@ -38,12 +38,12 @@ int main(int argc, char** argv) {
 	int n_featuresWrtMethod = 8;
 
 	/// For Τraining phase:
-	cv::String dirTrainingImages = "Training images"; // Training images folder directory ("Training images" is the default folder for using the provided training images)
-	cv::String dirTrainingData = "Training Data"; // Training data folder directory ("Training Data" is the default folder for the provided training data)
+	cv::String dirTrainingImages = argv[1]; //"Training images"; // Training images folder directory ("Training images" is the default folder for using the provided training images)
+	cv::String dirTrainingData = argv[2]; //"Training Data"; // Training data folder directory ("Training Data" is the default folder for the provided training data)
 
 	/// For Testing:
 	// XML file containing the trained model ("Trained model.xml" is the default value for the provided trained model)
-	cv::String trainedModel = "Trained model.xml";
+	cv::String trainedModel = argv[3];//"Trained model.xml";
 
 	// File directory for ground truth features (variables) and labels (If no ground truth available, leave it blank)
 	cv::String testFeaturesLabelsFile = "Ground Truth";
@@ -58,10 +58,10 @@ int main(int argc, char** argv) {
 
 	/// Τraining phase
 	// Please uncomment the following lines to obtain your own trained model.
-	App::getTrainedData(dirTrainingImages, n_featuresWrtMethod);
-	exit(0);
-//	App::trainForest(dirTrainingData, n_featuresWrtMethod);
+	App::getTrainedData(dirTrainingImages, n_featuresWrtMethod, dirTrainingData);
+	App::trainForest(dirTrainingData, n_featuresWrtMethod, trainedModel);
 	// End of training
+	exit(0);
 
 	/// Testing phase
 	// Please uncomment the following lines to apply testing. Adjust the directory folder of your test images in the "TestImagesDirectory" above.

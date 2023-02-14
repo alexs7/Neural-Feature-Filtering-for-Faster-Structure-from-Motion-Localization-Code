@@ -14,9 +14,9 @@ public:
 	~App(void) {};
 
 
-	static void getTrainedData(const cv::String & TrainingImagesDirectory, const int featAmount);
+	static void getTrainedData(const cv::String & TrainingImagesDirectory, const int featAmount, const cv::String & dirTrainingData);
 
-	static void trainForest(const cv::String & trainedDataPath, const int featAmount);
+	static void trainForest(const cv::String & trainedDataPath, const int featAmount, const cv::String & trainedModel);
 
 	static void predictOnImage(const cv::Mat & testImageInput, const cv::String trainedModelXMLFile, const cv::String CSVfileTestImagePredictions, std::vector<cv::KeyPoint> &testKps, cv::Mat &testDesc, cv::Mat &labelsPredicted, const int n_featuresWrtMethod);
 };

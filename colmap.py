@@ -188,6 +188,17 @@ def point_triangulator(database_path, image_path, input_path, output_path, ini_s
     # print(colmap_command)
     subprocess.check_call(colmap_command)
 
+def image_deleter(input_path, output_path, ids_to_remove_txt_path):
+    # Call COLMAP.
+    # example command:
+    # colmap image_deleter --input_path /media/iNicosiaData/engd_data/lamar/CAB_colmap_model/models_for_match_no_match/base/output_opencv_sift_model/
+    # --output_path /media/iNicosiaData/engd_data/lamar/CAB_colmap_model/models_for_match_no_match/live/output_opencv_sift_model --image_ids_path ids_to_remove.txt
+    # overwrite same model
+    colmap_command = [colmap_bin, "image_deleter", "--input_path", input_path, "--output_path", output_path, "--image_ids_path", ids_to_remove_txt_path]
+
+    # print(colmap_command)
+    subprocess.check_call(colmap_command)
+
 def image_registrator(database_path, input_path, output_path, ini_save_path=None, params=None):
 
     # Find and read template INI.

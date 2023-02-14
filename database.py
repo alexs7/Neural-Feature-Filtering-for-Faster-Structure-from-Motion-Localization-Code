@@ -56,6 +56,9 @@ class COLMAPDatabase(sqlite3.Connection):
                                                 score_visibility FLOAT NOT NULL,
                                                 xyz BLOB NOT NULL,
                                                 xy BLOB NOT NULL,
+                                                blue INTEGER NOT NULL,
+                                                green INTEGER NOT NULL,
+                                                red INTEGER NOT NULL,
                                                 matched INTEGER NOT NULL
                                             );"""
         conn = None
@@ -171,6 +174,21 @@ class COLMAPDatabase(sqlite3.Connection):
     def replace_descriptors(self, image_id, descriptors):
         # delete first
         self.execute("DELETE FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
+        descriptors = np.ascontiguousarray(descriptors, np.uint8)
+        self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
+
+    # These methods are solely for MnM do not compare with add_keypoints and add_descriptors
+    def insert_keypoints(self, image_id, keypoints, dominant_orientations):
+        assert (len(keypoints.shape) == 2)
+        assert (keypoints.shape[1] in [2, 4, 6])
+        assert dominant_orientations.shape[0] == len(keypoints)
+        # insert
+        keypoints = np.asarray(keypoints, np.float32)
+        dominant_orientations = np.asarray(dominant_orientations, np.uint8) #np.uint8 is OK the array contains just int increment values
+        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),) + (self.array_to_blob(dominant_orientations),))
+
+    # These methods are solely for MnM do not compare with add_keypoints and add_descriptors
+    def insert_descriptors(self, image_id, descriptors):
         descriptors = np.ascontiguousarray(descriptors, np.uint8)
         self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
 

@@ -13,7 +13,7 @@ from benchmark import benchmark
 from parameters import Parameters
 
 # sample command to run
-# python3 prepare_comparison_data.py colmap_data/CMU_data/slice3/ 5 (Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py")
+# python3 prepare_comparison_data.py colmap_data/CMU_data/slice3/ 5 (Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml_mnm.py")
 
 # multiple ones (uncomment, copy and comment):
 # python3 prepare_comparison_data.py colmap_data/Coop_data/slice1 5 & disown
@@ -61,13 +61,13 @@ query_images_names = load_images_from_text_file(query_images_path)
 localised_query_images_names = get_localised_image_by_names(query_images_names, query_images_bin_path)
 
 # live points
-# Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml.py" - to get the 3D points avg descs, and corresponding xyz coordinates (128 + 3) from the LIVE model.
+# Note: you will need to run this first, "get_points_3D_mean_desc_single_model_ml_mnm.py" - to get the 3D points avg descs, and corresponding xyz coordinates (128 + 3) from the LIVE model.
 # also you will need the scale between the colmap poses and the ARCore poses (for example the 2020-06-22 the 392 images are from morning run - or whatever you use) - ONLY if you use the Coop_data
 # Matching will happen from the query (or gt) images, on the live model, otherwise if you use the query (gt) model it will be "cheating"
 # as the descriptors from the query images that you are trying to match will already be in the query (or gt) model.
 # Only use the query model for ground truth pose errors comparisons.
 points3D_info = np.load(os.path.join(ml_path, "avg_descs_xyz_ml.npy")).astype(np.float32)
-points3D_xyz_live = points3D_info[:,128:131] # in my publication I used to get the points (x,y,z) seperately from the LIVE model, but here get_points_3D_mean_desc_single_model_ml.py already returns them
+points3D_xyz_live = points3D_info[:,128:131] # in my publication I used to get the points (x,y,z) seperately from the LIVE model, but here get_points_3D_mean_desc_single_model_ml_mnm.py already returns them
 train_descriptors_live = points3D_info[:, 0:128]
 
 K = get_intrinsics_from_camera_bin(query_cameras_bin_path, 3)  # 3 because 1 -base, 2 -live, 3 -query images

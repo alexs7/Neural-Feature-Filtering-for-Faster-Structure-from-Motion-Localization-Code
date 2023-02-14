@@ -1,6 +1,10 @@
-# Run this after format_data_for_match_no_match.py and get_points_3D_mean_desc_single_model_ml.py
+# Run this after format_data_for_match_no_match.py and get_points_3D_mean_desc_single_model_ml_mnm.py
 # and before create_training_data_and_train_for_match_no_match.py.
 # This file will create and define the GT to use later for testing once you have the trained model ready.
+
+# NOTE - 20/02/2023 - This file is not needed anymore. You can use your own GT 3D data for testing.
+# To explain you can use this file if you want to benchmark the MnM model (c++) on the same data structure as it was trained.
+# But the test data for this piece of work is to run the models on my 3D test data.
 
 import os
 import shutil
@@ -53,7 +57,7 @@ def createGroundTruthDataForMatchNoMatchMatchabilityComparison(mnm_base_path, mn
 
     # Here I set my own ground truth images. On the first occurrence of a pair I save the images in the "Training Data" folder
     # Note that here I pick the first occurring pair, for example [2499.0, 2508.0]. If [2499.0, 2291.0] then shows up,
-    # then I won't save the latter two images. This is because is I save both then I will have ground truth ambiguity when testing,
+    # then I won't save the latter two images. This is because if I save both then I will have ground truth ambiguity when testing,
     # i.e. will have two images for 2499.0 with different gt data. So the problem will be which one will I choose ?
     file_index = 1
     gt_images = []

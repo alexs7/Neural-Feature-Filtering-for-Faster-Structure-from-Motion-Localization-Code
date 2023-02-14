@@ -6,6 +6,9 @@ import cv2
 import numpy as np
 import struct
 import collections
+
+from tqdm import tqdm
+
 from database import COLMAPDatabase
 
 CameraModel = collections.namedtuple(
@@ -439,6 +442,29 @@ def get_keypoints_data_and_dominantOrientations(db, image_id):
     data = db.blob_to_array(db_row[2], np.float32).reshape(rows, cols)
     dominantOrientations = db.blob_to_array(db_row[3], np.uint8).reshape(rows, 1)
     return rows, cols, data, dominantOrientations
+
+def delete_images_from_db(db, image_ids):
+    print("Deleting images that have no points3D from db")
+    for image_id in tqdm(image_ids):
+        db.execute("DELETE FROM keypoints WHERE image_id = " + "'" + str(image_id) + "'")
+        db.execute("DELETE FROM images WHERE image_id = " + "'" + str(image_id) + "'")
+        db.execute("DELETE FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
+    db.commit()
+    db.close()
+
+def get_gt_images_only(first_set, second_set):
+    gt_images = {}
+    for image_id, img_data in first_set.items():
+        if(image_id not in second_set): #then it is a gt image
+            gt_images[image_id] = img_data
+    return gt_images
+
+def get_image_decs(db, image_id): #not to be confused with get_queryDescriptors() in feature_matching_generator.py - that one normalises descriptors.
+    data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
+    data = COLMAPDatabase.blob_to_array(data.fetchone()[0], np.uint8)
+    descs_rows = int(np.shape(data)[0] / 128)
+    descs = data.reshape([descs_rows, 128])  # descs for the whole image
+    return descs
 
 # This was updated - 13/10/2022, was named 'get_queryDescriptors'
 def get_descriptors(db, image_id):

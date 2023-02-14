@@ -18,7 +18,7 @@ void Matching::detectAndDescribe(const cv::Mat & img, std::vector<cv::KeyPoint>&
 	const int IMAGE_DOWNSAMPLE = 1;
 	cv::resize(img, img_down, img.size() / IMAGE_DOWNSAMPLE);
 //	cv::imshow(KpsOfImageX, img_down);
-	cv::imwrite(KpsOfImageX + ".png", img);
+//	cv::imwrite(KpsOfImageX + ".png", img); //20/02/2023 comment line
 
 	// Keypoint description
 	pImageSIFT->compute(img, imgKps, imgDesc);

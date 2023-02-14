@@ -29,7 +29,7 @@ cv::Mat shuffle(const cv::Mat &matrix)
 }
 
 // Pre-training phase. Input training images, obtain reliable matches and get features (variables) and labels
-void App::getTrainedData(const cv::String & TrainingImagesDirectory, const int featAmount) {
+void App::getTrainedData(const cv::String & TrainingImagesDirectory, const int featAmount, const cv::String & dirTrainingData) {
 
 	// Read training images from directory
 	std::vector<cv::String> fn;
@@ -176,7 +176,7 @@ void App::getTrainedData(const cv::String & TrainingImagesDirectory, const int f
 		// Store tha balanced (Training data) data in a CSV file.
 		cv::Mat balanced;
 		vconcat(balancedData0, balancedData1, balanced);
-		cv::String CSVfiledataBal = filedeal.nameCSV("Training Data/Balanced Pair ", countIter);
+		cv::String CSVfiledataBal = filedeal.nameCSV(dirTrainingData+"/Balanced Pair ", countIter);
 		filedeal.writeCSV(CSVfiledataBal, balanced);
 
 		// Print some information regarding the dimentions of the obtained data
@@ -189,7 +189,7 @@ void App::getTrainedData(const cv::String & TrainingImagesDirectory, const int f
 }
 
 // Training phase. Construct and train the classifier according to the obtained training data
-void App::trainForest(const cv::String & trainedDataPath, const int featAmount){
+void App::trainForest(const cv::String & trainedDataPath, const int featAmount, const cv::String & trainedModel){
 
 	// Prepair training data
 	// Load files with features and labels of every pair from directory
@@ -240,13 +240,13 @@ void App::trainForest(const cv::String & trainedDataPath, const int featAmount){
 	std::cout << "Training completed" << std::endl;
 
 	// Store trained model (this is the input xml for the test phase)
-	std::string filename_model = "Trained model.xml";
+	std::string filename_model = trainedModel;
 	rtree->save(filename_model);
 
 	// Calculate and print generilization error
 	cv::Mat ResponsesForError;
 	float trainingError = rtree->calcError(data, true, ResponsesForError);
-	std::cout << "Generilization error is: " << trainingError << std::endl;
+	std::cout << "Generalization error is: " << trainingError << std::endl;
 }
 
 // Testing phase. Apply the classifier to get predicted matchable keypoints for an image

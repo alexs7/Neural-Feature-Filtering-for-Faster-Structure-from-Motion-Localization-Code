@@ -12,9 +12,11 @@
 # 2 - Run "train_for_predicting_matchability.py"
 # 3 - Run "test_all_models_on_3D_gt_data.py"
 
+# NOTE 14/02/2023:
+# Removed the original tool as I got same results with python code.
+
 import os
 import sys
-from data import getClassificationData
 from database import COLMAPDatabase
 from database import pair_id_to_image_ids, image_ids_to_pair_id
 import numpy as np
@@ -22,15 +24,15 @@ from tqdm import tqdm
 from parameters import Parameters
 from query_image import get_descriptors
 
-def save_to_files_for_original_tool(all_descs, original_tool_path, file_identifier):
-    with open(os.path.join(f"{original_tool_path}", f"pos_{file_identifier}.txt"), 'w') as f:
-        for desc in tqdm(all_descs[np.where(all_descs[:,128] == 1)[0]]):
-            row = ' '.join([str(num) for num in desc[0:128].astype(np.uint8)])
-            f.write(f"{row}\n")
-    with open(os.path.join(f"{original_tool_path}", f"neg_{file_identifier}.txt"), 'w') as f:
-        for desc in tqdm(all_descs[np.where(all_descs[:,128] == 0)[0]]):
-            row = ' '.join([str(num) for num in desc[0:128].astype(np.uint8)])
-            f.write(f"{row}\n")
+# def save_to_files_for_original_tool(all_descs, original_tool_path, file_identifier):
+#     with open(os.path.join(f"{original_tool_path}", f"pos_{file_identifier}.txt"), 'w') as f:
+#         for desc in tqdm(all_descs[np.where(all_descs[:,128] == 1)[0]]):
+#             row = ' '.join([str(num) for num in desc[0:128].astype(np.uint8)])
+#             f.write(f"{row}\n")
+#     with open(os.path.join(f"{original_tool_path}", f"neg_{file_identifier}.txt"), 'w') as f:
+#         for desc in tqdm(all_descs[np.where(all_descs[:,128] == 0)[0]]):
+#             row = ' '.join([str(num) for num in desc[0:128].astype(np.uint8)])
+#             f.write(f"{row}\n")
 
 def get_matched_and_unmatched_descs(c, m, db_live, side=None):
     assert side != None
@@ -69,6 +71,7 @@ def gen_training_data(pair_ids, max_neighbours, max_pairs, db_live):
     if(max_pairs == -1): #just use all UNIQUE pair ids
         max_pairs = len(np.unique(left_images_ids.flatten()))
 
+    # TODO: max_pairs might be > than the number of unique left_images_ids images, so we need to check (rare case)
     rand_images = np.random.choice(np.unique(left_images_ids.flatten()), size=max_pairs, replace=False) #pick 500 random images (or central images) unique
 
     matched_images = {} #this will contain a random image id and its 13 * 2 (26),
@@ -177,11 +180,13 @@ def gen_training_data(pair_ids, max_neighbours, max_pairs, db_live):
     assert i == all_descs.shape[0]
     return all_descs
 
-def createDataForPredictingMatchabilityComparison(db_live_path, db_PM_path, original_tool_path, max_pairs, max_neighbours=13):
+def createDataForPredictingMatchabilityComparison(db_live_path, db_PM_path, max_pairs, max_neighbours=13):
     file_identifier = f"{max_pairs}_samples"
     training_data_db_path = os.path.join(db_PM_path, f"training_data_{file_identifier}.db")
+    print(f"Creating training data db at {training_data_db_path}.. (will drop table if exists)")
     training_data_db = COLMAPDatabase.create_db_predicting_matchability_data(training_data_db_path)
     db_live = COLMAPDatabase.connect(db_live_path)
+    print("Selecting pair_ids..")
     pair_ids = db_live.execute("SELECT pair_id FROM two_view_geometries WHERE rows != 0 ORDER BY rows DESC").fetchall()
 
     training_data_db.execute("BEGIN")
@@ -205,28 +210,41 @@ def createDataForPredictingMatchabilityComparison(db_live_path, db_PM_path, orig
     print("Total unmatched descs: " + str(len(unmatched)))
     print("% of matched decs: " + str(len(matched) * 100 / len(stats)))
 
-    print(f"Getting the data again to save in txt files for original tool in \n {original_tool_path}")
-    sift_vecs, classes = getClassificationData(training_data_db_path)
-    # shuffled
-    training_descs = np.c_[sift_vecs, classes]
-
-    print("Saving for original tool!")
-    save_to_files_for_original_tool(training_descs, original_tool_path, file_identifier)
-
     training_data_db.close()
     print("Done!")
 
-base_path = sys.argv[1]
+root_path = "/media/iNicosiaData/engd_data/"
+dataset = sys.argv[1] #HGE, CAB, LIN (or Other for CMU, retail shop)
 max_pairs = int(sys.argv[2]) # more sample images to get "neighbours" from
 
-print("Base path: " + base_path)
-parameters = Parameters(base_path)
-db_live_path = os.path.join(base_path, "live/database.db")
-output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
-os.makedirs(output_path, exist_ok = True)
-original_tool_path = "/home/Neural-Feature-Filtering-for-Faster-Structure-from-Motion-Localization-Code/code_to_compare/Predicting_Matchability/rforest"
+if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
+    base_path = os.path.join(root_path, "lamar", f"{dataset}_colmap_model")
+    print("Base path: " + base_path)
+    parameters = Parameters(base_path)
+    db_live_path = parameters.live_db_path
+    output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
+    os.makedirs(output_path, exist_ok=True)
+    createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs)
 
-createDataForPredictingMatchabilityComparison(db_live_path, output_path, original_tool_path, max_pairs)
+if(dataset == "CMU"):
+    slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",
+                    "slice16", "slice17", "slice18", "slice19", "slice20", "slice21", "slice22", "slice23", "slice24", "slice25"]
+    for slice_name in slices_names:
+        base_path = os.path.join(root_path, "cmu", f"{slice_name}", "exmaps_data")
+        print("Base path: " + base_path)
+        parameters = Parameters(base_path)
+        db_live_path = parameters.live_db_path
+        output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
+        os.makedirs(output_path, exist_ok=True)
+        createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs)
 
+if(dataset == "RetailShop"):
+    base_path = os.path.join(root_path, "retail_shop", "slice1")
+    print("Base path: " + base_path)
+    parameters = Parameters(base_path)
+    db_live_path = parameters.live_db_path
+    output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
+    os.makedirs(output_path, exist_ok=True)
+    createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs)
 
 

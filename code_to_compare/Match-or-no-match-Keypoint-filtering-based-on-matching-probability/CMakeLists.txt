@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.4)
 
 PROJECT(MatchOrNoMatch)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++11")
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 3.4.18 EXACT REQUIRED PATHS /home/alex/opencv_build3/install)
 find_package (PkgConfig REQUIRED)
 pkg_check_modules (GTK3 REQUIRED gtk+-3.0)
 
