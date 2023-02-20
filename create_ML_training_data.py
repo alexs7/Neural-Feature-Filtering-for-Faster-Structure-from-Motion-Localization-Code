@@ -8,25 +8,14 @@ from parameters import Parameters
 from point3D_loader import read_points3d_default, index_dict_reverse
 from query_image import read_images_binary, get_image_decs
 
-
 # The ML part for my second publication starts from here:
 # Run this file for all datasets, CMU, Retail, LaMAR - binary classifier, visibility and per_image score regressors
-# After this run get_points_3D_mean_desc_single_model_ml_mnm.py before prepare_comparison_data.py, then model_evaluator.py
 
-# NOTE: 13/02/2023 Review the below, about tensorboard:
-# Tensorboard Notes:
-# https://chadrick-kwag.net/how-to-manually-write-to-tensorboard-from-tf-keras-callback-useful-trick-when-writing-a-handful-of-validation-metrics-at-once/
-# You need 2 terminals
-# 1 - to run tensorboard, you ssh with "ssh -L 9999:localhost:20000 ar2056@weatherwax.cs.bath.ac.uk", and run this too "source ~/venv_basic/bin/activate" (the latter might not be needed)
-# then run "tensorboard --logdir colmap_data/Coop_data/slice1/ML_data/results/ --port 20000" inside fullpipeline/ (might need to reserve a port with hare, hare reserve 20000)
-# the you visit "http://localhost:9999" on your local machine.
-# 2 - the terminal you usually run the hare command from above and Tensorflow will read from the dir you store the results.
-# Will need to flush with the writer though, https://stackoverflow.com/questions/52483296/when-do-i-have-to-use-tensorflows-filewriter-flush-method (doesn't work...)
-
-# The order you have to follow to get the final paper results:
+# Run this in order:
 # 1 - create_ML_training_data.py
-# 2 - train_all_networks.py
-# 3 - get_points_3D_mean_desc_single_model_ml_mnm.py
+# 2 - train_classification_NF.py
+
+# TODO: review the below - not relevant anymore
 # 4 - prepare_comparison_data.py
 # 5 - model_evaluator.py
 # 6 - print_eval_NN_results.py

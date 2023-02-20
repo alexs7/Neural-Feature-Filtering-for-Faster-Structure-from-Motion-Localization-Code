@@ -8,13 +8,13 @@ import subprocess
 import sys
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from data import getClassificationData
+from data import getClassificationDataPM
 from joblib import dump
 
 def train_and_save_model(data_folder, no_samples):
     training_data_db_path = os.path.join(data_folder, f"training_data_{no_samples}_samples.db")
     print("Loading training data from: " + training_data_db_path)
-    sift, classes = getClassificationData(training_data_db_path)
+    sift, classes = getClassificationDataPM(training_data_db_path)
 
     # random_state, https://stackoverflow.com/questions/39158003/confused-about-random-state-in-decision-tree-of-scikit-learn
     # parameters are set from paper Section 3.2
@@ -31,7 +31,6 @@ def train_and_save_model(data_folder, no_samples):
     dump(rf, os.path.join(data_folder, sklearn_model_output_name))
 
 root_path = "/media/iNicosiaData/engd_data/"
-
 dataset = sys.argv[1]
 no_samples = sys.argv[2] #this value is defined from "create_training_data_predicting_matchability.py"
 

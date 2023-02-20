@@ -12,7 +12,7 @@
 # 2 - get_points_3D_mean_desc_single_model_ml_mnm.py, on weatherwax
 # 3 - Run create_gt_data_for_match_no_match.py to generate GT data once. (This is not needed if you are going to use your own GT 3D data)
 # 3 - Run this file, create_training_data_and_train_for_match_no_match.py with some "no_samples" params
-# 4 - Look at test_all_models_on_3D_gt_data.py then and run that
+# 4 - Look at test_models_on_3D_gt_data.py then and run that
 
 # NOTE: 20/02/2023: You can run file in parallel for each dataset, it will create a folder for each dataset under build/
 

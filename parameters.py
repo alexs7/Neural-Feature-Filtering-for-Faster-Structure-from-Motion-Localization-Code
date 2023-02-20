@@ -14,6 +14,10 @@ class Parameters(object):
         self.avg_descs_gt_ml_mnm_path = os.path.join(base_path,"gt","avg_descs_gt_ml_mnm.npy")
         self.gt_ml_mnm_model_points3D_path = os.path.join(base_path, "gt/output_opencv_sift_model/points3D.bin")
 
+        # ml paths
+        self.match_or_no_match_comparison_data = "models_for_match_no_match" #also contains models
+        self.predicting_matchability_comparison_data = "predicting_matchability_comparison_data"
+
         # 30/12/2022 still using the old names for filenames (_matrix) - nvm
         self.per_image_decay_scores_path = os.path.join(base_path, "per_image_score.npy")
         self.per_session_decay_scores_path = os.path.join(base_path, "per_session_score.npy")

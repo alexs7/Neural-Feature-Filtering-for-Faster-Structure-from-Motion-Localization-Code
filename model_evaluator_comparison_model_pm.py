@@ -13,7 +13,7 @@ from query_image import load_images_from_text_file, get_localised_image_by_names
 # The order is:
 # 1 - run create_training_data_predicting_matchability.py, creates data for your python model and the original code C++
 # 2 - train_for_predicting_matchability.py (choose the python model as it returns similar results to the original tool)
-# 3 - choose a model based of test_all_models_on_3D_gt_data.py csv file produced (after looking at the numbers).
+# 3 - choose a model based of test_models_on_3D_gt_data.py csv file produced (after looking at the numbers).
 # 4 - then this file
 
 # Read the original file model_evaluator.py for notes.

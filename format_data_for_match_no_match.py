@@ -25,10 +25,12 @@ from database import COLMAPDatabase
 from helper import remove_folder_safe
 from query_image import get_all_images_names_from_db, get_image_id
 
+MULTIPLIER = 4 #increase this to increase the number of features extracted and get more images localised in live and gt
+
 # The more you increase the values the more images will localise from live and gt
 # The randomness is to simulate the COLMAP feature extraction 800 query / 2000 recon. used in previous papers
-query_features_limit = random.randint(700, 900)
-reconstr_features_limit = random.randint(1900, 2200)
+query_features_limit = MULTIPLIER * random.randint(700, 900)
+reconstr_features_limit = MULTIPLIER * random.randint(1900, 2200)
 
 def empty_points_3D_txt_file(path):
     open(path, 'w').close()
@@ -189,6 +191,8 @@ def prepare_all_data_for_match_no_match(base_path, original_path, dataset=None, 
     # live db at this point is the same as base db
     live_db = COLMAPDatabase.connect(live_db_path)
     original_live_db = COLMAPDatabase.connect(os.path.join(original_path, "live", "database.db"))
+    # The query_name.txt file will contain the names of the live images only as it reads their name from the folder (from Exmaps)
+    # The db will contain all of them BUT the model will contain less as NOT all localise. Same with gt images.
     query_live_images_txt_path = os.path.join(model_live_path, "query_name.txt")
     image_names = np.loadtxt(query_live_images_txt_path, dtype=str) #only live images
 

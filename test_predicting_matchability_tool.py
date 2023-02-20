@@ -3,7 +3,7 @@
 # It will load a model from code_to_compare/Predicting_Matchability/rforest, and
 # colmap_data/CMU_data/slice3/predicting_matchability_comparison_data/ and run the model on the TEST data in "code_to_compare/Predicting_Matchability/rforest"
 
-# NOTE: 23/11/2022: Use test_all_models_on_3D_gt_data.py instead
+# NOTE: 23/11/2022: Use test_models_on_3D_gt_data.py instead
 
 # import os
 # import subprocess
