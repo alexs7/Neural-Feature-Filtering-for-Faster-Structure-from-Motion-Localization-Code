@@ -45,22 +45,6 @@ def arrange_images_txt_file(path):
             else:
                 f.write("\n")
 
-def create_new_query_image_names_file(model_path):
-    # just rewrite existing one
-    new_query_image_names_file_path = os.path.join(model_path, f'query_name.txt') #new will contain absolute paths
-    model_images_path = os.path.join(model_path, 'images')
-
-    if("base" in model_path):
-        search_path = '*' #images/*.jpg
-    else:
-        search_path = '/**/*' #images/session_*/*.jpg
-
-    with open(new_query_image_names_file_path, 'w') as f:
-        for filename in glob.glob(model_images_path + search_path):
-            f.write(f"{filename}\n")
-
-    return new_query_image_names_file_path
-
 def countDominantOrientations(keypoints): #13/02/2023 refactored to be faster
     domOrientations = np.ones([len(keypoints), 1])
     x1 = np.array([kp.pt[0] for kp in keypoints])

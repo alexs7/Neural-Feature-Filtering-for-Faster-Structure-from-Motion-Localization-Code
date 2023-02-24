@@ -1,13 +1,10 @@
 # This file returns the direct data to be used for model for training and testing
-# Seperated in 2 sections training and testing
+# Separated in 2 sections training and testing
 import os.path
-
 import cv2
 from tqdm import tqdm
-
 from database import COLMAPDatabase
 import numpy as np
-
 from point3D_loader import read_points3d_default
 from query_image import load_images_from_text_file, read_images_binary, get_image_id, get_image_decs, get_descriptors, get_image_data, get_localised_image_by_names, \
     get_total_number_of_valid_keypoints
