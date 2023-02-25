@@ -1,4 +1,4 @@
-# This script will load draw on the query images which points are mathcable and which ones are not.
+# This script will load draw on the query images which points are matchable and which ones are not.
 # Will use a number of models including NN (the classifier only), PM, MnM
 # This file will use the gt db as we need the data from the gt (query) images to display on the query images that data is not in live db
 import os
