@@ -282,6 +282,10 @@ def get_image_name_from_db_with_id(db, image_id):
         return image_name.split("/")[1]
     return image_name
 
+def get_full_image_name_from_db_with_id(db, image_id):
+    image_name = db.execute("SELECT name FROM images WHERE image_id = " + "'" + str(image_id) + "'").fetchone()[0]
+    return image_name
+
 def get_images_names_bin(images_bin_path):
     images_names = []
     images = read_images_binary(images_bin_path)
@@ -492,19 +496,24 @@ def get_image_name_only_with_extension(image_name):
 def is_image_base(img_name): #For CMU only
     return len(img_name.split("/")) == 1
 
-# This is used for MnM paper similar code is used in feature_matching_generator_ML_comparison_models.py
-def get_image_data(db, points3D, images, img_id, img_file):
+def get_image_data_mnm(db, points3D, images, img_id, img_file): #MnM code
+    breakpoint()
     image = images[img_id] #only localised images
     kp_db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
     cols = kp_db_row[1]
     rows = kp_db_row[0]
+    descs = get_queryDescriptors(db, img_id)
 
-    assert (image.xys.shape[0] == image.point3D_ids.shape[0] == rows)  # just for my sanity
+    sift = cv2.SIFT_create() #just to verify that the descriptors number are the same from format_data_for_match_no_match.py
+    opencv_kps, opencv_descs = sift.detectAndCompute(img_file, None)
+
+
+
+    assert (image.xys.shape[0] == image.point3D_ids.shape[0] == rows == descs.shape[0] == len(opencv_descs))  # just for my sanity
     # x, y, octave, angle, size, response
-    kp_data = COLMAPDatabase.blob_to_array(kp_db_row[2], np.float32)
-    kp_data = kp_data.reshape([rows, cols])
-    dominantOrientations = COLMAPDatabase.blob_to_array(kp_db_row[3], np.uint8)
-    dominantOrientations = dominantOrientations.reshape([rows, 1])
+    kps = COLMAPDatabase.blob_to_array(kp_db_row[2], np.float32)
+    kps = kps.reshape([rows, cols])
+    dominantOrientations = countDominantOrientations(kps)
 
     matched_values = [] #for each keypoint (x,y)/desc same thing
     green_intensities = [] #for each keypoint (x,y)/desc same thing
@@ -527,7 +536,7 @@ def get_image_data(db, points3D, images, img_id, img_file):
     matched_values = np.array(matched_values).reshape(rows, 1)
     green_intensities = np.array(green_intensities).reshape(rows, 1)
 
-    image_data = np.c_[kp_data, green_intensities, dominantOrientations, matched_values]
+    image_data = np.c_[kps, green_intensities, dominantOrientations, matched_values, descs]
     return image_data
 
 def get_keypoints_data(db, img_id, image_file):
@@ -598,32 +607,3 @@ def match(queryDescriptors, trainDescriptors, keypoints_xy, points3D_xyz, ratio_
             print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
 
     return good_matches
-
-def get_total_number_of_valid_keypoints(localised_query_images_names, db_gt, gt_model_images, image_path, gt_points_3D):
-    k = 0
-    for image_name in tqdm(localised_query_images_names):  # only loop through gt images that were localised from query_name.txt
-        img_id = get_image_id(db_gt, image_name)
-        img_data = gt_model_images[int(img_id)]
-        assert (img_data.name == image_name)
-
-        descs = get_image_decs(db_gt, img_id)
-        assert (img_data.xys.shape[0] == img_data.point3D_ids.shape[0] == descs.shape[0])  # just for my sanity
-
-        img_file = cv2.imread(os.path.join(image_path, img_data.name))
-        for i in range(img_data.point3D_ids.shape[0]):  # can loop through descs or img_data.xys - same thing
-            current_point3D_id = img_data.point3D_ids[i]
-
-            if (current_point3D_id == -1):  # means feature (or keypoint) is unmatched
-                matched = 0
-            else:
-                assert i in gt_points_3D[current_point3D_id].point2D_idxs
-                matched = 1
-
-            xy = img_data.xys[i]  # np.float64, same as xyz
-            y = np.round(xy[1]).astype(int)
-            x = np.round(xy[0]).astype(int)
-            if (y >= img_file.shape[0] or x >= img_file.shape[1]):
-                continue
-
-            k += 1
-    return k

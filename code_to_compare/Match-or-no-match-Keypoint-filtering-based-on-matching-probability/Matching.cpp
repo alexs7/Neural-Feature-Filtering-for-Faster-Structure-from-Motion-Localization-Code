@@ -103,6 +103,11 @@ void Matching::matchStereoPair(const cv::Mat & source, const cv::Mat & target, c
 	cv::Mat fundamentalMatrix;
 	fundamentalMatrix = findFundamentalMat(imgSrcPts, imgTarPts, CV_FM_RANSAC, 2, 0.99, inliers);
 
+    if(inliers.empty() == true){ // Alex 03/03/2023
+        std::cout << "  inliers.empty() is true - skipping" << std::endl;
+        return;
+    }
+
 	// Find RANSAC inlier matches
 	std::vector<cv::DMatch> RANSAC_matches;
 	for (int id = 0; id < matches.size(); id++) {
@@ -110,6 +115,11 @@ void Matching::matchStereoPair(const cv::Mat & source, const cv::Mat & target, c
 			RANSAC_matches.push_back(matches[id]);
 		}
 	}
+
+    if(RANSAC_matches.size() < 10){ // Alex 03/03/2023 - otherwise code breaks
+        std::cout << "  RANSAC_matches.size() < 10 - skipping" << std::endl;
+        return;
+    }
 
 	// Draw RANSAC matches on images
 //	cv::String dirPredKps = "ImagesWithPredictedKps";

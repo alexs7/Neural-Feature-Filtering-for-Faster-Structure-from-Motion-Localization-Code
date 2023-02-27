@@ -23,3 +23,7 @@ The files themselves will contain comments on how to use them.
 #### To test on GT data
 
 - test_all_models_on_3D_gt_data.py
+
+#### Notes:
+
+In most scripts you have to pass, 'HGE' or 'CMU' or 'RetailShop' to specify the dataset

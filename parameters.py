@@ -10,12 +10,16 @@ class Parameters(object):
         self.avg_descs_base_path = os.path.join(base_path,"avg_descs_base.npy")
         self.avg_descs_live_path = os.path.join(base_path,"avg_descs_live.npy")
 
-        # This is for MnM (Match and No Match)
-        self.avg_descs_gt_ml_mnm_path = os.path.join(base_path,"gt","avg_descs_gt_ml_mnm.npy")
-        self.gt_ml_mnm_model_points3D_path = os.path.join(base_path, "gt/output_opencv_sift_model/points3D.bin")
-
-        # ml paths
-        self.match_or_no_match_comparison_data = "models_for_match_no_match" #also contains models
+        # This is for MnM (Match and No Match) and PM (Predicting Matchability)
+        self.match_or_no_match_comparison_data = "models_for_match_no_match"  # also contains models
+        self.mnm_path = os.path.join(base_path, self.match_or_no_match_comparison_data)
+        self.gt_db_path_mnm = os.path.join(self.mnm_path, "gt/database.db")
+        self.avg_descs_gt_path_mnm = os.path.join(self.mnm_path, "gt", "avg_descs_gt_mnm.npy")
+        self.gt_model_points3D_path_mnm = os.path.join(self.mnm_path, "gt/output_opencv_sift_model/points3D.bin")
+        self.gt_model_images_path_mnm = os.path.join(self.mnm_path, "gt/output_opencv_sift_model/images.bin")
+        self.gt_model_cameras_path_mnm = os.path.join(self.mnm_path, "gt/output_opencv_sift_model/cameras.bin")
+        self.query_gt_images_txt_path_mnm = os.path.join(self.mnm_path, "gt/query_name.txt")
+        self.mnm_trained_model_path_mnm = os.path.join(self.mnm_path, "trained_model_pairs_no_8000.xml")
         self.predicting_matchability_comparison_data = "predicting_matchability_comparison_data"
 
         # 30/12/2022 still using the old names for filenames (_matrix) - nvm

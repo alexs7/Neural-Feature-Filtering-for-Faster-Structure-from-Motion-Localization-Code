@@ -92,6 +92,14 @@ void App::getTrainedData(const cv::String & TrainingImagesDirectory, const int f
 		std::vector<cv::DMatch> matches, initialMatches;
 		matching.matchStereoPair(imgSrc, imgTar, imgSrcKps, imgTarKps, imgSrcDesc, imgTarDesc, initialMatches, matches, inlierMatches);
 
+		if(inlierMatches.empty() == true){ //Alex 03/03/2023
+		    std::cout << "No inlierMatches found" << std::endl;
+		    std::cout << "Skipping Images: " << fn[i] << " and " << fn[i + 1] << std::endl;
+		    // increase i for correct selection of image pairs
+		    i = i + 1;
+            continue;
+		}
+
 		// Define Labels for each image
 		int n_imgSrc = imgSrcDesc.rows;
 		int n_imgTar = imgTarDesc.rows;

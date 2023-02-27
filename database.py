@@ -148,49 +148,75 @@ class COLMAPDatabase(sqlite3.Connection):
         descriptors = np.ascontiguousarray(descriptors, np.uint8)
         self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
 
-    def dominant_orientations_column_exists(self):
-        cols = self.execute("PRAGMA table_info('keypoints');").fetchall()
-        for col in cols:
-            if(col[1] == 'dominantOrientations'):
-                return True
-        return False
+    def add_octaves_column(self):
+        addColumn = "ALTER TABLE keypoints ADD COLUMN octaves BLOB"
+        self.execute(addColumn)
+
+    def add_angles_column(self):
+        addColumn = "ALTER TABLE keypoints ADD COLUMN angles BLOB"
+        self.execute(addColumn)
+
+    def add_sizes_column(self):
+        addColumn = "ALTER TABLE keypoints ADD COLUMN sizes BLOB"
+        self.execute(addColumn)
+
+    def add_responses_column(self):
+        addColumn = "ALTER TABLE keypoints ADD COLUMN responses BLOB"
+        self.execute(addColumn)
+
+    def add_green_intensities_column(self):
+        addColumn = "ALTER TABLE keypoints ADD COLUMN greenIntensities BLOB"
+        self.execute(addColumn)
 
     def add_dominant_orientations_column(self):
         addColumn = "ALTER TABLE keypoints ADD COLUMN dominantOrientations BLOB"
         self.execute(addColumn)
 
-    def replace_keypoints(self, image_id, keypoints, dominant_orientations):
+    def add_matched_column(self):
+        addColumn = "ALTER TABLE keypoints ADD COLUMN matched INTEGER DEFAULT 99"
+        self.execute(addColumn)
+
+    def replace_keypoints(self, image_id, keypoints):
         assert (len(keypoints.shape) == 2)
         assert (keypoints.shape[1] in [2, 4, 6])
-        assert dominant_orientations.shape[0] == len(keypoints)
-
-        # delete first
-        self.execute("DELETE FROM keypoints WHERE image_id = " + "'" + str(image_id) + "'")
-        # insert again
         keypoints = np.asarray(keypoints, np.float32)
-        dominant_orientations = np.asarray(dominant_orientations, np.uint8) #np.uint8 is OK the array contains just int increment values
-        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),) + (self.array_to_blob(dominant_orientations),))
+        self.execute("UPDATE keypoints SET rows = ? WHERE image_id = ?", (keypoints.shape[0], image_id))
+        self.execute("UPDATE keypoints SET cols = ? WHERE image_id = ?", (keypoints.shape[1], image_id))
+        self.execute("UPDATE keypoints SET data = ? WHERE image_id = ?", (self.array_to_blob(keypoints), image_id))
 
     def replace_descriptors(self, image_id, descriptors):
-        # delete first
-        self.execute("DELETE FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
         descriptors = np.ascontiguousarray(descriptors, np.uint8)
-        self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
+        self.execute("UPDATE descriptors SET rows = ? WHERE image_id = ?", (descriptors.shape[0], image_id))
+        self.execute("UPDATE descriptors SET cols = ? WHERE image_id = ?", (descriptors.shape[1], image_id))
+        self.execute("UPDATE descriptors SET data = ? WHERE image_id = ?", (self.array_to_blob(descriptors), image_id))
 
-    # These methods are solely for MnM do not compare with add_keypoints and add_descriptors
-    def insert_keypoints(self, image_id, keypoints, dominant_orientations):
-        assert (len(keypoints.shape) == 2)
-        assert (keypoints.shape[1] in [2, 4, 6])
-        assert dominant_orientations.shape[0] == len(keypoints)
-        # insert
-        keypoints = np.asarray(keypoints, np.float32)
-        dominant_orientations = np.asarray(dominant_orientations, np.uint8) #np.uint8 is OK the array contains just int increment values
-        self.execute("INSERT INTO keypoints VALUES (?, ?, ?, ?, ?)", (image_id,) + keypoints.shape + (self.array_to_blob(keypoints),) + (self.array_to_blob(dominant_orientations),))
+    def update_octaves(self, image_id, octaves):
+        octaves = np.asarray(octaves, np.uint8)
+        self.execute("UPDATE keypoints SET octaves = ? WHERE image_id = ?", (self.array_to_blob(octaves), image_id))
 
-    # These methods are solely for MnM do not compare with add_keypoints and add_descriptors
-    def insert_descriptors(self, image_id, descriptors):
-        descriptors = np.ascontiguousarray(descriptors, np.uint8)
-        self.execute("INSERT INTO descriptors VALUES (?, ?, ?, ?)", (image_id,) + descriptors.shape + (self.array_to_blob(descriptors),))
+    def update_angles(self, image_id, angles):
+        angles = np.asarray(angles, np.float32)
+        self.execute("UPDATE keypoints SET angles = ? WHERE image_id = ?", (self.array_to_blob(angles), image_id))
+
+    def update_sizes(self, image_id, sizes):
+        sizes = np.asarray(sizes, np.float32)
+        self.execute("UPDATE keypoints SET sizes = ? WHERE image_id = ?", (self.array_to_blob(sizes), image_id))
+
+    def update_responses(self, image_id, responses):
+        responses = np.asarray(responses, np.float32)
+        self.execute("UPDATE keypoints SET responses = ? WHERE image_id = ?", (self.array_to_blob(responses), image_id))
+
+    def update_green_intensities(self, image_id, green_intensities):
+        green_intensities = np.asarray(green_intensities, np.uint8)
+        self.execute("UPDATE keypoints SET greenIntensities = ? WHERE image_id = ?", (self.array_to_blob(green_intensities), image_id))
+
+    def update_dominant_orientations(self, image_id, dominant_orientations):
+        dominant_orientations = np.asarray(dominant_orientations, np.uint8)
+        self.execute("UPDATE keypoints SET dominantOrientations = ? WHERE image_id = ?", (self.array_to_blob(dominant_orientations), image_id))
+
+    def update_matched_values(self, image_id, matched):
+        matched = np.asarray(matched, np.uint8)
+        self.execute("UPDATE keypoints SET matched = ? WHERE image_id = ?", (matched, image_id))
 
     def delete_all_matches(self):
         self.execute("DELETE FROM matches")

@@ -70,6 +70,21 @@ def feature_extractor(database_path, image_path, image_list_path=None, ini_save_
 
     subprocess.check_call(colmap_command)
 
+# Simple version no ini set here.
+def vocab_tree_builder(database_path, output_file_path):
+    # Call COLMAP.
+    # colmap vocab_tree_builder --database_path base/database.db --vocab_tree_path voc32k.bin --num_visual_words 32768
+    colmap_command = [colmap_bin, "vocab_tree_builder", "--database_path", database_path, "--vocab_tree_path", output_file_path, "--num_visual_words", "32768"]
+    # print(colmap_command)
+    subprocess.check_call(colmap_command)
+
+# Simple version no ini set here.
+def custom_matcher(database_path, match_list_path=None, match_type = None):
+    # Call COLMAP.
+    colmap_command = [colmap_bin, "matches_importer", "--database_path", database_path, "--match_list_path", match_list_path, "--match_type", match_type]
+    # print(colmap_command)
+    subprocess.check_call(colmap_command)
+
 def vocab_tree_matcher(database_path, match_list_path=None, ini_save_path=None, params=None):
 
     # Find and read template INI.

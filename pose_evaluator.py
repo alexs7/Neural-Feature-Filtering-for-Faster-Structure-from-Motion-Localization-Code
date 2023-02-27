@@ -6,36 +6,6 @@ import pdb
 import numpy as np
 from query_image import read_images_binary, get_query_image_global_pose_new_model, load_images_from_text_file, QuaternionFromMatrix
 
-# NOTE: 26/09/2022 is not used anymore.
-# def pose_evaluate(query_poses, gt_poses, scale= 1):
-#     trans_errors = []
-#     rotation_errors = []
-#     for image_name, _ in query_poses.items():
-#         q_pose = query_poses[image_name]
-#         gt_pose = gt_poses[image_name]
-#
-#         # camera center errors
-#         q_pose_cntr = -q_pose[0:3, 0:3].transpose().dot(q_pose[0:3, 3])
-#         gt_pose_cntr = -gt_pose[0:3, 0:3].transpose().dot(gt_pose[0:3, 3])
-#         # multiplying by scale will return the distance in (m) in the other dataset (ARCore or CMU or ...)
-#         dist = scale * np.linalg.norm(q_pose_cntr - gt_pose_cntr)
-#         trans_errors.append(dist)
-#
-#         # rotations errors
-#         # from paper: Benchmarking 6DOF Outdoor Visual Localization in Changing Conditions
-#         q_pose_R = q_pose[0:3, 0:3]
-#         gt_pose_R = gt_pose[0:3, 0:3]
-#         # NOTE: arccos returns radians - but I convert it to angles
-#         a_rad = np.arccos((np.trace(np.dot(np.linalg.inv(gt_pose_R), q_pose_R)) - 1) / 2)
-#         a_deg = np.degrees(a_rad)
-#         rotation_errors.append(a_deg)
-#
-#     # Note: These might contain nan values!
-#     trans_errors = np.array(trans_errors)
-#     rotation_errors = np.array(rotation_errors)
-#
-#     return trans_errors, rotation_errors
-
 # 01/09/2022, This is used to return the error per image, using the new format!
 def pose_evaluate_generic_comparison_model(query_pose, ground_truth_pose, scale):
     # camera center errors

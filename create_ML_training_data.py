@@ -10,6 +10,7 @@ from query_image import read_images_binary, get_image_decs
 
 # The ML part for my second publication starts from here:
 # Run this file for all datasets, CMU, Retail, LaMAR - binary classifier, visibility and per_image score regressors
+# General Notes: you are using conda tf env
 
 # Run this in order:
 # 1 - create_ML_training_data.py

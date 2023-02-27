@@ -32,14 +32,15 @@ def run(base_path):
     ]
 
     ml_path = os.path.join(base_path, "ML_data") #folder should exist from create_ML_training_data.py
+    nn_save_path = os.path.join(ml_path, "classification_model") #to store the binary model
     log_folder_name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     log_folder = os.path.join(ml_path, "tensorboard_logs", log_folder_name)
 
     print(f"Tensorboard log folder: {log_folder}")
 
     db_path = os.path.join(base_path, ml_path, "ml_database_all.db")
-    batch_size = 2048
-    epochs = 1000
+    batch_size = 4096
+    epochs = 250
 
     callbacks = [TensorBoard(log_dir=log_folder, histogram_freq=1, write_graph=True, write_images=True, update_freq='epoch', profile_batch=2, embeddings_freq=1)]
 
@@ -79,7 +80,7 @@ def run(base_path):
 
     # Save model here
     print("Saving model..")
-    model.save(ml_path)
+    model.save(nn_save_path)
     print("Done!")
 
 root_path = "/media/iNicosiaData/engd_data/"
