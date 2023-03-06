@@ -262,6 +262,14 @@ def prepare_all_data_for_match_no_match(mnm_path, original_path, dataset=None, d
 
         assert keypoints_no_db == keypoints_no_original_db
         assert keypoints_no_db == image.xys.shape[0]
+
+        # Leave code for reference
+        # keypoints_data = gt_db.execute("SELECT rows, cols, data FROM keypoints WHERE image_id = ?", (img_id,)).fetchone()
+        # rows_no = keypoints_data[0]
+        # cols_no = keypoints_data[1]
+        # keypoints_xy = COLMAPDatabase.blob_to_array(keypoints_data[2], np.float32).reshape(rows_no, cols_no)
+        # keypoints_xy and image.xys are the same at this point!
+
         for i in range(image.xys.shape[0]):  # can loop through descs or img_data.xys - same thing
             current_point3D_id = image.point3D_ids[i]
             if (current_point3D_id == -1):  # means feature is unmatched
@@ -306,5 +314,4 @@ if(dataset == "RetailShop"):
     # remove_folder_safe(base_path)
     original_path = f"/media/iNicosiaData/engd_data/retail_shop/slice1/"
     prepare_all_data_for_match_no_match(mnm_path, original_path, dataset, doing_lamar=False)
-
 

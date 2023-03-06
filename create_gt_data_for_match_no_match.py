@@ -1,4 +1,4 @@
-# Run this after format_data_for_match_no_match.py and get_points_3D_mean_desc_single_model_ml_mnm.py
+# Run this after format_data_for_match_no_match.py and get_points_3D_mean_desc_ml_mnm.py
 # and before create_training_data_and_train_for_match_no_match.py.
 # This file will create and define the GT to use later for testing once you have the trained model ready.
 

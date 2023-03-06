@@ -10,7 +10,7 @@
 # To summarise:
 # 1 - Run this file to generate the data for your sklearn model (.db) and the original tool rforest (.txt)
 # 2 - Run "train_for_predicting_matchability.py"
-# 3 - Run "test_models_on_3D_gt_data.py"
+# 3 - Run "learned_models_benchmarks.py"
 
 # NOTE 14/02/2023:
 # Removed the original tool as I got same results with python code.

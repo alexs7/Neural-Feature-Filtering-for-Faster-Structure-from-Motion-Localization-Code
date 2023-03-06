@@ -9,6 +9,7 @@ class Parameters(object):
         self.cmu_only_all_slices_aggregated_results_csv = os.path.join(self.results_path,"evaluation_results_2022_aggregated_all_slices.csv")
         self.avg_descs_base_path = os.path.join(base_path,"avg_descs_base.npy")
         self.avg_descs_live_path = os.path.join(base_path,"avg_descs_live.npy")
+        self.avg_descs_gt_path = os.path.join(base_path,"avg_descs_gt.npy")
 
         # This is for MnM (Match and No Match) and PM (Predicting Matchability)
         self.match_or_no_match_comparison_data = "models_for_match_no_match"  # also contains models
@@ -50,8 +51,8 @@ class Parameters(object):
         self.base_db_path = os.path.join(base_path,"base/database.db")
         self.gt_db_path = os.path.join(base_path,"gt/database.db")
 
-        # not the session ones!
-        self.query_images_path = os.path.join(base_path,"gt/query_name.txt")
+        self.live_query_images_path = os.path.join(base_path,"live/query_name.txt")
+        self.gt_query_images_path = os.path.join(base_path,"gt/query_name.txt")
 
         self.gt_model_cameras_path = os.path.join(base_path,"gt/model/cameras.bin")
 
@@ -66,11 +67,13 @@ class Parameters(object):
 
         # This is the scale you will have to multiply your COLMAP model's acquired camera centers distance with.
         # Pass this in pose evaluator, and it will be multiplied with the distance of the gt camera center and your estimated camera center
-        # from your COLMAP model. This is valid for ARCORE only
-        # 30/12/2022 - New path added
-        self.ARCORE_scale_path = os.path.join(base_path, "ML_data", "prepared_data", "scale.npy")
+        # from your COLMAP model. This is valid for ARCORE only and the Retail dataset.
+        # 08/03/2023 - New path added
+        self.ARCORE_scale_path = os.path.join(base_path, "scale.npy")
 
         self.debug_images_path = os.path.join(base_path, "debug_images")
         self.debug_images_base_path = os.path.join(base_path, "debug_images_base")
         self.debug_images_live_path = os.path.join(base_path, "debug_images_live")
         self.debug_images_gt_path = os.path.join(base_path, "debug_images_gt")
+        # use to save images for ML, predicted keypoints vs all keypoints
+        self.debug_images_ml_path = os.path.join(base_path, "ML_data", "debug_images")

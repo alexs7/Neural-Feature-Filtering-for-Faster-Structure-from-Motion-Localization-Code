@@ -331,6 +331,15 @@ def get_image_by_name(name, images):
             return image
     return image
 
+# This will return the localised images objects in a dict
+def get_localised_images(names, images_bin_path):
+    images = read_images_binary(images_bin_path)
+    localised_images = {}
+    for image in tqdm(images.values()):
+        if(image.name in names): #only return the localised image that are in the names list
+            localised_images[image.id] = image
+    return localised_images
+
 # maybe these shoudln't be here... anyway..
 def read_cameras_binary(path_to_model_file):
     cameras = {}
@@ -496,49 +505,6 @@ def get_image_name_only_with_extension(image_name):
 def is_image_base(img_name): #For CMU only
     return len(img_name.split("/")) == 1
 
-def get_image_data_mnm(db, points3D, images, img_id, img_file): #MnM code
-    breakpoint()
-    image = images[img_id] #only localised images
-    kp_db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
-    cols = kp_db_row[1]
-    rows = kp_db_row[0]
-    descs = get_queryDescriptors(db, img_id)
-
-    sift = cv2.SIFT_create() #just to verify that the descriptors number are the same from format_data_for_match_no_match.py
-    opencv_kps, opencv_descs = sift.detectAndCompute(img_file, None)
-
-
-
-    assert (image.xys.shape[0] == image.point3D_ids.shape[0] == rows == descs.shape[0] == len(opencv_descs))  # just for my sanity
-    # x, y, octave, angle, size, response
-    kps = COLMAPDatabase.blob_to_array(kp_db_row[2], np.float32)
-    kps = kps.reshape([rows, cols])
-    dominantOrientations = countDominantOrientations(kps)
-
-    matched_values = [] #for each keypoint (x,y)/desc same thing
-    green_intensities = [] #for each keypoint (x,y)/desc same thing
-
-    for i in range(image.xys.shape[0]):  # can loop through descs or img_data.xys - same thing
-        current_point3D_id = image.point3D_ids[i]
-        x = image.xys[i][0]
-        y = image.xys[i][1]
-        if (current_point3D_id == -1):  # means feature is unmatched
-            matched = 0
-            green_intensity = img_file[int(y), int(x)][1] # reverse indexing
-        else:
-            # this is to make sure that xy belong to the right pointd3D
-            assert i in points3D[current_point3D_id].point2D_idxs
-            matched = 1
-            green_intensity = img_file[int(y), int(x)][1] # reverse indexing
-        matched_values.append(matched)
-        green_intensities.append(green_intensity)
-
-    matched_values = np.array(matched_values).reshape(rows, 1)
-    green_intensities = np.array(green_intensities).reshape(rows, 1)
-
-    image_data = np.c_[kps, green_intensities, dominantOrientations, matched_values, descs]
-    return image_data
-
 def get_keypoints_data(db, img_id, image_file):
     # it is a row, with many keypoints (blob)
     kp_db_row = db.execute("SELECT rows, cols, data, dominantOrientations FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
@@ -564,6 +530,28 @@ def clear_folder(folder_path):
     os.makedirs(folder_path, exist_ok=True)
     pass
 
+def get_intrinsics(images, cameras_bin):
+    Ks = {}
+    for id, img_data in images.items():
+        camera = cameras_bin[img_data.camera_id]
+        camera_params = camera.params
+        K = None
+        if(camera_params.size == 3):
+            fx = camera_params[0]
+            fy = camera_params[0]
+            cx = camera_params[1]
+            cy = camera_params[2]
+            K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
+        if(camera_params.size == 4):
+            fx = camera_params[0]
+            fy = camera_params[1]
+            cx = camera_params[2]
+            cy = camera_params[3]
+            K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
+        assert(K is not None)
+        Ks[img_data.name] = K
+    return Ks
+
 # indexing is the same as points3D indexing for trainDescriptors - NOTE: This does not normalised the descriptors!
 def get_queryDescriptors(db, image_id):
     query_image_descriptors_data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
@@ -574,36 +562,41 @@ def get_queryDescriptors(db, image_id):
     queryDescriptors = query_image_descriptors_data.astype(np.float32)
     return queryDescriptors
 
-def match(queryDescriptors, trainDescriptors, keypoints_xy, points3D_xyz, ratio_test_val, k=2):
+def match(queryDescriptors, train_descriptors_ids, keypoints_xy, points3D_xyz_ids, ratio_test_val, k=2):
     matcher = cv2.BFMatcher()  # cv2.FlannBasedMatcher(Parameters.index_params, Parameters.search_params) # or cv.BFMatcher()
     # Matching on trainDescriptors (remember these are the means of the 3D points)
 
-    temp_matches = matcher.knnMatch(queryDescriptors, trainDescriptors, k=k)
+    train_descriptors = train_descriptors_ids[:, 0:128].astype(np.float32)
+    temp_matches = matcher.knnMatch(queryDescriptors, train_descriptors, k=k)
 
     # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
     # m the closest, n is the second closest
-    good_matches = []
+    good_matches = np.empty([0,7])
     for m, n in temp_matches:
+
+        if(m.distance == n.distance):
+            continue #just skip
+
         assert (m.distance <= n.distance)
         # trainIdx is from 0 to no of points 3D (since each point 3D has a desc), so you can use it as an index here
         if (m.distance < ratio_test_val * n.distance):  # and (score_m > score_n):
             if (m.queryIdx >= keypoints_xy.shape[0]):  # keypoints_xy.shape[0] always same as classifier_predictions.shape[0]
                 raise Exception("m.queryIdx error!")
-            if (m.trainIdx >= points3D_xyz.shape[0]):
+            if (m.trainIdx >= points3D_xyz_ids.shape[0]):
                 raise Exception("m.trainIdx error!")
             # idx1.append(m.queryIdx)
             # idx2.append(m.trainIdx)
-            scores = []
             xy2D = keypoints_xy[m.queryIdx, :].tolist()
-            xyz3D = points3D_xyz[m.trainIdx, :].tolist()
+            id3D = train_descriptors_ids[m.trainIdx, -1] # this is the id of the 3D point, that belongs to the matched train descriptor
+            xyz3D = points3D_xyz_ids[np.where(points3D_xyz_ids[:, -1] == id3D)][0][0:3].tolist()
 
-            match_data = [xy2D, xyz3D, [m.distance, n.distance], scores]
+            match_data = [xy2D, xyz3D, [m.distance, n.distance]]
             match_data = list(chain(*match_data))
-            good_matches.append(match_data)
+            good_matches = np.r_[good_matches, np.array(match_data).reshape([1,7])]
 
-    # sanity check
-    if (ratio_test_val == 1.0):
-        if (len(good_matches) != len(temp_matches)):
-            print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
+    # sanity check 09/03/2023 - don't need this anymore
+    # if (ratio_test_val == 1.0):
+    #     if (len(good_matches) != len(temp_matches)):
+    #         print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
 
     return good_matches

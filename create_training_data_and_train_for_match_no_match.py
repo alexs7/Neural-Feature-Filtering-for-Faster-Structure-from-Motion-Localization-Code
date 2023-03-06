@@ -1,4 +1,4 @@
-# Run this after format_data_for_match_no_match.py and get_points_3D_mean_desc_single_model_ml_mnm.py
+# Run this after format_data_for_match_no_match.py and get_points_3D_mean_desc_ml_mnm.py
 # You need the "all_images" folder for this script to work, from format_data_for_match_no_match.py.
 # The "all_images" folder is in each dataset folder.
 # This file will create the data for the original C++ tool, and deletes 'Training Data', and 'Training images' folders
@@ -9,9 +9,9 @@
 
 # To summarise:
 # 1 - Run format_data_for_match_no_match.py on CYENS machine, transfer data back to weatherwax
-# 2 - get_points_3D_mean_desc_single_model_ml_mnm.py, on weatherwax (not needed for this file)
+# 2 - get_points_3D_mean_desc_ml_mnm.py, on weatherwax (not needed for this file)
 # 3 - Run this file, create_training_data_and_train_for_match_no_match.py with some "pairs_limit" params
-# 4 - Look at test_models_on_3D_gt_data.py then and run that
+# 4 - Look at learned_models_benchmarks.py then and run that
 
 # NOTE: 20/02/2023: You can run file in parallel for each dataset, it will create a folder for each dataset under build/
 # NOTE: 03/03/2023: This file does not depend on format_data_for_match_no_match.py other than the "all_images" folder (which is created by format_data_for_match_no_match.py)
@@ -110,7 +110,8 @@ if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     createTrainingDataForMatchNoMatchMatchabilityComparison(mnm_path, original_live_db_path, images_path, mnm_base_source_code_dir, pairs_limit)
 
 if(dataset == "CMU"):
-    slices_names = ["slice20", "slice21", "slice22", "slice23", "slice24", "slice25"]
+    slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",
+                    "slice16", "slice17", "slice18", "slice19", "slice20", "slice21", "slice22", "slice23", "slice24", "slice25"]
     for slice_name in slices_names:
         mnm_path = os.path.join(root_path, "cmu", f"{slice_name}", "exmaps_data", "models_for_match_no_match")
         print("Base path: " + mnm_path)

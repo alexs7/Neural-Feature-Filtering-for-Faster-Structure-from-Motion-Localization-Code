@@ -37,6 +37,8 @@ import struct
 import argparse
 import time
 
+from tqdm import tqdm
+
 Point3D = collections.namedtuple(
     "Point3D", ["id", "xyz", "rgb", "error", "image_ids", "point2D_idxs"])
 
@@ -196,3 +198,13 @@ def index_dict_reverse(points3D):
         points3D_indexing[value.id] = point3D_index
         point3D_index = point3D_index + 1
     return points3D_indexing
+
+def get_points3D_xyz_id(points3D):
+    xyz_ids = np.zeros([len(points3D.items()),4])
+    p_idx = 0
+    for key, value in tqdm(points3D.items()):
+        xyz = value.xyz.reshape([1,3])
+        xyz_id = np.append(xyz, value.id)
+        xyz_ids[p_idx] = xyz_id
+        p_idx+=1
+    return xyz_ids

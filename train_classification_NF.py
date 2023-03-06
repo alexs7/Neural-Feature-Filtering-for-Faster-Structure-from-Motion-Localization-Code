@@ -1,7 +1,6 @@
 import datetime
 import os
 import numpy as np
-
 from custom_loss_nn import tweaked_loss
 from data import getClassificationData
 from data_generator import DataGenerator
@@ -19,6 +18,42 @@ else:
     print("No GPU found")
 
 def run(base_path):
+
+    ml_path = os.path.join(base_path, "ML_data") #folder should exist from create_ML_training_data.py
+    nn_save_path = os.path.join(ml_path, "classification_model") #to store the binary model
+    log_folder_name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    log_folder = os.path.join(ml_path, "tensorboard_logs", log_folder_name)
+
+    print(f"Tensorboard log folder: {log_folder}")
+
+    db_path = os.path.join(base_path, ml_path, "ml_database_all.db")
+    batch_size = 4096
+    epochs = 1000
+
+    callbacks = [TensorBoard(log_dir=log_folder, histogram_freq=1, write_graph=True, write_images=True, update_freq='epoch', profile_batch=2, embeddings_freq=1)]
+
+    print("Batch_size: " + str(batch_size))
+    print("Epochs: " + str(epochs))
+
+    print("Loading data..")
+    data = getClassificationData(db_path)
+
+    # split to val and train data
+    val_size = int(data.shape[0] * 30 / 100)
+    X_val = data[0:val_size,0:133]
+    y_val = data[0:val_size, 133].astype(np.float32)
+    X_train = data[val_size:, 0:133]
+    y_train = data[val_size:, 133].astype(np.float32)
+
+    training_gen_data = DataGenerator(X_train, y_train, batch_size)
+    validation_gen_data = DataGenerator(X_val, y_val, batch_size)
+
+    # Create model
+    print("Creating model")
+
+    print("List GPUs:")
+    print(tf.config.list_physical_devices('GPU'))
+
     metrics = [
         keras.metrics.TruePositives(name='tp'),
         keras.metrics.FalsePositives(name='fp'),
@@ -31,51 +66,21 @@ def run(base_path):
         keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
     ]
 
-    ml_path = os.path.join(base_path, "ML_data") #folder should exist from create_ML_training_data.py
-    nn_save_path = os.path.join(ml_path, "classification_model") #to store the binary model
-    log_folder_name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    log_folder = os.path.join(ml_path, "tensorboard_logs", log_folder_name)
-
-    print(f"Tensorboard log folder: {log_folder}")
-
-    db_path = os.path.join(base_path, ml_path, "ml_database_all.db")
-    batch_size = 4096
-    epochs = 250
-
-    callbacks = [TensorBoard(log_dir=log_folder, histogram_freq=1, write_graph=True, write_images=True, update_freq='epoch', profile_batch=2, embeddings_freq=1)]
-
-    print("Batch_size: " + str(batch_size))
-    print("Epochs: " + str(epochs))
-
-    print("Loading data..")
-    data = getClassificationData(db_path)
-
-    # Create model
-    print("Creating model")
     model = Sequential()
     # in keras the first layer is a hidden layer too, so input dims is OK here
     model.add(Dense(133, input_dim=133, activation='relu')) #Note: 'relu' here will be the same as 'linear' (default as all values are positive)
-    model.add(Dense(256, activation='relu'))
-    model.add(Dense(256, activation='relu'))
+    model.add(Dense(266, activation='relu'))
+    model.add(Dense(266, activation='relu'))
+    model.add(Dense(266, activation='relu'))
     model.add(Dense(133, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
     # Compile model
     opt = keras.optimizers.Adam(learning_rate=1e-4)
     model.compile(optimizer=opt, loss=tweaked_loss, metrics=metrics)
+
     model.summary()
 
     # NOTE: Before training you should use a baseline model
-
-    # split to val and train data
-    val_size = int(data.shape[0] * 30 / 100)
-    X_val = data[0:val_size,0:133]
-    y_val = data[0:val_size, 133].astype(np.float32)
-    X_train = data[val_size:, 0:133]
-    y_train = data[val_size:, 133].astype(np.float32)
-
-    training_gen_data = DataGenerator(X_train, y_train, batch_size)
-    validation_gen_data = DataGenerator(X_val, y_val, batch_size)
-
     model.fit(training_gen_data, validation_data=validation_gen_data, epochs=epochs, shuffle=True, verbose=1, callbacks=callbacks)
 
     # Save model here

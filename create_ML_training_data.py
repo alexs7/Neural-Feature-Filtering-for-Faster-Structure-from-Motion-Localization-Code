@@ -8,7 +8,6 @@ from parameters import Parameters
 from point3D_loader import read_points3d_default, index_dict_reverse
 from query_image import read_images_binary, get_image_decs
 
-# The ML part for my second publication starts from here:
 # Run this file for all datasets, CMU, Retail, LaMAR - binary classifier, visibility and per_image score regressors
 # General Notes: you are using conda tf env
 

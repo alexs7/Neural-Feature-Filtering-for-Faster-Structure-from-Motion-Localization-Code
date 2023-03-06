@@ -6,8 +6,7 @@ import numpy as np
 from tqdm import tqdm
 from database import COLMAPDatabase
 from point3D_loader import read_points3d_default
-from query_image import read_images_binary, get_image_id, get_image_decs, get_image_data_mnm, get_localised_image_by_names, get_queryDescriptors, \
-    countDominantOrientations
+from query_image import read_images_binary, get_image_decs, get_localised_image_by_names
 
 # Methods below fetch data for TRAINING
 
@@ -74,7 +73,7 @@ def getClassificationDataPM(db_path):
     ml_db = COLMAPDatabase.connect_ML_db(db_path)
 
     print(" Running the select query..")
-    data = ml_db.execute("SELECT sift, matched FROM data ORDER BY RANDOM()").fetchall()  # guarantees same order - maybe ?
+    data = ml_db.execute("SELECT sift, matched FROM data ORDER BY RANDOM()").fetchall()
 
     sift_vecs = (COLMAPDatabase.blob_to_array(row[0], np.uint8) for row in data)
     sift_vecs = np.array(list(sift_vecs))
@@ -86,141 +85,77 @@ def getClassificationDataPM(db_path):
 
     return sift_vecs, classes
 
-# Methods below fetch ground truth data for TESTING, binary classification models
+# Methods below fetch data used for TESTING, i.e. comparing to GT data
 
-def getClassificationDataTestingMnM(image_names, db_path, images_path, points3D, model_images):
-    db_gt_mnm = COLMAPDatabase.connect(db_path)
-    total_number_keypoints = db_gt_mnm.execute("SELECT SUM(rows) FROM keypoints").fetchone()[0]
-    # gt_data is the concatenated data of all images that will be used to generate binary classification model stats
-    # gt_image_data is the per image data that will be used to generate the image pose data
-    gt_data = np.empty([total_number_keypoints, 9])
-    k = 0
-    images_data = {}
-    for image_name in tqdm(image_names):
-        img_id = get_image_id(db_gt_mnm, image_name)
-        model_image = model_images[int(img_id)]
-        assert (model_image.name == image_name)
-        qt_image_file = cv2.imread(os.path.join(images_path, image_name))  # no need for cv2.COLOR_BGR2RGB here as G is in the middle anw
-        kp_db_row = db_gt_mnm.execute("SELECT rows, cols, data FROM keypoints WHERE image_id = " + "'" + str(img_id) + "'").fetchone()
-        cols = kp_db_row[1]
-        rows = kp_db_row[0]
-        kps = COLMAPDatabase.blob_to_array(kp_db_row[2], np.float32)
-        kps = kps.reshape([rows, cols])
-        descs = get_queryDescriptors(db_gt_mnm, img_id)
+def get_MnM_data(parameters):
+    # Not returning SIFT here are MnM paper does not use SIFT
+    gt_db_mnm = COLMAPDatabase.connect(parameters.gt_db_path_mnm)
+    gt_image_names = np.loadtxt(parameters.query_gt_images_txt_path_mnm, dtype=str)  # only gt images
+    localised_qt_images_names = get_localised_image_by_names(gt_image_names, parameters.gt_model_images_path_mnm)  # only gt images (localised only)
+    localised_gt_images_ids = gt_db_mnm.execute("SELECT image_id FROM images WHERE name IN ({})".format(",".join(["?"] * len(localised_qt_images_names))), localised_qt_images_names).fetchall()
+    localised_gt_images_ids = [x[0] for x in localised_gt_images_ids]
+    all_kps_data = gt_db_mnm.execute("SELECT rows, cols, data, octaves, angles, sizes, responses, greenIntensities, dominantOrientations, matched FROM keypoints WHERE image_id IN ({})".format(",".join(["?"] * len(localised_qt_images_names))), localised_gt_images_ids).fetchall()
 
-        sift = cv2.SIFT_create()  # just to verify that the descriptors number are the same from format_data_for_match_no_match.py
-        opencv_kps, opencv_descs = sift.detectAndCompute(qt_image_file, None)
+    # from C++ code, order of features is:
+    # features.at < float > (j, 0) = keypoints[j].pt.x;
+    # features.at < float > (j, 1) = keypoints[j].pt.y;
+    # features.at < float > (j, 2) = keypoints[j].octave;
+    # features.at < float > (j, 3) = keypoints[j].angle;
+    # features.at < float > (j, 4) = keypoints[j].size;
+    # features.at < float > (j, 5) = keypoints[j].response;
+    # features.at < float > (j, 6) = Green.at < double > (j, 0);
+    # features.at < float > (j, 7) = domOrientations.at < double > (j, 0);
 
-        # For some fucking reason the keypoints are not saved the order they are extracted in the db in
-        # format_data_for_match_no_match.py file. So I need to sort the DB data by x coordinate as done in OpenCV.
-        sift_data_db = np.c_[kps, descs]
-        sift_data_db_sorted = sift_data_db[sift_data_db[:, 0].argsort()]
-        dominantOrientations = countDominantOrientations(sift_data_db_sorted[:,0:2])
+    data = np.empty([0,9])
+    images_to_examine = 0
+    for row in tqdm(all_kps_data): #each row is a row of data for that image
+        rows_no = row[0]
+        cols_no = row[1]
+        kps_xy = COLMAPDatabase.blob_to_array(row[2], np.float32).reshape(rows_no, cols_no) #(x,y) shape (rows_no, 2)
+        octaves = COLMAPDatabase.blob_to_array(row[3], np.uint8).reshape(rows_no, 1) #octaves (rows_no, 1)
+        angles = COLMAPDatabase.blob_to_array(row[4], np.float32).reshape(rows_no, 1)
+        sizes = COLMAPDatabase.blob_to_array(row[5], np.float32).reshape(rows_no, 1)
+        responses = COLMAPDatabase.blob_to_array(row[6], np.float32).reshape(rows_no, 1)
+        greenIntensities = COLMAPDatabase.blob_to_array(row[7], np.uint8).reshape(rows_no, 1)
+        dominantOrientations = COLMAPDatabase.blob_to_array(row[8], np.uint8).reshape(rows_no, 1)
+        if(row[9] == 99 or COLMAPDatabase.blob_to_array(row[9], np.uint8).shape[0] == 0):
+            # At this point for various reasons I did not add matched data to the database
+            # for this specific localised image, so I will just skip it
+            # Check format_data_for_match_no_match.py for more info
+            # The second case happens when an image has keypoints but no image.xys for some reason (because of COLMAP most probably).
+            continue
+        images_to_examine += 1
+        matched = COLMAPDatabase.blob_to_array(row[9], np.uint8).reshape(rows_no, 1)
+        image_data = np.c_[kps_xy, octaves, angles, sizes, responses, greenIntensities, dominantOrientations, matched]
+        data = np.r_[data, image_data]
+    print(f"Total gt images to examine: {images_to_examine} / {len(localised_gt_images_ids)}")
+    return data
 
-        # now the model's xys need to be sorted too along with the point3D_ids
-        model_xys_point3D_id = np.c_[model_image.xys, model_image.point3D_ids]
-        model_xys_point3D_id_sorted = model_xys_point3D_id[model_xys_point3D_id[:, 0].argsort()]
+def get_default_data(parameters, image_path):
+    # return SIFT here (COLMAP's) as PM and my method NF, use SIFT
+    gt_db = COLMAPDatabase.connect(parameters.gt_db_path)
+    gt_model_images = read_images_binary(parameters.gt_model_images_path)
+    gt_points_3D = read_points3d_default(parameters.gt_model_points3D_path)
 
-        # at this point the db data and the model data, and opencv are sorted by x coordinate
-
-        # extreme sanity check
-        assert (model_image.xys.shape[0] == model_image.point3D_ids.shape[0] == rows == descs.shape[0] == len(opencv_descs) == len(dominantOrientations) == len(kps))
-
-        # Now I need the match values and green values for each keypoint
-        matched_values = []  # for each keypoint (x,y)/desc same thing
-        green_intensities = []  # for each keypoint (x,y)/desc same thing
-
-        for i in range(model_xys_point3D_id_sorted.shape[0]):
-            current_point3D_id = model_xys_point3D_id_sorted[i, 2]
-            x = model_xys_point3D_id_sorted[i, 0]
-            y = model_xys_point3D_id_sorted[i, 1]
-
-            if (current_point3D_id == -1):  # means feature is unmatched
-                matched = 0
-                green_intensity = qt_image_file[int(y), int(x)][1]  # reverse indexing
-            else:
-                # this is to make sure the current image is in the point3D's image_ids
-                # i.e the image is looking at the point3D
-                assert int(img_id) in points3D[current_point3D_id].image_ids
-                matched = 1
-                green_intensity = qt_image_file[int(y), int(x)][1]  # reverse indexing, BGR
-            matched_values.append(matched)
-            green_intensities.append(green_intensity)
-
-        matched_values = np.array(matched_values).reshape(rows, 1)
-        green_intensities = np.array(green_intensities).reshape(rows, 1)
-
-        # from C++ code, order of features is:
-        # features.at < float > (j, 0) = keypoints[j].pt.x;
-        # features.at < float > (j, 1) = keypoints[j].pt.y;
-        # features.at < float > (j, 2) = keypoints[j].octave;
-        # features.at < float > (j, 3) = keypoints[j].angle;
-        # features.at < float > (j, 4) = keypoints[j].size;
-        # features.at < float > (j, 5) = keypoints[j].response;
-        # features.at < float > (j, 6) = Green.at < double > (j, 0);
-        # features.at < float > (j, 7) = domOrientations.at < double > (j, 0);
-
-        # they all will have the same order as the above variables
-        octaves = [kp.octave for kp in opencv_kps]
-        angles = [kp.angle for kp in opencv_kps]
-        sizes = [kp.size for kp in opencv_kps]
-        responses = [kp.response for kp in opencv_kps]
-
-        image_data = np.c_[sift_data_db_sorted[:,0:2], octaves, angles, sizes, responses, green_intensities, dominantOrientations, matched_values]
-        images_data[image_name] = image_data
-
-        for i in range(len(image_data)): #as many keypoints as detected
-            sample = image_data[i, :]
-            x = sample[0]
-            y = sample[1]
-            octave = sample[2]
-            angle = sample[3]
-            size = sample[4]
-            response = sample[5]
-            green_intensity = sample[6]
-            dominantOrientation = sample[7]
-            matched = sample[8] #can use astype(np.int64) here
-            gt_data[k,:] = [x,y,octave,angle,size,response,green_intensity,dominantOrientation,matched]
-            k += 1
-
-    assert k == total_number_keypoints
-    return gt_data, images_data
-
-# This can work for both PM 2014 and NF (mine)
-def getClassificationDataTesting(base_path, image_path):
-    db_gt_path = os.path.join(base_path, "gt/database.db")
-    db_gt = COLMAPDatabase.connect(db_gt_path)
-    query_images_bin_path = os.path.join(base_path, "gt/model/images.bin")
-    gt_model_images = read_images_binary(query_images_bin_path)
-
-    query_gt_images_txt_path = os.path.join(base_path, "gt/query_name.txt") #only gt_images names
-    gt_image_names = np.loadtxt(query_gt_images_txt_path, dtype=str)
-    gt_points_3D = read_points3d_default(os.path.join(base_path, "gt/model/points3D.bin"))
-
-    print("Reading gt images .bin (localised)...")
-    localised_query_images_names = get_localised_image_by_names(gt_image_names, query_images_bin_path)  # only gt images (localised only)
-
-    print(f"Total number of gt localised images: {len(localised_query_images_names)}")
-
-    # The method below returns the total number of data points (keypoints/ descs whatever) for all gt images
-    # A data point is a SIFT + XY + RGB + ... + matched for a pixel in a gt image
-    # The reason I am calling this is to preallocate an array to store all the data
-    # Otherwise I would have to use a list and append to it, which is very inefficient
-    # The code in the method is very similar to the code below.
-    total_number_keypoints = get_total_number_of_valid_keypoints(localised_query_images_names, db_gt, gt_model_images, image_path, gt_points_3D)
+    gt_image_names = np.loadtxt(parameters.gt_query_images_path, dtype=str)  # only gt images
+    localised_qt_images_names = get_localised_image_by_names(gt_image_names, parameters.gt_model_images_path)  # only gt images (localised only)
+    localised_gt_images_ids = gt_db.execute("SELECT image_id FROM images WHERE name IN ({})".format(",".join(["?"] * len(localised_qt_images_names))), localised_qt_images_names).fetchall()
+    localised_gt_images_ids = [x[0] for x in localised_gt_images_ids]
+    print(f"Total number of gt localised images: {len(localised_qt_images_names)}")
+    total_keypoints_no = gt_db.execute("SELECT SUM(rows) FROM keypoints WHERE image_id IN ({})".format(",".join(["?"] * len(localised_gt_images_ids))), localised_gt_images_ids).fetchone()[0]
 
     # allocate array to store all test / gt data
-    gt_data = np.empty([total_number_keypoints, 134])
-    k=0
-    for image_name in tqdm(localised_query_images_names): #only loop through gt images that were localised from query_name.txt
-        img_id = get_image_id(db_gt, image_name)
+    # SIFT + XY + RGB = 134
+    gt_data = np.empty([total_keypoints_no, 134])
+    k = 0
+    for img_id in tqdm(localised_gt_images_ids):  # only loop through gt images that were localised from query_name.txt
+        descs = get_image_decs(gt_db, img_id)
         img_data = gt_model_images[int(img_id)]
-        assert (img_data.name == image_name)
+        # sanity checks
+        assert (img_data.id == img_id)
+        assert (img_data.xys.shape[0] == img_data.point3D_ids.shape[0] == descs.shape[0])
 
-        descs = get_image_decs(db_gt, img_id)
-        assert(img_data.xys.shape[0] == img_data.point3D_ids.shape[0] == descs.shape[0]) # just for my sanity
-
-        img_file = cv2.imread(os.path.join(image_path, img_data.name))
+        img_file = cv2.imread(os.path.join(image_path, img_data.name)) #at this point I am looking at gt images only
         for i in range(img_data.point3D_ids.shape[0]):  # can loop through descs or img_data.xys - same thing
             current_point3D_id = img_data.point3D_ids[i]
 
@@ -237,13 +172,13 @@ def getClassificationDataTesting(base_path, image_path):
             if (y >= img_file.shape[0] or x >= img_file.shape[1]):
                 continue
             brg = img_file[y, x]  # opencv conventions
+            # OpenCV uses BRG, not RGB
             blue = brg[0]
             green = brg[1]
             red = brg[2]
 
             # need to store in the same order as in the training data found in, getClassificationData()
             # SIFT + XY + RGB + Matched
-            gt_data[k, :] = np.append(desc,[xy[0], xy[1], blue, green, red, matched])
+            gt_data[k, :] = np.append(desc, [xy[0], xy[1], blue, green, red, matched])
             k += 1
-    assert k == total_number_keypoints
     return gt_data
