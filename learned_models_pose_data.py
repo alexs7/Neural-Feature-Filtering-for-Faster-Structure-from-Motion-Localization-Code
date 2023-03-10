@@ -78,7 +78,7 @@ def get_img_data(model_img, img_file, points_3D, descs):
 def get_image_statistics(matchable_xy_descs, train_descriptors_gt, points3D_xyz_ids,
                          Ks, model_img, descs,
                          scale=1, camera_type=None, height=None,
-                         width=None, train_descriptors_reference = None, points3D_xyz_ids_reference = None):
+                         width=None):
     # save feature reduction results
     percentage_reduction = 100 - (len(matchable_xy_descs) * 100 / len(descs))
 
@@ -87,26 +87,7 @@ def get_image_statistics(matchable_xy_descs, train_descriptors_gt, points3D_xyz_
     keypoints_xy = matchable_xy_descs[:, 0:2]
     ratio_test_val = 1.0
 
-    start = time.time()
-    matches = match(queryDescriptors, train_descriptors_gt, keypoints_xy, points3D_xyz_ids, ratio_test_val, k=2)
-    end = time.time()
-    fm_time = end - start
-
-    # To explain what is happening here:
-    # For MnM I had to create a gt model that is build upon OpenCV SIFT and not COLMAP SIFT.
-    # That gt model is only used to get the gt poses for MnM.
-    # It is not fair to the other methods and MnM to measure feature time in that model.
-    # So what I do I take the query descs of MnM which are the same size as the query descs of the other methods
-    # for each image, (check format_data_for_match_no_match.py) and I match them to the original COLMAP train descriptors
-    # I do not care about the matches in the latter case I just want to measure the feature time.
-    # The matches used for pose estimation will have to come of course from the MnM gt model as I need to match Opencv SIFT
-    # with OpenCV SIFT.
-    # Placing this code here as it will overwrite fm_time
-    if(train_descriptors_reference is not None and points3D_xyz_ids_reference is not None):
-        start = time.time()
-        _ = match(queryDescriptors, train_descriptors_reference, keypoints_xy, points3D_xyz_ids_reference, ratio_test_val, k=2)
-        end = time.time()
-        fm_time = end - start
+    matches, fm_time = match(queryDescriptors, train_descriptors_gt, keypoints_xy, points3D_xyz_ids, ratio_test_val, k=2)
 
     # get est pose at this point
     image_points = matches[:, 0:2]
@@ -165,7 +146,7 @@ def get_MnM_pose_data(parameters, localised_query_images_mnm, mnm_model,
 
     train_descriptors_gt = np.load(parameters.avg_descs_gt_path).astype(np.float32) # used later in get_image_statistics
     points3D_xyz_gt = read_points3d_default(parameters.gt_model_points3D_path) # used later in get_image_statistics
-    points3D_xyz_id_gt = get_points3D_xyz_id(points3D_xyz_gt) # used later in get_image_statistics
+    points3D_xyz_ids_gt = get_points3D_xyz_id(points3D_xyz_gt) # used later in get_image_statistics
 
     gt_db_mnm = COLMAPDatabase.connect(parameters.gt_db_path_mnm)
     total_fm_time = []  # feature matching time
@@ -184,7 +165,7 @@ def get_MnM_pose_data(parameters, localised_query_images_mnm, mnm_model,
         if (kps_data[9] == 99 or COLMAPDatabase.blob_to_array(kps_data[9], np.uint8).shape[0] == 0):
             # At this point for various reasons I did not add matched data to the database
             # for this specific localised image, so I will just skip it
-            # Check format_data_for_match_no_match.py for more info
+            # Check create_universal_models.py for more info
             # The second case happens when an image has keypoints but no image.xys for some reason (because of COLMAP most probably).
             print(f"Skipping image {model_img.name} ...")
             continue
@@ -214,13 +195,23 @@ def get_MnM_pose_data(parameters, localised_query_images_mnm, mnm_model,
                                    os.path.join(parameters.debug_images_ml_path, "mnm_"+model_img.name.replace("/", "_")))
 
         # data = {errors_rotation, errors_translation, total_fm_time, total_consencus_time, percentage_reduction_total, est_poses, gt_poses}
-        data = get_image_statistics(matchable_xy_descs, train_descriptors_gt_mnm, points3D_xyz_ids_mnm, Ks_mnm, model_img, descs, scale=scale, camera_type=camera_type, height=height, width=width, train_descriptors_reference=train_descriptors_gt, points3D_xyz_ids_reference=points3D_xyz_id_gt)
+        data = get_image_statistics(matchable_xy_descs, train_descriptors_gt_mnm, points3D_xyz_ids_mnm, Ks_mnm, model_img, descs, scale=scale, camera_type=camera_type, height=height, width=width)
+        data_original = get_image_statistics(matchable_xy_descs, train_descriptors_gt, points3D_xyz_ids_gt, Ks_mnm, model_img, descs, scale=scale, camera_type=camera_type, height=height, width=width)
+
+        # This is needed to keep comaprisons fair. The OpenCV model does not have the same number of 3D points
+        # as the COLMAP model, so the matching time will be different.
+        # I need the feature matching time to be calculated from the same number of 3D points to be fair.
+        # I pick the feature matching time from the model that has the most 3D points.
+        if(len(train_descriptors_gt) > len(train_descriptors_gt_mnm)):
+            fm_time = data_original["fm_time"]
+        else:
+            fm_time = data["fm_time"]
 
         if type(data) == str: #returned failed image name
             print(f"No results for image: {data}")
             degenerate_images.append(data)
         else:
-            total_fm_time.append(data["fm_time"])
+            total_fm_time.append(fm_time)
             total_consencus_time.append(data["consensus_time"])
             percentage_reduction_total.append(data["percentage_reduction"])
             errors_rotation.append(data["error_rotation"])
@@ -520,7 +511,7 @@ result_file_output_path = os.path.join(root_path, file_name)
 
 with open(result_file_output_path, 'w', encoding='UTF8') as f:
     writer = csv.writer(f)
-    pose_results_lamar(writer)
     pose_result_cmu(writer)
+    pose_results_lamar(writer)
     pose_results_retail_shop(writer)
 

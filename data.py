@@ -121,7 +121,7 @@ def get_MnM_data(parameters):
         if(row[9] == 99 or COLMAPDatabase.blob_to_array(row[9], np.uint8).shape[0] == 0):
             # At this point for various reasons I did not add matched data to the database
             # for this specific localised image, so I will just skip it
-            # Check format_data_for_match_no_match.py for more info
+            # Check create_universal_models.py for more info
             # The second case happens when an image has keypoints but no image.xys for some reason (because of COLMAP most probably).
             continue
         images_to_examine += 1

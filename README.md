@@ -6,7 +6,7 @@ The files themselves will contain comments on how to use them.
 
 #### To get data for Match and No Match, run the following commands:
 
-- format_data_for_match_no_match.py
+- create_universal_models.py
 - get_points_3D_mean_desc_ml_mnm.py
 - create_training_data_and_train_for_match_no_match.py
 

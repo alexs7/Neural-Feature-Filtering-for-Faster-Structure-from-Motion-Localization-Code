@@ -1,5 +1,4 @@
 import cv2
-import os
 
 def save_debug_image_simple_ml(image_gt_path, original_keypoints_xy, predicted_keypoints_xy, output_path):
     query_image_file = cv2.imread(image_gt_path)

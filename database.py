@@ -184,6 +184,9 @@ class COLMAPDatabase(sqlite3.Connection):
         self.execute("UPDATE keypoints SET cols = ? WHERE image_id = ?", (keypoints.shape[1], image_id))
         self.execute("UPDATE keypoints SET data = ? WHERE image_id = ?", (self.array_to_blob(keypoints), image_id))
 
+    def insert_matches(self, pair_id, rows, cols, matches):
+        self.execute("INSERT INTO matches(pair_id, rows, cols, data) VALUES(?, ?, ?, ?);", (pair_id, rows, cols, self.array_to_blob(matches)))
+
     def replace_descriptors(self, image_id, descriptors):
         descriptors = np.ascontiguousarray(descriptors, np.uint8)
         self.execute("UPDATE descriptors SET rows = ? WHERE image_id = ?", (descriptors.shape[0], image_id))

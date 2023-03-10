@@ -4,7 +4,7 @@
 # You must estimate the 3D avg descriptors for each point in the gt model, as you will be matching gt images in the gt model!
 # And comparing the poses accuracy with the gt poses.
 # You can also match in the live model but it makes more sense to match in the gt model.
-# Run this after format_data_for_match_no_match.py
+# Run this after create_universal_models.py
 
 import os
 import sys

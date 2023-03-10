@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import struct
 import collections
-
+import time
 from tqdm import tqdm
 
 from database import COLMAPDatabase
@@ -567,7 +567,10 @@ def match(queryDescriptors, train_descriptors_ids, keypoints_xy, points3D_xyz_id
     # Matching on trainDescriptors (remember these are the means of the 3D points)
 
     train_descriptors = train_descriptors_ids[:, 0:128].astype(np.float32)
+    start = time.time()
     temp_matches = matcher.knnMatch(queryDescriptors, train_descriptors, k=k)
+    end = time.time()
+    ftime = end - start
 
     # output: idx1, idx2, lowes_distance (vectors of corresponding indexes in
     # m the closest, n is the second closest
@@ -599,4 +602,4 @@ def match(queryDescriptors, train_descriptors_ids, keypoints_xy, points3D_xyz_id
     #     if (len(good_matches) != len(temp_matches)):
     #         print(" Matches not equal, len(good_matches)= " + str(len(good_matches)) + " len(temp_matches)= " + str(len(temp_matches)))
 
-    return good_matches
+    return good_matches, ftime
