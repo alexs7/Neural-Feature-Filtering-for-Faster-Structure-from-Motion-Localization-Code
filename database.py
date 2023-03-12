@@ -45,6 +45,31 @@ class COLMAPDatabase(sqlite3.Connection):
     # xyz -> np.float64, xy -> np.float64, score,pred_score -> as it is (I think you may be able to use np.float64/32)
     # sift -> np.uint8
     @staticmethod
+    def create_db_for_all_data_opencv(db_file):
+        sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
+        sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
+                                                image_id INTEGER NOT NULL,
+                                                name TEXT NOT NULL,
+                                                sift BLOB NOT NULL,
+                                                xyz BLOB NOT NULL,
+                                                xy BLOB NOT NULL,
+                                                blue INTEGER NOT NULL,
+                                                green INTEGER NOT NULL,
+                                                red INTEGER NOT NULL,
+                                                matched INTEGER NOT NULL
+                                            );"""
+        conn = None
+        try:
+            conn = sqlite3.connect(db_file)
+            conn.execute(sql_drop_table_if_exists)
+            conn.commit()
+            conn.execute(sql_create_data_table)
+            conn.commit()
+            return conn
+        except Error as e:
+            print(e)
+
+    @staticmethod
     def create_db_for_all_data(db_file):
         sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
         sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
@@ -176,6 +201,22 @@ class COLMAPDatabase(sqlite3.Connection):
         addColumn = "ALTER TABLE keypoints ADD COLUMN matched INTEGER DEFAULT 99"
         self.execute(addColumn)
 
+    def add_images_localised_column(self):
+        addColumn = "ALTER TABLE images ADD COLUMN localised INTEGER DEFAULT 0"
+        self.execute(addColumn)
+
+    def add_images_is_base_column(self):
+        addColumn = "ALTER TABLE images ADD COLUMN base INTEGER DEFAULT 0"
+        self.execute(addColumn)
+
+    def add_images_is_live_column(self):
+        addColumn = "ALTER TABLE images ADD COLUMN live INTEGER DEFAULT 0"
+        self.execute(addColumn)
+
+    def add_images_is_gt_column(self):
+        addColumn = "ALTER TABLE images ADD COLUMN gt INTEGER DEFAULT 0"
+        self.execute(addColumn)
+
     def replace_keypoints(self, image_id, keypoints):
         assert (len(keypoints.shape) == 2)
         assert (keypoints.shape[1] in [2, 4, 6])
@@ -220,6 +261,18 @@ class COLMAPDatabase(sqlite3.Connection):
     def update_matched_values(self, image_id, matched):
         matched = np.asarray(matched, np.uint8)
         self.execute("UPDATE keypoints SET matched = ? WHERE image_id = ?", (matched, image_id))
+
+    def update_images_localised_value(self, image_id, localised):
+        self.execute("UPDATE images SET localised = ? WHERE image_id = ?", (localised, image_id))
+
+    def update_images_is_base_value(self, img_name):
+        self.execute("UPDATE images SET base = ? WHERE name = ?", (1, img_name))
+
+    def update_images_is_live_value(self, img_name):
+        self.execute("UPDATE images SET live = ? WHERE name = ?", (1, img_name))
+
+    def update_images_is_gt_value(self, img_name):
+        self.execute("UPDATE images SET gt = ? WHERE name = ?", (1, img_name))
 
     def delete_all_matches(self):
         self.execute("DELETE FROM matches")

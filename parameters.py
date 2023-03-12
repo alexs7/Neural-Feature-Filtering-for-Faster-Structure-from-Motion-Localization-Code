@@ -3,6 +3,7 @@ import os
 class Parameters(object):
 
     def __init__(self, base_path):
+        self.base_path = base_path
         self.results_path = os.path.join(base_path,"results")
         self.degenerate_poses_path = os.path.join(self.results_path, "degenerate_poses.npy")
         self.aggregated_results_csv = os.path.join(self.results_path,"evaluation_results_2022_aggregated.csv")
@@ -15,11 +16,14 @@ class Parameters(object):
         self.match_or_no_match_comparison_data = "models_for_match_no_match"  # also contains models
         self.mnm_path = os.path.join(base_path, self.match_or_no_match_comparison_data)
         self.gt_db_path_mnm = os.path.join(self.mnm_path, "gt/database.db")
-        self.avg_descs_gt_path_mnm = os.path.join(self.mnm_path, "gt", "avg_descs_gt_mnm.npy")
+        self.avg_descs_gt_path_mnm = os.path.join(self.mnm_path, "gt", "avg_descs_gt_mnm.npy") #this is for colmap models
+        self.avg_descs_gt_path_opencv_mnm = os.path.join(self.mnm_path, "gt", "avg_descs_gt_opencv_mnm.npy") #this is for opencv models
         self.gt_model_points3D_path_mnm = os.path.join(self.mnm_path, "gt/output_opencv_sift_model/points3D.bin")
         self.gt_model_images_path_mnm = os.path.join(self.mnm_path, "gt/output_opencv_sift_model/images.bin")
         self.gt_model_cameras_path_mnm = os.path.join(self.mnm_path, "gt/output_opencv_sift_model/cameras.bin")
         self.query_gt_images_txt_path_mnm = os.path.join(self.mnm_path, "gt/query_name.txt")
+        self.query_gt_localised_images_txt_path_mnm = os.path.join(self.mnm_path, "localised_qt_images_names.txt") #this is outside the gt folder as it was added later
+        self.mnm_all_universal_images_path = os.path.join(self.mnm_path, "all_images")
         self.mnm_trained_model_path_mnm = os.path.join(self.mnm_path, "trained_model_pairs_no_8000.xml")
         self.predicting_matchability_comparison_data = "predicting_matchability_comparison_data"
 
@@ -77,3 +81,7 @@ class Parameters(object):
         self.debug_images_gt_path = os.path.join(base_path, "debug_images_gt")
         # use to save images for ML, predicted keypoints vs all keypoints
         self.debug_images_ml_path = os.path.join(base_path, "ML_data", "debug_images")
+        # specific to the model
+        self.debug_images_ml_path_mnm = os.path.join(base_path, "ML_data", "debug_images", "mnm")
+        self.debug_images_ml_path_nf = os.path.join(base_path, "ML_data", "debug_images", "nf")
+        self.debug_images_ml_path_pm = os.path.join(base_path, "ML_data", "debug_images", "pm")

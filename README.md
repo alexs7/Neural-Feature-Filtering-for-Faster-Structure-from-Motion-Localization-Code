@@ -17,8 +17,8 @@ The files themselves will contain comments on how to use them.
 
 #### To get data for Neural Filtering, run the following commands:
 
-- create_ML_training_data.py
-- train_classification_NF.py
+- create_nf_training_data.py
+- train_for_nf.py
 
 #### Benchmarking the models:
 

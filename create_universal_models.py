@@ -6,6 +6,7 @@
 # You will need to run this on the CYENS machine as it has pycolmap and colmap installed - because of docker I can't run them on Bath Uni
 # This file will use the image pairs from ExMaps models to avoid using vocabulary tree for image retrieval.
 # The SIFT matching still happens here (in the custom_matcher).
+# Don't forget to run get_points_3D_mean_desc_ml_mnm.py after this file to get the avg of the 3D desc of a point same order as in points3D
 
 import os
 import random
@@ -109,21 +110,20 @@ def prepare_all_data_for_match_no_match(mnm_path, original_path, dataset=None, d
         raise Exception("nfeatures must be set to a value")
     # MnM model paths
     model_gt_path = os.path.join(mnm_path, "gt")
-    # MnM database paths
-    qt_db_path = os.path.join(model_gt_path, 'database.db')
 
     # remove old models and their data
-    print(f"Removing old MnM models and their data, i.e. {mnm_path}..")
-    remove_folder_safe(mnm_path)
+    print(f"Removing previous MnM gt data folder, i.e. {model_gt_path}..")
+    remove_folder_safe(model_gt_path)
 
     # NOTE 13/02/2023:
     # Since I am running this on CYENS now I will copy base to the folder "base_path"
     # only need the gt model here
     print(f"Copying gt..")
     shutil.copytree(os.path.join(original_path, "gt"), model_gt_path, dirs_exist_ok=True)
-    # I will need the original database for getting the number of keypoints
-    qt_db_original_path = os.path.join(original_path, "gt", 'database.db')
-    gt_db_original = COLMAPDatabase.connect(qt_db_original_path)
+
+    # MnM database paths
+    qt_db_path = os.path.join(model_gt_path, 'database.db')
+    gt_db = COLMAPDatabase.connect(qt_db_path)  # MnM database can modify it
 
     # use original path here as that is where the original images are
     if(doing_lamar == True):
@@ -161,9 +161,8 @@ def prepare_all_data_for_match_no_match(mnm_path, original_path, dataset=None, d
     empty_points_3D_txt_file(points_3D_file_txt_path)  # as in COLMAP's faq
     arrange_images_txt_file(images_file_txt_path)  # as in COLMAP's faq
 
-    gt_db = COLMAPDatabase.connect(qt_db_path) #MnM database can modify it
-
     # when running for the first time it is OK to add columns
+    print("Adding columns to database..")
     gt_db.add_octaves_column()
     gt_db.add_angles_column()
     gt_db.add_sizes_column()
@@ -171,6 +170,11 @@ def prepare_all_data_for_match_no_match(mnm_path, original_path, dataset=None, d
     gt_db.add_green_intensities_column()
     gt_db.add_dominant_orientations_column()
     gt_db.add_matched_column()
+    gt_db.add_images_localised_column()
+    gt_db.add_images_is_base_column()
+    gt_db.add_images_is_live_column()
+    gt_db.add_images_is_gt_column()
+    gt_db.commit()
 
     image_names = get_all_images_names_from_db(gt_db)  # base + live + gt
 
@@ -180,15 +184,19 @@ def prepare_all_data_for_match_no_match(mnm_path, original_path, dataset=None, d
         if os.path.exists(os.path.join(images_base_path, image_name)):
             image_file_path = os.path.join(images_base_path, image_name)
             copy_image_to_all_images_folder(image_file_path, all_images_path, image_name)
+            gt_db.update_images_is_base_value(image_name)
         # live image
         if os.path.exists(os.path.join(images_live_path, image_name)):
             image_file_path = os.path.join(images_live_path, image_name)
             copy_image_to_all_images_folder(image_file_path, all_images_path, image_name)
+            gt_db.update_images_is_live_value(image_name)
         # gt image
         if os.path.exists(os.path.join(images_gt_path, image_name)):
             image_file_path = os.path.join(images_gt_path, image_name)
             copy_image_to_all_images_folder(image_file_path, all_images_path, image_name)
+            gt_db.update_images_is_gt_value(image_name)
 
+    gt_db.commit()
     print("At this point you can start training the C++ MnM RF model..")
 
     print("Extracting features from images and inserting in db (gt)..")
@@ -221,8 +229,8 @@ def prepare_all_data_for_match_no_match(mnm_path, original_path, dataset=None, d
             print("No descriptors for image (None): " + image_name)
             continue
 
-        if(des.shape[0] == 0):
-            # because sometimes it returns an empty array
+        if(des.shape[0] == 0 or des.shape[0] == 1):
+            # because sometimes it returns an empty array or only 1 which is not enough for matching later on (k=2)
             # insert zero no of keypoints and descriptors
             gt_db.replace_keypoints(image_id, np.zeros([0, 2]))
             gt_db.replace_descriptors(image_id, np.zeros([0, 128]))
@@ -281,71 +289,104 @@ def prepare_all_data_for_match_no_match(mnm_path, original_path, dataset=None, d
     gt_db.delete_all_matches()
 
     print("Doing my own feature matching..")  # for custom matcher too
+    pairs_with_matches = {}
     for pair_id in tqdm(all_pairs):
         pair_id = pair_id[0]
         img_1_id, img_2_id = pair_id_to_image_ids(pair_id)
+        # names kept but not used
         img_1_name = get_full_image_name_from_db_with_id(gt_db, img_1_id)
         img_2_name = get_full_image_name_from_db_with_id(gt_db, img_2_id)
         # note the -1 at the end, because the last element of the list is the descriptors
         img_1_descs = get_descriptors(gt_db, str(img_1_id))[-1]
         img_2_descs = get_descriptors(gt_db, str(img_2_id))[-1]
+        if(img_1_descs.shape[0] == 0 or img_2_descs.shape[0] == 0):
+            print("No descriptors for one of the images in pair: " + str(pair_id))
+            continue #skip this pair as there are not descs for one of the images
         img_1_descs = sklearn.preprocessing.normalize(img_1_descs, norm='l2')  # as suggested in https://github.com/colmap/colmap/issues/578
         img_2_descs = sklearn.preprocessing.normalize(img_2_descs, norm='l2')
         descriptors1 = torch.from_numpy(img_1_descs).to(device)
         descriptors2 = torch.from_numpy(img_2_descs).to(device)
         matches = mutual_nn_ratio_matcher(descriptors1, descriptors2).astype(np.uint32)
         if img_1_id > img_2_id:
-            breakpoint()
             matches = matches[:, [1, 0]]
-        gt_db.insert_matches(pair_id, matches.shape[0], matches.shape[1], matches)
+        pairs_with_matches[pair_id] = matches
+        # gt_db.insert_matches(pair_id, matches.shape[0], matches.shape[1], matches) #uncomment if you use "pairs" in custom_matcher, do not use if you use "raw"
 
     gt_db.delete_all_two_view_geometries()
     gt_db.commit()
 
+    print("Writing pairs /w matches to .txt file..")  # for custom matcher
+    pairs_with_matches_txt_path = os.path.join(model_gt_path, 'pairs_with_matches.txt')
+    # at this point gt_db has the same matches as gt_db_original
+    f = open(pairs_with_matches_txt_path, 'a')
+    for pair_id, pair_matches in tqdm(pairs_with_matches.items()):
+        img_1_id, img_2_id = pair_id_to_image_ids(pair_id)
+        img_1_name = get_full_image_name_from_db_with_id(gt_db, img_1_id)
+        img_2_name = get_full_image_name_from_db_with_id(gt_db, img_2_id)
+        pair = [f"{img_1_name} {img_2_name}"]
+
+        np.savetxt(f, pair, fmt="%s")
+        np.savetxt(f, pair_matches, fmt="%d")
+        f.write("\n")
+    f.close()
+
     print("Geometry verification..")
-    colmap.custom_matcher(qt_db_path, pairs_txt_path, match_type = "pairs") #this will not run matching again if you have matches in the db I checked and compared values
+    # This is the old one that uses only pairs and does the matching again
+
+    # NOTE: You can insert your own matches and run custom_matcher with "pairs" - not recommended
+    # The proper way since you are doing the matching is to use "raw" and use pairs_with_matches_txt_path
+    # The code in this file will do the latter, although I generated the data using the first method.
+    # I compared the matched and two_view_geometries table and points cloud and they are the almost identical.
+
+    # colmap.custom_matcher(qt_db_path, pairs_txt_path, match_type = "pairs")
+    colmap.custom_matcher(qt_db_path, pairs_with_matches_txt_path, match_type = "raw") #this will not run matching again
 
     opencv_sift_gt_model_path = os.path.join(model_gt_path, 'output_opencv_sift_model')
     # Triangulate points, and load images from all_images_path so it is easier with different images' name
     colmap.point_triangulator(qt_db_path, all_images_path, manually_created_model_txt_path, opencv_sift_gt_model_path)
 
-    # get gt localised images number
-    query_gt_images_txt_path = os.path.join(model_gt_path, "query_name.txt")
-    gt_image_names = np.loadtxt(query_gt_images_txt_path, dtype=str)  # only gt images
-    localised_qt_images_names = get_localised_image_by_names(gt_image_names, os.path.join(opencv_sift_gt_model_path, "images.bin"))  # only gt images (localised only)
-    print(f"Total number of gt localised images: {len(localised_qt_images_names)}")
-    print(f"Total number of gt (query) images (.txt): {len(gt_image_names)}")
-
-    np.savetxt(os.path.join(mnm_path, "localised_qt_images_names.txt"), localised_qt_images_names, fmt="%s")
-
     print("Inserting matched values to gt db, from localised images..")
     gt_images = read_images_binary(os.path.join(opencv_sift_gt_model_path, "images.bin"))
+    gt_images_names = [image.name for id, image in gt_images.items()] #localised
+    print("Loading 3D points..")
     gt_points3D = read_points3D_binary(os.path.join(opencv_sift_gt_model_path, "points3D.bin"))
-    for image_name in tqdm(localised_qt_images_names):
-        matched_values = []
+    # Note: all localised_qt_images_names will have matched values, i.e.  0 or 1 for each keypoint but not 99 for all keypoints (default value)
+
+    for image_name in tqdm(image_names):
         img_id = int(get_image_id(gt_db, image_name))
-        image = gt_images[img_id]
         keypoints_no_db = gt_db.execute("SELECT rows FROM keypoints WHERE image_id = ?", (img_id,)).fetchone()[0]
-        assert keypoints_no_db == image.xys.shape[0]
+        matched_values = []
 
-        # Leave code for reference
-        # keypoints_data = gt_db.execute("SELECT rows, cols, data FROM keypoints WHERE image_id = ?", (img_id,)).fetchone()
-        # rows_no = keypoints_data[0]
-        # cols_no = keypoints_data[1]
-        # keypoints_xy = COLMAPDatabase.blob_to_array(keypoints_data[2], np.float32).reshape(rows_no, cols_no)
-        # keypoints_xy and image.xys are the same at this point!
+        if(image_name not in gt_images_names):
+            for i in range(keypoints_no_db):
+                matched_values.append(0)
+            gt_db.update_matched_values(img_id, matched_values)
+            continue #then it is not localised value will be 0 by default, matches will be [0,0,0,...] as well
 
-        for i in range(image.xys.shape[0]):  # can loop through descs or img_data.xys or db kps - same thing
-            current_point3D_id = image.point3D_ids[i]
-            if (current_point3D_id == -1):  # means feature is unmatched
-                matched = 0
-            else:
-                # this is to make sure that xy belong to the right pointd3D
-                assert i in gt_points3D[current_point3D_id].point2D_idxs
-                matched = 1
-            matched_values.append(matched)
-        gt_db.update_matched_values(img_id, matched_values)
+        image = gt_images[img_id]
+        gt_db.update_images_localised_value(img_id, 1) #set image to localised in db, easier to find later
+        db_name = gt_db.execute("SELECT name FROM images WHERE image_id = ?", (img_id,)).fetchone()[0]
+        # sanity checks
+        assert db_name == image_name
 
+        if(image.xys.shape[0] == 0): #for the rare case that image has no triangulated points but keypoints in db
+            for i in range(keypoints_no_db):
+                matched_values.append(0)
+            gt_db.update_matched_values(img_id, matched_values)
+        else:
+            for i in range(image.xys.shape[0]):
+                assert keypoints_no_db == image.xys.shape[0] #sanity check
+                current_point3D_id = image.point3D_ids[i]
+                if (current_point3D_id == -1):  # means feature is unmatched
+                    matched = 0
+                else:
+                    # this is to make sure that xy belong to the right pointd3D
+                    assert i in gt_points3D[current_point3D_id].point2D_idxs
+                    matched = 1
+                matched_values.append(matched)
+            gt_db.update_matched_values(img_id, matched_values)
+
+    # at this point no image should have a value of 99 in the matched column in the keypoints table
     gt_db.commit()
     print('Done!')
 
@@ -365,7 +406,7 @@ if(dataset == "CMU"):
     if(len(sys.argv) > 3):
         slices_names = [sys.argv[3]]
     else: # do all slices
-        slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",
+        slices_names = ["slice14", "slice15",
                         "slice16", "slice17", "slice18", "slice19", "slice20", "slice21", "slice22", "slice23", "slice24", "slice25"]
     for slice_name in slices_names:
         # overwrite paths

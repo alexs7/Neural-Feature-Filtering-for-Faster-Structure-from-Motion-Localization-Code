@@ -117,7 +117,10 @@ void Matching::matchStereoPair(const cv::Mat & source, const cv::Mat & target, c
 	}
 
     if(RANSAC_matches.size() < 10){ // Alex 03/03/2023 - otherwise code breaks
-        std::cout << "  RANSAC_matches.size() < 10 - skipping" << std::endl;
+        inliers = cv::Mat();
+        if(inliers.empty() == true){
+            std::cout << "  RANSAC_matches.size() < 10 - skipping, set inliers to empty" << std::endl;
+        }
         return;
     }
 

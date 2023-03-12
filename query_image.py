@@ -481,7 +481,7 @@ def get_image_decs(db, image_id): #not to be confused with get_queryDescriptors(
 
 # This was updated - 13/10/2022, was named 'get_queryDescriptors'
 def get_descriptors(db, image_id):
-    db_row = db.execute("SELECT rows, cols, data FROM descriptors WHERE image_id = " + "'" + image_id + "'")
+    db_row = db.execute("SELECT rows, cols, data FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
     db_row = db_row.fetchone()
     if(db_row == None):
         return None
@@ -490,6 +490,20 @@ def get_descriptors(db, image_id):
     descs = db_row[2]
     descs = db.blob_to_array(descs, np.uint8).reshape(rows, cols)
     return rows, cols, descs
+
+def get_kps_data(db, image_id):
+    db_row = db.execute("SELECT rows, cols, data, octaves, angles, sizes, responses, greenIntensities, dominantOrientations, matched FROM keypoints WHERE image_id = ?", (image_id,)).fetchone()
+    rows_no = db_row[0]
+    cols_no = db_row[1]
+    kps_xy = COLMAPDatabase.blob_to_array(db_row[2], np.float32).reshape(rows_no, cols_no)  # (x,y) shape (rows_no, 2)
+    octaves = COLMAPDatabase.blob_to_array(db_row[3], np.uint8).reshape(rows_no, 1)  # octaves (rows_no, 1)
+    angles = COLMAPDatabase.blob_to_array(db_row[4], np.float32).reshape(rows_no, 1)
+    sizes = COLMAPDatabase.blob_to_array(db_row[5], np.float32).reshape(rows_no, 1)
+    responses = COLMAPDatabase.blob_to_array(db_row[6], np.float32).reshape(rows_no, 1)
+    greenIntensities = COLMAPDatabase.blob_to_array(db_row[7], np.uint8).reshape(rows_no, 1)
+    dominantOrientations = COLMAPDatabase.blob_to_array(db_row[8], np.uint8).reshape(rows_no, 1)
+    matched = COLMAPDatabase.blob_to_array(db_row[9], np.uint8).reshape(rows_no, 1)
+    return rows_no, cols_no, kps_xy, octaves, angles, sizes, responses, greenIntensities, dominantOrientations, matched
 
 def get_image_name_only(image_name):
     image_name = image_name.split("/")

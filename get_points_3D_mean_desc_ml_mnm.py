@@ -1,6 +1,6 @@
 # Run this to get the avg of the 3D desc of a point same order as in points3D
 # This file should only be used for the MnM at this part of your phD.
-# This is because you create OpenCV SIFT models, for MnM. You can not use the previous average desc file for PM.
+# This is because you create OpenCV SIFT models, for MnM. You can not use the previous average desc file for PM or NF.
 # You must estimate the 3D avg descriptors for each point in the gt model, as you will be matching gt images in the gt model!
 # And comparing the poses accuracy with the gt poses.
 # You can also match in the live model but it makes more sense to match in the gt model.
@@ -14,13 +14,22 @@ from database import COLMAPDatabase
 from parameters import Parameters
 from point3D_loader import read_points3d_default
 
-def get_desc_avg(path):
+def get_desc_avg(path, use_opencv_sift_models):
     SIZE = 129  # (SIFT + point_id)
     parameters = Parameters(path)
-    print(f"Loading db from {parameters.gt_db_path_mnm}...") #MnM gt db
-    db = COLMAPDatabase.connect(parameters.gt_db_path_mnm)
-    points3D = read_points3d_default(parameters.gt_model_points3D_path_mnm)
+    if use_opencv_sift_models:
+        db = COLMAPDatabase.connect(parameters.gt_db_path_mnm)
+        points3D = read_points3d_default(parameters.gt_model_points3D_path_mnm)
+        save_path = parameters.avg_descs_gt_path_opencv_mnm
+        print("Using OpenCV SIFT models..")
+    else:
+        db = COLMAPDatabase.connect(parameters.gt_db_path_mnm)
+        points3D = read_points3d_default(parameters.gt_model_points3D_path_mnm)
+        save_path = parameters.avg_descs_gt_path_mnm
+
+    print(f"Loading db from {parameters.gt_db_path_mnm}...")  # MnM gt db
     print(f"Loading points from {parameters.gt_model_points3D_path_mnm}...")
+    print(f"Saving avg descs to {save_path}...")
     points_mean_descs_ids = np.empty([len(points3D.keys()), SIZE])
 
     point3D_vm_col_idx = 0
@@ -45,28 +54,30 @@ def get_desc_avg(path):
         mean = points3D_descs.mean(axis=0)
         points_mean_descs_ids[point3D_vm_col_idx] = np.append(mean, point_id).reshape(1, SIZE)
         point3D_vm_col_idx += 1
-    np.save(parameters.avg_descs_gt_path_mnm, points_mean_descs_ids)
+    np.save(save_path, points_mean_descs_ids)
     pass
 
 root_path = "/media/iNicosiaData/engd_data/"
 dataset = sys.argv[1] #HGE, CAB, LIN (or Other for CMU, retail shop)
+use_opencv_sift_models = (sys.argv[2] == '1')
+
 print("Getting gt avg descs (Only these needed for the ML (MnM) part)")
 
 if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     path = os.path.join(root_path, f"lamar/{dataset}_colmap_model/")
-    get_desc_avg(path)
+    get_desc_avg(path, use_opencv_sift_models)
 
 if(dataset == "CMU"):
-    if(len(sys.argv) > 2):
-        slices_names = [sys.argv[2]]
+    if(len(sys.argv) > 3):
+        slices_names = [sys.argv[3]]
     else: # do all slices
         slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",
                         "slice16", "slice17", "slice18", "slice19", "slice20", "slice21", "slice22", "slice23", "slice24", "slice25"]
     for slice_name in slices_names:
         # overwrite paths
         path = os.path.join(root_path, f"cmu/{slice_name}/exmaps_data/")
-        get_desc_avg(path)
+        get_desc_avg(path, use_opencv_sift_models)
 
 if(dataset == "RetailShop"):
     path = os.path.join(root_path, f"retail_shop/slice1/")
-    get_desc_avg(path)
+    get_desc_avg(path, use_opencv_sift_models)

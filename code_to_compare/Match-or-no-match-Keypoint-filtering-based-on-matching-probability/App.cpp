@@ -87,6 +87,9 @@ void App::getTrainedData(const cv::String & TrainingImagesDirectory, const int f
 		matching.detectAndDescribe(imgSrc, imgSrcKps, imgSrcDesc, cv::String("Keypoints in source image"));
 		matching.detectAndDescribe(imgTar, imgTarKps, imgTarDesc, cv::String("Keypoints in target image"));
 
+        std::cout << "No. SIFT keypoints in image 1 " << imgSrcKps.size() << std::endl;
+        std::cout << "No. SIFT keypoints in image 2 " << imgTarKps.size() << std::endl;
+
 		// Apply pairwise matching to obtain reliable matches
 		cv::Mat inlierMatches;
 		std::vector<cv::DMatch> matches, initialMatches;
@@ -167,19 +170,25 @@ void App::getTrainedData(const cv::String & TrainingImagesDirectory, const int f
 		// Shuffle data
 		cv::Mat shuffledData0 = shuffle(Data0);
 		cv::Mat balancedData0;
-		// Alex (Me) 19/11/2022 - this will fail if shuffledData0 < balancedData1 (when you have more positive examples than negative)
-		// so I added an if condition
-		if(balancedData1.rows <= shuffledData0.rows){
+
+        //Alex 12/03/2023, this will only work if there are more negative (0) than positive (1) matches
+        // So if there are more positive matches than negative matches, the positive matches will be reduced to the amount of negative matches
+        // and balancedData0 will be the same as shuffledData0
+		if(shuffledData0.rows > balancedData1.rows){
             for (int y = 0; y < balancedData1.rows; y++) {
                 balancedData0.push_back(shuffledData0.row(y));
             }
-		}else{ // Alex (Me) 19/11/2022 - loop though the shuffledData0, which size is less than balancedData1
-            cv::Mat shuffledData1 = shuffle(balancedData1); // balancedData1 is larger than Data0
-            cv::Mat balancedData1;
-		    for (int y = 0; y < Data0.rows; y++) {
-                balancedData1.push_back(shuffledData1.row(y));
+        }else{
+            cv::Mat balancedData1_temp;
+            for (int y = 0; y < shuffledData0.rows; y++) {
+                balancedData1_temp.push_back(balancedData1.row(y));
             }
-		}
+            balancedData1 = balancedData1_temp;
+            balancedData0 = shuffledData0;
+        }
+
+        std::cout << "balancedData 0 rows " << balancedData0.rows << std::endl;
+        std::cout << "balancedData 1 rows " << balancedData1.rows << std::endl;
 
 		// Store tha balanced (Training data) data in a CSV file.
 		cv::Mat balanced;
@@ -188,8 +197,8 @@ void App::getTrainedData(const cv::String & TrainingImagesDirectory, const int f
 		filedeal.writeCSV(CSVfiledataBal, balanced);
 
 		// Print some information regarding the dimentions of the obtained data
-		std::cout << "Ground truth data are of dimentions " << featAndLabForCSV.rows << " x " << featAndLabForCSV.cols << std::endl;
-		std::cout << "Training data (balanced) are of dimentions " << balanced.rows << " x " << balanced.cols << std::endl;
+		std::cout << "Ground truth data are of dimensions " << featAndLabForCSV.rows << " x " << featAndLabForCSV.cols << std::endl;
+		std::cout << "Training data (balanced) are of dimensions " << balanced.rows << " x " << balanced.cols << std::endl;
 
 		// increase i for correct selection of image pairs
 		i = i + 1;

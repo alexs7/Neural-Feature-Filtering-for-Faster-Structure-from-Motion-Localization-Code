@@ -180,14 +180,35 @@ def gen_training_data(pair_ids, max_neighbours, max_pairs, db_live):
     assert i == all_descs.shape[0]
     return all_descs
 
-def createDataForPredictingMatchabilityComparison(db_live_path, db_PM_path, max_pairs, max_neighbours=13):
-    file_identifier = f"{max_pairs}_samples"
-    training_data_db_path = os.path.join(db_PM_path, f"training_data_{file_identifier}.db")
-    print(f"Creating training data db at {training_data_db_path}.. (will drop table if exists)")
-    training_data_db = COLMAPDatabase.create_db_predicting_matchability_data(training_data_db_path)
+def createDataForPredictingMatchabilityComparison(db_live_path, db_PM_path, max_pairs, max_neighbours=13, openCV_db_path=None):
     db_live = COLMAPDatabase.connect(db_live_path)
     print("Selecting pair_ids..")
-    pair_ids = db_live.execute("SELECT pair_id FROM two_view_geometries WHERE rows != 0 ORDER BY rows DESC").fetchall()
+    pair_ids = db_live.execute("SELECT pair_id FROM two_view_geometries WHERE rows > 0 ORDER BY rows DESC").fetchall()
+
+    if(openCV_db_path is not None): #if this is false then it will just use pairs from the COLMAP db
+        print("Using pairs from openCV db..")
+        openCV_db = COLMAPDatabase.connect(openCV_db_path)
+
+        # The pairs in the openCV gt db are less than the ones in the original gt db, this is because in create_universal_models.py, I pick pairs that only have
+        # rows >0 from the gt db.
+        # Now to make training fair I need to train on live data only, so I pick the live pairs from the openCV gt db.
+        # The pairs in the openCV db are the same as in the original gt db image. Pair 12345 for example is the same in opencv gt and original live/gt db
+        # This is because the opencv model was constructed from the original gt db
+
+        # Choosing the pairs from the opencv gt db that are only in the live db, to avoid gt pairs in the training data
+        pair_ids_opencv = openCV_db.execute("SELECT pair_id FROM two_view_geometries WHERE rows > 0 AND pair_id IN ({})".format(",".join(["?"] * len(pair_ids))), list(pair_id[0] for pair_id in pair_ids)).fetchall()
+        pair_ids = pair_ids_opencv
+
+        file_identifier = f"{max_pairs}_samples_opencv"
+        training_data_db_path = os.path.join(db_PM_path, f"training_data_{file_identifier}.db")
+        print(f"Creating training data db at {training_data_db_path}.. (will drop table if exists)")
+        training_data_db = COLMAPDatabase.create_db_predicting_matchability_data(training_data_db_path)
+    else:
+        print("Using pairs from COLMAP db..")
+        file_identifier = f"{max_pairs}_samples"
+        training_data_db_path = os.path.join(db_PM_path, f"training_data_{file_identifier}.db")
+        print(f"Creating training data db at {training_data_db_path}.. (will drop table if exists)")
+        training_data_db = COLMAPDatabase.create_db_predicting_matchability_data(training_data_db_path)
 
     training_data_db.execute("BEGIN")
     training_descs = gen_training_data(pair_ids, max_neighbours, max_pairs, db_live)
@@ -216,6 +237,10 @@ def createDataForPredictingMatchabilityComparison(db_live_path, db_PM_path, max_
 root_path = "/media/iNicosiaData/engd_data/"
 dataset = sys.argv[1] #HGE, CAB, LIN (or Other for CMU, retail shop)
 max_pairs = int(sys.argv[2]) # more sample images to get "neighbours" from
+use_opencv_sift_models = (sys.argv[3] == '1')
+
+if(use_opencv_sift_models):
+    print("Using OpenCV SIFT models")
 
 if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     base_path = os.path.join(root_path, "lamar", f"{dataset}_colmap_model")
@@ -224,7 +249,11 @@ if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     db_live_path = parameters.live_db_path
     output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
     os.makedirs(output_path, exist_ok=True)
-    createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs)
+    if(use_opencv_sift_models):
+        openCV_db_path = parameters.gt_db_path_mnm
+    else:
+        openCV_db_path = None
+    createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs, openCV_db_path=openCV_db_path)
 
 if(dataset == "CMU"):
     slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",
@@ -236,7 +265,11 @@ if(dataset == "CMU"):
         db_live_path = parameters.live_db_path
         output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
         os.makedirs(output_path, exist_ok=True)
-        createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs)
+        if (use_opencv_sift_models):
+            openCV_db_path = parameters.gt_db_path_mnm
+        else:
+            openCV_db_path = None
+        createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs, openCV_db_path=openCV_db_path)
 
 if(dataset == "RetailShop"):
     base_path = os.path.join(root_path, "retail_shop", "slice1")
@@ -245,6 +278,10 @@ if(dataset == "RetailShop"):
     db_live_path = parameters.live_db_path
     output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
     os.makedirs(output_path, exist_ok=True)
-    createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs)
+    if (use_opencv_sift_models):
+        openCV_db_path = parameters.gt_db_path_mnm
+    else:
+        openCV_db_path = None
+    createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs, openCV_db_path=openCV_db_path)
 
 
