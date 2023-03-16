@@ -12,6 +12,7 @@ The files themselves will contain comments on how to use them.
 
 #### To get data for Predicticting Matchability, run the following commands:
 
+- create_universal_models.py (no need to run again if you have already run it, from above)
 - create_training_data_predicting_matchability.py
 - train_for_predicting_matchability.py
 
@@ -22,7 +23,7 @@ The files themselves will contain comments on how to use them.
 
 #### Benchmarking the models:
 
-- learned_models_benchmarks.py #will generate model statistics
+- learned_models_benchmarks.py #will generate model statistics (this will be merged with the next script)
 - learned_models_pose_data.py #will generate pose data statistics
 
 #### Notes:

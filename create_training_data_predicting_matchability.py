@@ -10,7 +10,6 @@
 # To summarise:
 # 1 - Run this file to generate the data for your sklearn model (.db) and the original tool rforest (.txt)
 # 2 - Run "train_for_predicting_matchability.py"
-# 3 - Run "learned_models_benchmarks.py"
 
 # NOTE 14/02/2023:
 # Removed the original tool as I got same results with python code.
@@ -24,20 +23,10 @@ from tqdm import tqdm
 from parameters import Parameters
 from query_image import get_descriptors
 
-# def save_to_files_for_original_tool(all_descs, original_tool_path, file_identifier):
-#     with open(os.path.join(f"{original_tool_path}", f"pos_{file_identifier}.txt"), 'w') as f:
-#         for desc in tqdm(all_descs[np.where(all_descs[:,128] == 1)[0]]):
-#             row = ' '.join([str(num) for num in desc[0:128].astype(np.uint8)])
-#             f.write(f"{row}\n")
-#     with open(os.path.join(f"{original_tool_path}", f"neg_{file_identifier}.txt"), 'w') as f:
-#         for desc in tqdm(all_descs[np.where(all_descs[:,128] == 0)[0]]):
-#             row = ' '.join([str(num) for num in desc[0:128].astype(np.uint8)])
-#             f.write(f"{row}\n")
-
-def get_matched_and_unmatched_descs(c, m, db_live, side=None):
+def get_matched_and_unmatched_descs(c, m, db, side=None):
     assert side != None
     pair_id = image_ids_to_pair_id(int(c), int(m))
-    pair_data = db_live.execute("SELECT rows, cols, data FROM two_view_geometries WHERE pair_id = " + "'" + str(pair_id) + "'").fetchone()
+    pair_data = db.execute("SELECT rows, cols, data FROM two_view_geometries WHERE pair_id = " + "'" + str(pair_id) + "'").fetchone()
     rows = pair_data[0]
     cols = pair_data[1]
     data = pair_data[2]
@@ -45,8 +34,8 @@ def get_matched_and_unmatched_descs(c, m, db_live, side=None):
 
     zero_based_matched_indices_left = zero_based_indices[:, 0]
     zero_based_matched_indices_right = zero_based_indices[:, 1]
-    _, _, descs_left = get_descriptors(db_live, str(int(c)))
-    _, _, descs_right = get_descriptors(db_live, str(int(m)))
+    _, _, descs_left = get_descriptors(db, str(int(c)))
+    _, _, descs_right = get_descriptors(db, str(int(m)))
     zero_based_unmatched_indices_left = np.delete(np.arange(descs_left.shape[0]), zero_based_matched_indices_left, axis=0)
     zero_based_unmatched_indices_right = np.delete(np.arange(descs_right.shape[0]), zero_based_matched_indices_right, axis=0)
 
@@ -63,7 +52,7 @@ def get_matched_and_unmatched_descs(c, m, db_live, side=None):
         unmatched = np.c_[unmatched, np.zeros([unmatched[:, 0].shape[0], 1])]
         return matched, unmatched, zero_based_matched_indices_right, zero_based_unmatched_indices_right
 
-def gen_training_data(pair_ids, max_neighbours, max_pairs, db_live):
+def gen_training_data(pair_ids, max_neighbours, max_pairs, descs_db):
     print("Getting Training Data..")
     image_ids = pair_id_to_image_ids(np.array(pair_ids))
     left_images_ids = image_ids[0] #can also use image_ids[1] here but it's more or less the same
@@ -116,7 +105,7 @@ def gen_training_data(pair_ids, max_neighbours, max_pairs, db_live):
     # Do central ones first
     for c, ms in tqdm(matched_images.items()):
         # for each c we only check with the first match, ms[0], can do other but fuck it same thing
-        matched, unmatched, matched_indices, unmatched_indices = get_matched_and_unmatched_descs(c, ms[0], db_live, side='left')
+        matched, unmatched, matched_indices, unmatched_indices = get_matched_and_unmatched_descs(c, ms[0], descs_db, side='left')
         assert (matched.shape[0] == matched_indices.shape[0])
         assert (unmatched.shape[0] == unmatched_indices.shape[0])
         tracked_indices[c] = matched_indices #c will always be unique as matched_images.keys() only contains unique ids
@@ -132,7 +121,7 @@ def gen_training_data(pair_ids, max_neighbours, max_pairs, db_live):
             # so it is bound to happen that we will see some m again and again.
             # so make sure to keep their descs that were deemed positive once and not replace them with a negative one
             # as per the paper, "All points that appear in at least one match form the positive class"
-            matched, unmatched, matched_indices, unmatched_indices = get_matched_and_unmatched_descs(c, m, db_live, side='right')
+            matched, unmatched, matched_indices, unmatched_indices = get_matched_and_unmatched_descs(c, m, descs_db, side='right')
             assert(matched.shape[0] == matched_indices.shape[0])
             assert(unmatched.shape[0] == unmatched_indices.shape[0])
 
@@ -153,7 +142,7 @@ def gen_training_data(pair_ids, max_neighbours, max_pairs, db_live):
     print("Calculating the size of, all_descs ..")
     decs_no = 0
     for image_id, matched_indices_array in tqdm(tracked_indices.items()):
-        _, _, descs = get_descriptors(db_live, str(int(image_id)))
+        _, _, descs = get_descriptors(descs_db, str(int(image_id)))
         decs_no += descs.shape[0]
     all_descs = np.empty([decs_no, 129])
 
@@ -161,7 +150,7 @@ def gen_training_data(pair_ids, max_neighbours, max_pairs, db_live):
     print("Filling, all_descs ..")
     i = 0
     for image_id, matched_indices_array in tqdm(tracked_indices.items()):
-        _, _, descs = get_descriptors(db_live, str(int(image_id)))
+        _, _, descs = get_descriptors(descs_db, str(int(image_id)))
 
         matched = descs[matched_indices_array]
         unmatched = np.delete(descs, matched_indices_array, axis=0)
@@ -180,38 +169,32 @@ def gen_training_data(pair_ids, max_neighbours, max_pairs, db_live):
     assert i == all_descs.shape[0]
     return all_descs
 
-def createDataForPredictingMatchabilityComparison(db_live_path, db_PM_path, max_pairs, max_neighbours=13, openCV_db_path=None):
-    db_live = COLMAPDatabase.connect(db_live_path)
+def createDataForPredictingMatchabilityComparison(parameters, db_PM_path, max_pairs, max_neighbours=13):
+    db_live = COLMAPDatabase.connect(parameters.live_db_path)
     print("Selecting pair_ids..")
     pair_ids = db_live.execute("SELECT pair_id FROM two_view_geometries WHERE rows > 0 ORDER BY rows DESC").fetchall()
 
-    if(openCV_db_path is not None): #if this is false then it will just use pairs from the COLMAP db
-        print("Using pairs from openCV db..")
-        openCV_db = COLMAPDatabase.connect(openCV_db_path)
+    print("Using pairs from openCV db..")
+    openCV_db = COLMAPDatabase.connect(parameters.gt_db_path_mnm)
 
-        # The pairs in the openCV gt db are less than the ones in the original gt db, this is because in create_universal_models.py, I pick pairs that only have
-        # rows >0 from the gt db.
-        # Now to make training fair I need to train on live data only, so I pick the live pairs from the openCV gt db.
-        # The pairs in the openCV db are the same as in the original gt db image. Pair 12345 for example is the same in opencv gt and original live/gt db
-        # This is because the opencv model was constructed from the original gt db
+    # The pairs in the openCV gt db are less than the ones in the original gt db, this is because in create_universal_models.py, I pick pairs that only have
+    # rows >0 from the gt db.
+    # Now to make training fair I need to train on live data only, so I pick the live pairs from the openCV gt db.
+    # The pairs in the openCV db are the same as in the original gt db image. Pair 12345 for example is the same in opencv gt and original live/gt db
+    # This is because the opencv model was constructed from the original gt db
 
-        # Choosing the pairs from the opencv gt db that are only in the live db, to avoid gt pairs in the training data
-        pair_ids_opencv = openCV_db.execute("SELECT pair_id FROM two_view_geometries WHERE rows > 0 AND pair_id IN ({})".format(",".join(["?"] * len(pair_ids))), list(pair_id[0] for pair_id in pair_ids)).fetchall()
-        pair_ids = pair_ids_opencv
+    # Choosing the pairs from the opencv gt db that are only in the live db, to avoid gt pairs in the training data
+    pair_ids_opencv = openCV_db.execute("SELECT pair_id FROM two_view_geometries WHERE rows > 0 AND pair_id IN ({})".format(",".join(["?"] * len(pair_ids))), list(pair_id[0] for pair_id in pair_ids)).fetchall()
+    pair_ids = pair_ids_opencv
 
-        file_identifier = f"{max_pairs}_samples_opencv"
-        training_data_db_path = os.path.join(db_PM_path, f"training_data_{file_identifier}.db")
-        print(f"Creating training data db at {training_data_db_path}.. (will drop table if exists)")
-        training_data_db = COLMAPDatabase.create_db_predicting_matchability_data(training_data_db_path)
-    else:
-        print("Using pairs from COLMAP db..")
-        file_identifier = f"{max_pairs}_samples"
-        training_data_db_path = os.path.join(db_PM_path, f"training_data_{file_identifier}.db")
-        print(f"Creating training data db at {training_data_db_path}.. (will drop table if exists)")
-        training_data_db = COLMAPDatabase.create_db_predicting_matchability_data(training_data_db_path)
+    file_identifier = f"{max_pairs}_samples_opencv"
+    training_data_db_path = os.path.join(db_PM_path, f"training_data_{file_identifier}.db")
+    print(f"Creating training data db at {training_data_db_path}.. (will drop table if exists)")
+    training_data_db = COLMAPDatabase.create_db_predicting_matchability_data(training_data_db_path)
+
 
     training_data_db.execute("BEGIN")
-    training_descs = gen_training_data(pair_ids, max_neighbours, max_pairs, db_live)
+    training_descs = gen_training_data(pair_ids, max_neighbours, max_pairs, openCV_db) #need to pass openCV_db here as we will train on OpenCV descs
 
     print("Inserting data..")
     for training_desc in tqdm(training_descs):
@@ -237,23 +220,14 @@ def createDataForPredictingMatchabilityComparison(db_live_path, db_PM_path, max_
 root_path = "/media/iNicosiaData/engd_data/"
 dataset = sys.argv[1] #HGE, CAB, LIN (or Other for CMU, retail shop)
 max_pairs = int(sys.argv[2]) # more sample images to get "neighbours" from
-use_opencv_sift_models = (sys.argv[3] == '1')
-
-if(use_opencv_sift_models):
-    print("Using OpenCV SIFT models")
 
 if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     base_path = os.path.join(root_path, "lamar", f"{dataset}_colmap_model")
     print("Base path: " + base_path)
     parameters = Parameters(base_path)
-    db_live_path = parameters.live_db_path
     output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
     os.makedirs(output_path, exist_ok=True)
-    if(use_opencv_sift_models):
-        openCV_db_path = parameters.gt_db_path_mnm
-    else:
-        openCV_db_path = None
-    createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs, openCV_db_path=openCV_db_path)
+    createDataForPredictingMatchabilityComparison(parameters, output_path, max_pairs)
 
 if(dataset == "CMU"):
     slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",
@@ -262,26 +236,16 @@ if(dataset == "CMU"):
         base_path = os.path.join(root_path, "cmu", f"{slice_name}", "exmaps_data")
         print("Base path: " + base_path)
         parameters = Parameters(base_path)
-        db_live_path = parameters.live_db_path
         output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
         os.makedirs(output_path, exist_ok=True)
-        if (use_opencv_sift_models):
-            openCV_db_path = parameters.gt_db_path_mnm
-        else:
-            openCV_db_path = None
-        createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs, openCV_db_path=openCV_db_path)
+        createDataForPredictingMatchabilityComparison(parameters, output_path, max_pairs)
 
 if(dataset == "RetailShop"):
     base_path = os.path.join(root_path, "retail_shop", "slice1")
     print("Base path: " + base_path)
     parameters = Parameters(base_path)
-    db_live_path = parameters.live_db_path
     output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
     os.makedirs(output_path, exist_ok=True)
-    if (use_opencv_sift_models):
-        openCV_db_path = parameters.gt_db_path_mnm
-    else:
-        openCV_db_path = None
-    createDataForPredictingMatchabilityComparison(db_live_path, output_path, max_pairs, openCV_db_path=openCV_db_path)
+    createDataForPredictingMatchabilityComparison(parameters, output_path, max_pairs)
 
 

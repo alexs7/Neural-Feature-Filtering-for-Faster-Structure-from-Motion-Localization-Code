@@ -174,6 +174,7 @@ def get_image_id(db, query_image):
 
 # This was copied from feature_matcher_single_image.py
 def get_keypoints_xy(db, image_id):
+    image_id = str(image_id)
     query_image_keypoints_data = db.execute("SELECT data FROM keypoints WHERE image_id = " + "'" + image_id + "'")
     query_image_keypoints_data = query_image_keypoints_data.fetchone()[0]
     query_image_keypoints_data_cols = db.execute("SELECT cols FROM keypoints WHERE image_id = " + "'" + image_id + "'")
@@ -471,13 +472,6 @@ def get_gt_images_only(first_set, second_set):
         if(image_id not in second_set): #then it is a gt image
             gt_images[image_id] = img_data
     return gt_images
-
-def get_image_decs(db, image_id): #not to be confused with get_queryDescriptors() in feature_matching_generator.py - that one normalises descriptors.
-    data = db.execute("SELECT data FROM descriptors WHERE image_id = " + "'" + str(image_id) + "'")
-    data = COLMAPDatabase.blob_to_array(data.fetchone()[0], np.uint8)
-    descs_rows = int(np.shape(data)[0] / 128)
-    descs = data.reshape([descs_rows, 128])  # descs for the whole image
-    return descs
 
 # This was updated - 13/10/2022, was named 'get_queryDescriptors'
 def get_descriptors(db, image_id):

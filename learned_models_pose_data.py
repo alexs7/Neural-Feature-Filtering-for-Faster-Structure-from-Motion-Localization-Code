@@ -21,7 +21,7 @@ from joblib import load
 from database import COLMAPDatabase
 from parameters import Parameters
 from point3D_loader import get_points3D_xyz_id, read_points3d_default
-from query_image import get_intrinsics, read_cameras_binary, read_images_binary, load_images_from_text_file, get_localised_images, get_image_decs, clear_folder, match, \
+from query_image import get_intrinsics, read_cameras_binary, read_images_binary, load_images_from_text_file, get_localised_images, clear_folder, match, \
     get_keypoints_xy, get_descriptors, get_kps_data
 
 # Here all the models are test at once so easier to examine results.

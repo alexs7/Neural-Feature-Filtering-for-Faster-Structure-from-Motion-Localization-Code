@@ -56,6 +56,14 @@ class COLMAPDatabase(sqlite3.Connection):
                                                 blue INTEGER NOT NULL,
                                                 green INTEGER NOT NULL,
                                                 red INTEGER NOT NULL,
+                                                octave INTEGER NOT NULL,
+                                                angle FLOAT NOT NULL,
+                                                size FLOAT NOT NULL,
+                                                response FLOAT NOT NULL,
+                                                domOrientations INTEGER NOT NULL,
+                                                base INTEGER NOT NULL,
+                                                live INTEGER NOT NULL,
+                                                gt INTEGER NOT NULL,
                                                 matched INTEGER NOT NULL
                                             );"""
         conn = None
@@ -104,53 +112,6 @@ class COLMAPDatabase(sqlite3.Connection):
                                                     sift BLOB NOT NULL,
                                                     matched INTEGER NOT NULL
                                                 );"""
-        conn = None
-        try:
-            conn = sqlite3.connect(db_file)
-            conn.execute(sql_drop_table_if_exists)
-            conn.commit()
-            conn.execute(sql_create_data_table)
-            conn.commit()
-            return conn
-        except Error as e:
-            print(e)
-
-    @staticmethod
-    def create_db_match_no_match_data(db_file):
-        # x, y, octave, angle, size, response
-        sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
-        sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
-                                                    x FLOAT NOT NULL,
-                                                    y FLOAT NOT NULL,
-                                                    octave FLOAT NOT NULL,
-                                                    angle FLOAT NOT NULL,
-                                                    size FLOAT NOT NULL,
-                                                    response FLOAT NOT NULL,
-                                                    domOrientations FLOAT NOT NULL,
-                                                    green FLOAT NOT NULL,
-                                                    matched INTEGER NOT NULL,
-                                                    imageId INTEGER NOT NULL
-                                                    );"""
-        conn = None
-        try:
-            conn = sqlite3.connect(db_file)
-            conn.execute(sql_drop_table_if_exists)
-            conn.commit()
-            conn.execute(sql_create_data_table)
-            conn.commit()
-            return conn
-        except Error as e:
-            print(e)
-
-    @staticmethod
-    def create_db_for_visual_data(db_file):
-        sql_drop_table_if_exists = "DROP TABLE IF EXISTS data;"
-        sql_create_data_table = """CREATE TABLE IF NOT EXISTS data (
-                                                sift BLOB NOT NULL,
-                                                pred_score FLOAT NOT NULL,
-                                                score FLOAT NOT NULL, 
-                                                xyz BLOB NOT NULL
-                                            );"""
         conn = None
         try:
             conn = sqlite3.connect(db_file)

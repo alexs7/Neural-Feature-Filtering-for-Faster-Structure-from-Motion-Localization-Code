@@ -15,7 +15,7 @@ class Parameters(object):
         # This is for MnM (Match and No Match) and PM (Predicting Matchability)
         self.match_or_no_match_comparison_data = "models_for_match_no_match"  # also contains models
         self.mnm_path = os.path.join(base_path, self.match_or_no_match_comparison_data)
-        self.gt_db_path_mnm = os.path.join(self.mnm_path, "gt/database.db")
+        self.gt_db_path_mnm = os.path.join(self.mnm_path, "gt/database.db") #with extra columns from create_universal_models.py
         self.avg_descs_gt_path_mnm = os.path.join(self.mnm_path, "gt", "avg_descs_gt_mnm.npy") #this is for colmap models
         self.avg_descs_gt_path_opencv_mnm = os.path.join(self.mnm_path, "gt", "avg_descs_gt_opencv_mnm.npy") #this is for opencv models
         self.gt_model_points3D_path_mnm = os.path.join(self.mnm_path, "gt/output_opencv_sift_model/points3D.bin")

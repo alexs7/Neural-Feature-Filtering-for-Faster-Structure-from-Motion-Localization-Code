@@ -11,12 +11,10 @@ from sklearn.ensemble import RandomForestClassifier
 from data import getClassificationDataPM
 from joblib import dump
 
-def train_and_save_model(data_folder, no_samples, use_opencv_sift_models=False):
-    if(use_opencv_sift_models):
-        print("Training on OpenCV SIFT data..")
-        training_data_db_path = os.path.join(data_folder, f"training_data_{no_samples}_samples_opencv.db")
-    else:
-        training_data_db_path = os.path.join(data_folder, f"training_data_{no_samples}_samples.db")
+def train_and_save_model(data_folder, no_samples):
+    print("Training on OpenCV SIFT data..")
+    training_data_db_path = os.path.join(data_folder, f"training_data_{no_samples}_samples_opencv.db")
+
     print("Loading training data from: " + training_data_db_path)
     sift, classes = getClassificationDataPM(training_data_db_path)
 
@@ -37,16 +35,12 @@ def train_and_save_model(data_folder, no_samples, use_opencv_sift_models=False):
 root_path = "/media/iNicosiaData/engd_data/"
 dataset = sys.argv[1]
 no_samples = sys.argv[2] #this value is defined from "create_training_data_predicting_matchability.py"
-use_opencv_sift_models = (sys.argv[3] == '1')
-
-if(use_opencv_sift_models):
-    print("Using OpenCV SIFT models")
 
 if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     base_path = os.path.join(root_path, "lamar", f"{dataset}_colmap_model")
     print("Base path: " + base_path)
     data_folder = os.path.join(base_path, "predicting_matchability_comparison_data")
-    train_and_save_model(data_folder, no_samples, use_opencv_sift_models)
+    train_and_save_model(data_folder, no_samples)
 
 if(dataset == "CMU"):
     slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",
@@ -55,12 +49,12 @@ if(dataset == "CMU"):
         base_path = os.path.join(root_path, "cmu", f"{slice_name}", "exmaps_data")
         print("Base path: " + base_path)
         data_folder = os.path.join(base_path, "predicting_matchability_comparison_data")
-        train_and_save_model(data_folder, no_samples, use_opencv_sift_models)
+        train_and_save_model(data_folder, no_samples)
 
 if(dataset == "RetailShop"):
     base_path = os.path.join(root_path, "retail_shop", "slice1")
     print("Base path: " + base_path)
     data_folder = os.path.join(base_path, "predicting_matchability_comparison_data")
-    train_and_save_model(data_folder, no_samples, use_opencv_sift_models)
+    train_and_save_model(data_folder, no_samples)
 
 print("Done!")

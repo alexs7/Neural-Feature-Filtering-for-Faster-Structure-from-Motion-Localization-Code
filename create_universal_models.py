@@ -406,8 +406,8 @@ if(dataset == "CMU"):
     if(len(sys.argv) > 3):
         slices_names = [sys.argv[3]]
     else: # do all slices
-        slices_names = ["slice14", "slice15",
-                        "slice16", "slice17", "slice18", "slice19", "slice20", "slice21", "slice22", "slice23", "slice24", "slice25"]
+        slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",
+                    "slice16", "slice17", "slice18", "slice19", "slice20", "slice21", "slice22", "slice23", "slice24", "slice25"]
     for slice_name in slices_names:
         # overwrite paths
         mnm_path = f"/media/iNicosiaData/engd_data/cmu/{slice_name}/exmaps_data/models_for_match_no_match"

@@ -4,7 +4,7 @@
 # You must estimate the 3D avg descriptors for each point in the gt model, as you will be matching gt images in the gt model!
 # And comparing the poses accuracy with the gt poses.
 # You can also match in the live model but it makes more sense to match in the gt model.
-# Run this after create_universal_models.py
+# Run this only after create_universal_models.py
 
 import os
 import sys
@@ -14,18 +14,14 @@ from database import COLMAPDatabase
 from parameters import Parameters
 from point3D_loader import read_points3d_default
 
-def get_desc_avg(path, use_opencv_sift_models):
+def get_desc_avg(path):
     SIZE = 129  # (SIFT + point_id)
     parameters = Parameters(path)
-    if use_opencv_sift_models:
-        db = COLMAPDatabase.connect(parameters.gt_db_path_mnm)
-        points3D = read_points3d_default(parameters.gt_model_points3D_path_mnm)
-        save_path = parameters.avg_descs_gt_path_opencv_mnm
-        print("Using OpenCV SIFT models..")
-    else:
-        db = COLMAPDatabase.connect(parameters.gt_db_path_mnm)
-        points3D = read_points3d_default(parameters.gt_model_points3D_path_mnm)
-        save_path = parameters.avg_descs_gt_path_mnm
+
+    print("Using OpenCV SIFT models..")
+    db = COLMAPDatabase.connect(parameters.gt_db_path_mnm)
+    points3D = read_points3d_default(parameters.gt_model_points3D_path_mnm)
+    save_path = parameters.avg_descs_gt_path_opencv_mnm
 
     print(f"Loading db from {parameters.gt_db_path_mnm}...")  # MnM gt db
     print(f"Loading points from {parameters.gt_model_points3D_path_mnm}...")
@@ -59,13 +55,12 @@ def get_desc_avg(path, use_opencv_sift_models):
 
 root_path = "/media/iNicosiaData/engd_data/"
 dataset = sys.argv[1] #HGE, CAB, LIN (or Other for CMU, retail shop)
-use_opencv_sift_models = (sys.argv[2] == '1')
 
 print("Getting gt avg descs (Only these needed for the ML (MnM) part)")
 
 if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     path = os.path.join(root_path, f"lamar/{dataset}_colmap_model/")
-    get_desc_avg(path, use_opencv_sift_models)
+    get_desc_avg(path)
 
 if(dataset == "CMU"):
     if(len(sys.argv) > 3):
@@ -76,8 +71,8 @@ if(dataset == "CMU"):
     for slice_name in slices_names:
         # overwrite paths
         path = os.path.join(root_path, f"cmu/{slice_name}/exmaps_data/")
-        get_desc_avg(path, use_opencv_sift_models)
+        get_desc_avg(path)
 
 if(dataset == "RetailShop"):
     path = os.path.join(root_path, f"retail_shop/slice1/")
-    get_desc_avg(path, use_opencv_sift_models)
+    get_desc_avg(path)
