@@ -25,7 +25,9 @@ class Parameters(object):
         self.query_gt_localised_images_txt_path_mnm = os.path.join(self.mnm_path, "localised_qt_images_names.txt") #this is outside the gt folder as it was added later
         self.mnm_all_universal_images_path = os.path.join(self.mnm_path, "all_images")
         self.mnm_trained_model_path_mnm = os.path.join(self.mnm_path, "trained_model_pairs_no_8000.xml")
+        # TODO: refactor the below it's stupid
         self.predicting_matchability_comparison_data = "predicting_matchability_comparison_data"
+        self.predicting_matchability_comparison_data_full = os.path.join(self.base_path, "predicting_matchability_comparison_data")
 
         # 30/12/2022 still using the old names for filenames (_matrix) - nvm
         self.per_image_decay_scores_path = os.path.join(base_path, "per_image_score.npy")
@@ -86,5 +88,5 @@ class Parameters(object):
         self.debug_images_ml_path_nf = os.path.join(base_path, "ML_data", "debug_images", "nf")
         self.debug_images_ml_path_pm = os.path.join(base_path, "ML_data", "debug_images", "pm")
 
-        # ml data but with opencv data, from create_nf_training_data.py
+        # ml data but with opencv data, from create_nf_training_data.py, contains all RGB, Octave etc data
         self.ml_database_all_opencv_sift_path = os.path.join(base_path, "ML_data", "ml_database_all_opencv_sift.db")

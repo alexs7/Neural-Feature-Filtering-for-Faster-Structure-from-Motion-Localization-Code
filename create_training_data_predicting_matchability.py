@@ -169,13 +169,15 @@ def gen_training_data(pair_ids, max_neighbours, max_pairs, descs_db):
     assert i == all_descs.shape[0]
     return all_descs
 
-def createDataForPredictingMatchabilityComparison(parameters, db_PM_path, max_pairs, max_neighbours=13):
+def createDataForPredictingMatchabilityComparison(parameters, db_PM_path, max_neighbours=13, max_pairs=1200):
     db_live = COLMAPDatabase.connect(parameters.live_db_path)
     print("Selecting pair_ids..")
     pair_ids = db_live.execute("SELECT pair_id FROM two_view_geometries WHERE rows > 0 ORDER BY rows DESC").fetchall()
 
     print("Using pairs from openCV db..")
     openCV_db = COLMAPDatabase.connect(parameters.gt_db_path_mnm)
+
+    print(f"Max pairs: {max_pairs} for this dataset..")
 
     # The pairs in the openCV gt db are less than the ones in the original gt db, this is because in create_universal_models.py, I pick pairs that only have
     # rows >0 from the gt db.
@@ -219,7 +221,8 @@ def createDataForPredictingMatchabilityComparison(parameters, db_PM_path, max_pa
 
 root_path = "/media/iNicosiaData/engd_data/"
 dataset = sys.argv[1] #HGE, CAB, LIN (or Other for CMU, retail shop)
-max_pairs = int(sys.argv[2]) # more sample images to get "neighbours" from
+
+# Note: Use 3200 max_pairs for HGE, CAB, LIN and 1200 for CMU
 
 if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     base_path = os.path.join(root_path, "lamar", f"{dataset}_colmap_model")
@@ -227,7 +230,7 @@ if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     parameters = Parameters(base_path)
     output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
     os.makedirs(output_path, exist_ok=True)
-    createDataForPredictingMatchabilityComparison(parameters, output_path, max_pairs)
+    createDataForPredictingMatchabilityComparison(parameters, output_path, max_pairs=3200)
 
 if(dataset == "CMU"):
     slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",
@@ -238,7 +241,7 @@ if(dataset == "CMU"):
         parameters = Parameters(base_path)
         output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
         os.makedirs(output_path, exist_ok=True)
-        createDataForPredictingMatchabilityComparison(parameters, output_path, max_pairs)
+        createDataForPredictingMatchabilityComparison(parameters, output_path)
 
 if(dataset == "RetailShop"):
     base_path = os.path.join(root_path, "retail_shop", "slice1")
@@ -246,6 +249,6 @@ if(dataset == "RetailShop"):
     parameters = Parameters(base_path)
     output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
     os.makedirs(output_path, exist_ok=True)
-    createDataForPredictingMatchabilityComparison(parameters, output_path, max_pairs)
+    createDataForPredictingMatchabilityComparison(parameters, output_path)
 
 

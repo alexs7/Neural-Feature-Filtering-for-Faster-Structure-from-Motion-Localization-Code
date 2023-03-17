@@ -3,7 +3,6 @@ import numpy as np
 from tensorflow.keras.utils import Sequence
 from database import COLMAPDatabase
 
-
 class SQLiteDataGenerator(Sequence):
     def __init__(self, db_file, batch_size, input_shape, output_shape, val=False):
         self.db_file = db_file
@@ -88,3 +87,17 @@ class SQLiteDataGenerator(Sequence):
         self.cursor.execute(query)
         result = self.cursor.fetchone()
         return result[0]
+
+class DataGenerator(Sequence):
+    def __init__(self, x_set, y_set, batch_size):
+        self.x = x_set
+        self.y = y_set
+        self.batch_size = batch_size
+
+    def __len__(self):
+        return int(np.ceil(len(self.x) / float(self.batch_size)))
+
+    def __getitem__(self, idx):
+        batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
+        return batch_x, batch_y

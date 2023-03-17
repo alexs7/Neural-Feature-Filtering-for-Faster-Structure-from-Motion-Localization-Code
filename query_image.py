@@ -10,6 +10,7 @@ import time
 from tqdm import tqdm
 
 from database import COLMAPDatabase
+from parameters import Parameters
 
 CameraModel = collections.namedtuple(
     "CameraModel", ["model_id", "model_name", "num_params"])
@@ -485,19 +486,44 @@ def get_descriptors(db, image_id):
     descs = db.blob_to_array(descs, np.uint8).reshape(rows, cols)
     return rows, cols, descs
 
-def get_kps_data(db, image_id):
-    db_row = db.execute("SELECT rows, cols, data, octaves, angles, sizes, responses, greenIntensities, dominantOrientations, matched FROM keypoints WHERE image_id = ?", (image_id,)).fetchone()
-    rows_no = db_row[0]
-    cols_no = db_row[1]
-    kps_xy = COLMAPDatabase.blob_to_array(db_row[2], np.float32).reshape(rows_no, cols_no)  # (x,y) shape (rows_no, 2)
-    octaves = COLMAPDatabase.blob_to_array(db_row[3], np.uint8).reshape(rows_no, 1)  # octaves (rows_no, 1)
-    angles = COLMAPDatabase.blob_to_array(db_row[4], np.float32).reshape(rows_no, 1)
-    sizes = COLMAPDatabase.blob_to_array(db_row[5], np.float32).reshape(rows_no, 1)
-    responses = COLMAPDatabase.blob_to_array(db_row[6], np.float32).reshape(rows_no, 1)
-    greenIntensities = COLMAPDatabase.blob_to_array(db_row[7], np.uint8).reshape(rows_no, 1)
-    dominantOrientations = COLMAPDatabase.blob_to_array(db_row[8], np.uint8).reshape(rows_no, 1)
-    matched = COLMAPDatabase.blob_to_array(db_row[9], np.uint8).reshape(rows_no, 1)
-    return rows_no, cols_no, kps_xy, octaves, angles, sizes, responses, greenIntensities, dominantOrientations, matched
+def get_test_data(ml_db, gt_db, image_id):
+    # ml_db here is created by create_nf_training_data.py
+    # gt_db here is created by create_universal_models.py
+    # ml_db is created after gt_db and contains all the images data from gt_db 1 row for each image's keypoint
+    db_rows = ml_db.execute("SELECT sift, xy, blue, green, red, octave, angle, size, response, domOrientations, matched FROM data WHERE image_id = ? and gt = 1 ", (image_id,)).fetchall()
+    rows_descs, cols_descs, descs = get_descriptors(gt_db, image_id)
+
+    assert rows_descs == len(db_rows), "The number of rows in the descriptors table is not equal to the number of rows in the ML data table"
+
+    rows_no = rows_descs
+    test_data = np.empty([rows_no, 139])
+    for i in range(len(db_rows)):
+        row = db_rows[i]
+        sift = COLMAPDatabase.blob_to_array(row[0], np.uint8)
+        kps_xy = COLMAPDatabase.blob_to_array(row[1], np.float64)
+        blue = row[2]
+        green = row[3]
+        red = row[4]
+        octave = row[5]
+        angle = row[6]
+        size = row[7]
+        response = row[8]
+        dominantOrientation = row[9]
+        matched = row[10]
+
+        test_data[i, 0:128] = sift
+        test_data[i, 128:130] = kps_xy
+        test_data[i, 130] = blue
+        test_data[i, 131] = green
+        test_data[i, 132] = red
+        test_data[i, 133] = octave
+        test_data[i, 134] = angle
+        test_data[i, 135] = size
+        test_data[i, 136] = response
+        test_data[i, 137] = dominantOrientation
+        test_data[i, 138] = matched
+
+    return test_data
 
 def get_image_name_only(image_name):
     image_name = image_name.split("/")
