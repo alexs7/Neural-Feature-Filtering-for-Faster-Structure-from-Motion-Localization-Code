@@ -11,6 +11,9 @@ from query_image import read_images_binary, get_descriptors, get_keypoints_xy
 # Run this file for all datasets, CMU, Retail, LaMAR - binary classifier
 # General Notes: you are using conda tf env
 # Note: You must create the universal models first, using create_universal_models.py
+# Another note: This file generates the training data from the images in the point cloud only, that is the LOCALISED images.
+# no point training on addition non localised images, as they will only bring more unmatched data and doesn't align with our training principle which is
+# to train on 3D data (a point cloud), i.e. xy - XYZ - matched or not.
 
 # Run this in order:
 # 1 - create_universal_models.py
@@ -38,7 +41,7 @@ def create_all_data_opencv_sift(params):
     opencv_gt_model_points3D = read_points3d_default(params.gt_model_points3D_path_mnm)
 
     mnm_ml_db.execute("BEGIN")
-    for img_id , img_data in tqdm(opencv_gt_model_images.items()):
+    for img_id , img_data in tqdm(opencv_gt_model_images.items()): #using localised images only
 
         # this happens only in LaMAR and in the base model provided by the authors. Some images have no xys, no points3D, but a pose and db descs.
         # So probably they manually added them. I just skip them. The descs are there because of me, from exmaps file, get_lamar_data.py

@@ -85,3 +85,6 @@ class Parameters(object):
         self.debug_images_ml_path_mnm = os.path.join(base_path, "ML_data", "debug_images", "mnm")
         self.debug_images_ml_path_nf = os.path.join(base_path, "ML_data", "debug_images", "nf")
         self.debug_images_ml_path_pm = os.path.join(base_path, "ML_data", "debug_images", "pm")
+
+        # ml data but with opencv data, from create_nf_training_data.py
+        self.ml_database_all_opencv_sift_path = os.path.join(base_path, "ML_data", "ml_database_all_opencv_sift.db")
