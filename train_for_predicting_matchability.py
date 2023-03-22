@@ -45,7 +45,7 @@ if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     base_path = os.path.join(root_path, "lamar", f"{dataset}_colmap_model")
     print("Base path: " + base_path)
     params = Parameters(base_path)
-    train_and_save_model(params, no_samples=3200)
+    train_and_save_model(params, no_samples=params.predicting_matchability_comparison_data_lamar_no_samples)
 
 if(dataset == "CMU"):
     slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",

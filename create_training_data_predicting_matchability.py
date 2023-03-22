@@ -104,7 +104,7 @@ def gen_training_data(pair_ids, max_neighbours, max_pairs, descs_db):
     tracked_indices = {}
     # Do central ones first
     for c, ms in tqdm(matched_images.items()):
-        # for each c we only check with the first match, ms[0], can do other but fuck it same thing
+        # for each c we only check with the first match, ms[0], can do other but same thing
         matched, unmatched, matched_indices, unmatched_indices = get_matched_and_unmatched_descs(c, ms[0], descs_db, side='left')
         assert (matched.shape[0] == matched_indices.shape[0])
         assert (unmatched.shape[0] == unmatched_indices.shape[0])
@@ -222,7 +222,7 @@ def createDataForPredictingMatchabilityComparison(parameters, db_PM_path, max_ne
 root_path = "/media/iNicosiaData/engd_data/"
 dataset = sys.argv[1] #HGE, CAB, LIN (or Other for CMU, retail shop)
 
-# Note: Use 3200 max_pairs for HGE, CAB, LIN and 1200 for CMU
+# Note: Use parameters.predicting_matchability_comparison_data_lamar_no_samples max_pairs for HGE, CAB, LIN and 1200 for CMU
 
 if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     base_path = os.path.join(root_path, "lamar", f"{dataset}_colmap_model")
@@ -230,7 +230,7 @@ if(dataset == "HGE" or dataset == "CAB" or dataset == "LIN"):
     parameters = Parameters(base_path)
     output_path = os.path.join(base_path, "predicting_matchability_comparison_data")
     os.makedirs(output_path, exist_ok=True)
-    createDataForPredictingMatchabilityComparison(parameters, output_path, max_pairs=3200)
+    createDataForPredictingMatchabilityComparison(parameters, output_path, max_pairs=parameters.predicting_matchability_comparison_data_lamar_no_samples)
 
 if(dataset == "CMU"):
     slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",

@@ -25,6 +25,7 @@ class Parameters(object):
         self.query_gt_localised_images_txt_path_mnm = os.path.join(self.mnm_path, "localised_qt_images_names.txt") #this is outside the gt folder as it was added later
         self.mnm_all_universal_images_path = os.path.join(self.mnm_path, "all_images")
         self.mnm_trained_model_path_mnm = os.path.join(self.mnm_path, "trained_model_pairs_no_8000.xml")
+        self.predicting_matchability_comparison_data_lamar_no_samples = 5000
         # TODO: refactor the below it's stupid
         self.predicting_matchability_comparison_data = "predicting_matchability_comparison_data"
         self.predicting_matchability_comparison_data_full = os.path.join(self.base_path, "predicting_matchability_comparison_data")

@@ -8,6 +8,8 @@ def tweaked_loss(y_true, y_pred):
     # from the paper. [1] -> [1,0] and [0] -> [0,1]. The left is positive class and the right is negative class
     # the 1 show which class it is each sample
 
+    # This is where the reversing happens,
+    # from paper: "the error of a certain sample is 0 if the sample is predicted correctly, otherwise the error is 1."
     y_pred = tf.concat([y_pred, 1.0 - y_pred], axis=1)
     y_true = tf.concat([y_true, 1.0 - y_true], axis=1)
 

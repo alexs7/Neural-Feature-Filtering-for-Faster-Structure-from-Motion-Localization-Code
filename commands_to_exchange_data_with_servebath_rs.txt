@@ -1,0 +1,193 @@
+HGE
+
+['MnM', '25.415', '18.173', '64.40', '1.175', '0.374', '0.83']
+['NF', '3.740', '2.388', '58.10', '3.309', '0.526', '0.85']
+['PM', '18.631', '40.092', '99.67', '0.072', '0.004', '0.36']
+
+CUDA_VISIBLE_DEVICES=0 python3.8 train_classification_NF.py CMU slice2 ; CUDA_VISIBLE_DEVICES=0 python3.8 train_classification_NF.py CMU slice3 ; CUDA_VISIBLE_DEVICES=0 python3.8 train_classification_NF.py CMU slice4 ; CUDA_VISIBLE_DEVICES=0 python3.8 train_classification_NF.py CMU slice5 ; CUDA_VISIBLE_DEVICES=0 python3.8 train_classification_NF.py CMU slice6 ; CUDA_VISIBLE_DEVICES=0 python3.8 train_classification_NF.py CMU slice7
+
+CUDA_VISIBLE_DEVICES=1 python3.8 train_classification_NF.py CMU slice8 ; CUDA_VISIBLE_DEVICES=1 python3.8 train_classification_NF.py CMU slice9 ; CUDA_VISIBLE_DEVICES=1 python3.8 train_classification_NF.py CMU slice10 ; CUDA_VISIBLE_DEVICES=1 python3.8 train_classification_NF.py CMU slice11 ; CUDA_VISIBLE_DEVICES=1 python3.8 train_classification_NF.py CMU slice12 ; CUDA_VISIBLE_DEVICES=0 python3.8 train_classification_NF.py CMU slice13 
+
+CUDA_VISIBLE_DEVICES=2 python3.8 train_classification_NF.py CMU slice14 ; CUDA_VISIBLE_DEVICES=2 python3.8 train_classification_NF.py CMU slice15 ; CUDA_VISIBLE_DEVICES=2 python3.8 train_classification_NF.py CMU slice16 ; CUDA_VISIBLE_DEVICES=2 python3.8 train_classification_NF.py CMU slice17 ; CUDA_VISIBLE_DEVICES=2 python3.8 train_classification_NF.py CMU slice18 ; CUDA_VISIBLE_DEVICES=2 python3.8 train_classification_NF.py CMU slice19
+
+CUDA_VISIBLE_DEVICES=3 python3.8 train_classification_NF.py CMU slice20 ; CUDA_VISIBLE_DEVICES=3 python3.8 train_classification_NF.py CMU slice21 ; CUDA_VISIBLE_DEVICES=3 python3.8 train_classification_NF.py CMU slice22 ; CUDA_VISIBLE_DEVICES=3 python3.8 train_classification_NF.py CMU slice23 ; CUDA_VISIBLE_DEVICES=3 python3.8 train_classification_NF.py CMU slice24 ; CUDA_VISIBLE_DEVICES=3 python3.8 train_classification_NF.py CMU slice25
+
+
+scp -P 15965 -r cmu/slice2/exmaps_data/ML_data/classification_model alex@5.tcp.eu.ngrok.io:/media
+/iNicosiaData/engd_data/cmu/slice2/exmaps_data/ML_data/
+
+scp -P 15965 -r cmu/slice2/exmaps_data/ML_data/classification_model alex@5.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice2/exmaps_data/ML_data/ &&
+
+scp -P 15849 -r cmu/slice2/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice2/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice3/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice3/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice4/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice4/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice5/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice5/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice6/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice6/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice7/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice7/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice8/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice8/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice9/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice9/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice10/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice10/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice11/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice11/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice12/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice12/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice13/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice13/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice14/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice14/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice15/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice15/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice16/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice16/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice17/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice17/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice18/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice18/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice19/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice19/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice20/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice20/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice21/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice21/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice22/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice22/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice23/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice23/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice24/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice24/exmaps_data/ML_data/ &&
+scp -P 15849 -r cmu/slice25/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice25/exmaps_data/ML_data/ 
+
+scp -P 15849 -r lamar/CAB_colmap_model/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/lamar/CAB_colmap_model/ML_data/
+
+scp -P 11744 -r retail_shop/slice1/ML_data/classification_model alex@4.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/retail_shop/slice1/ML_data/ML_data/
+
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice8/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice8/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice9/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice9/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice10/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice10/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice11/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice11/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice12/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice12/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice13/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice13/exmaps_data/ML_data/ 
+
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice2/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice2/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice3/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice3/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice4/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice4/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice5/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice5/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice6/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice6/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice7/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice7/exmaps_data/ML_data/ 
+
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice8/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice8/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice9/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice9/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice10/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice10/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice11/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice11/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice12/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice12/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice13/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice13/exmaps_data/ML_data/
+
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice14/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice14/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice15/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice15/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice16/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice16/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice17/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice17/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice18/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice18/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice19/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice19/exmaps_data/ML_data/
+
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice14/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice14/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice15/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice15/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice16/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice16/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice17/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice17/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice18/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice18/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice19/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice19/exmaps_data/ML_data/
+
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice20/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice20/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice21/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice21/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice22/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice22/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice23/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice23/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice24/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice24/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice25/exmaps_data/ML_data/classification_model_small alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice25/exmaps_data/ML_data/
+
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice20/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice20/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice21/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice21/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice22/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice22/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice23/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice23/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice24/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice24/exmaps_data/ML_data/ &&
+scp -P 11352 -r /media/iNicosiaData/engd_data/cmu/slice25/exmaps_data/ML_data/classification_model alex@6.tcp.eu.ngrok.io:/media/iNicosiaData/engd_data/cmu/slice25/exmaps_data/ML_data/
+
+scp /media/iNicosiaData/engd_data/cmu/slice2/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice2.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice3/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice3.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice4/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice4.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice5/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice5.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice6/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice6.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice7/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice7.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice8/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice8.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice9/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice9.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice10/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice10.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice11/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice11.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice12/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice12.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice13/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice13.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice14/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice14.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice15/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice15.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice16/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice16.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice17/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice17.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice18/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice18.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice19/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice19.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice20/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice20.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice22/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice22.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice21/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice21.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice23/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice23.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice24/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice24.db &&
+scp /media/iNicosiaData/engd_data/cmu/slice25/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_cmu_slice25.db &&
+scp /media/iNicosiaData/engd_data/retail_shop/slice1/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_retail_shop.db &&
+scp /media/iNicosiaData/engd_data/lamar/HGE_colmap_model/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_lamar_hge.db &&
+scp /media/iNicosiaData/engd_data/lamar/LIN_colmap_model/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_lamar_lin.db
+
+scp /media/iNicosiaData/engd_data/retail_shop/CAB/exmaps_data/ML_data/ml_database_all_opencv_sift.db ar2056@aching.cs.bath.ac.uk:/mnt/fast0/ar2056/ml_database_all_opencv_sift_lamar_cab.db 
+
+//small network (sift+xy+rgb)
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice2.db slice2 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice3.db slice3 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice4.db slice4 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice5.db slice5 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice6.db slice6 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice7.db slice7
+
+CUDA_VISIBLE_DEVICES=1 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice8.db slice8 &&
+CUDA_VISIBLE_DEVICES=1 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice9.db slice9 &&
+CUDA_VISIBLE_DEVICES=1 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice10.db slice10 &&
+CUDA_VISIBLE_DEVICES=1 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice11.db slice11 &&
+CUDA_VISIBLE_DEVICES=1 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice12.db slice12 &&
+CUDA_VISIBLE_DEVICES=1 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice13.db slice13
+
+CUDA_VISIBLE_DEVICES=4 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice14.db slice14 &&
+CUDA_VISIBLE_DEVICES=4 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice15.db slice15 &&
+CUDA_VISIBLE_DEVICES=4 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice16.db slice16 &&
+CUDA_VISIBLE_DEVICES=4 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice17.db slice17 &&
+CUDA_VISIBLE_DEVICES=4 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice18.db slice18 &&
+CUDA_VISIBLE_DEVICES=4 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice19.db slice19
+
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice20.db slice20 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice21.db slice21 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice22.db slice22 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice23.db slice23 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice24.db slice24 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf_small.py CMU /home/ml_database_all_opencv_sift_cmu_slice25.db slice25
+
+//on aching
+CUDA_VISIBLE_DEVICES=5 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice2.db slice2 &&
+CUDA_VISIBLE_DEVICES=5 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice3.db slice3 &&
+CUDA_VISIBLE_DEVICES=5 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice4.db slice4 &&
+CUDA_VISIBLE_DEVICES=5 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice5.db slice5 &&
+CUDA_VISIBLE_DEVICES=5 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice6.db slice6 &&
+CUDA_VISIBLE_DEVICES=5 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice7.db slice7
+
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice8.db slice8 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice9.db slice9 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice10.db slice10 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice11.db slice11 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice12.db slice12 &&
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice13.db slice13
+
+CUDA_VISIBLE_DEVICES=2 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice14.db slice14 &&
+CUDA_VISIBLE_DEVICES=2 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice15.db slice15 &&
+CUDA_VISIBLE_DEVICES=2 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice16.db slice16 &&
+CUDA_VISIBLE_DEVICES=2 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice17.db slice17 &&
+CUDA_VISIBLE_DEVICES=2 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice18.db slice18 &&
+CUDA_VISIBLE_DEVICES=2 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice19.db slice19
+
+CUDA_VISIBLE_DEVICES=3 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice20.db slice20 &&
+CUDA_VISIBLE_DEVICES=3 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice21.db slice21 &&
+CUDA_VISIBLE_DEVICES=3 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice22.db slice22 &&
+CUDA_VISIBLE_DEVICES=3 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice23.db slice23 &&
+CUDA_VISIBLE_DEVICES=3 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice24.db slice24 &&
+CUDA_VISIBLE_DEVICES=3 python3.8 train_for_nf.py CMU /home/ml_database_all_opencv_sift_cmu_slice25.db slice25
+
+// on ogg 
+CUDA_VISIBLE_DEVICES=1 python3.8 train_for_nf.py HGE /home/ml_database_all_opencv_sift_lamar_hge.db
+CUDA_VISIBLE_DEVICES=2 python3.8 train_for_nf.py LIN /home/ml_database_all_opencv_sift_lamar_lin.db
+CUDA_VISIBLE_DEVICES=3 python3.8 train_for_nf.py CAB /home/ml_database_all_opencv_sift_lamar_cab.db
+
+CUDA_VISIBLE_DEVICES=0 python3.8 train_for_nf.py RetailShop /home/ml_database_all_opencv_sift_retail_shop.db
+

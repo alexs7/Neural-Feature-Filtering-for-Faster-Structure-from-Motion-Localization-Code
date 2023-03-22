@@ -1,6 +1,6 @@
-# Look at learned_models_benchmarks.py for docs
-# You can run this file after learned_models_benchmarks.py
-#  An note here is that I use the gt model to localise the gt images not the live model.
+# This file will generate a csv file with the results of the models.
+# then you need to parse that .csv file and generate stats for the thesis
+# The .csv file can be parsed with parse_results_for_thesis.py
 
 import csv
 import os
@@ -11,7 +11,7 @@ import pycolmap
 from tqdm import tqdm
 
 from pose_evaluator import pose_evaluate_generic_comparison_model, pose_evaluate_generic_comparison_model_Maa
-from save_2D_points import save_debug_image_simple_ml
+from save_2D_points import save_debug_image_simple_ml, save_debug_image_simple_ml_green, save_debug_image_simple_ml_red
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #https://stackoverflow.com/questions/35911252/disable-tensorflow-debugging-information
 from tensorflow import keras
@@ -51,7 +51,6 @@ def run_predictions(model, data, model_type=None):
     mnm_data = data['mnm_data']
     pm_data = data['pm_data']
     nf_data = data['nf_data'] #SIFT + XY + BRG + octave + angle + size + response + dominantOrientation + matched
-    nf_small_data = nf_data[:, 0:133] #SIFT + XY + BRG
 
     # same order as above
     xy_descs = np.c_[nf_data[:,128:130], nf_data[:, 0:128]] #XY + SIFT
@@ -74,7 +73,7 @@ def run_predictions(model, data, model_type=None):
     if (model_type == "nf_small"):
         # at this point we have all the data for the current image (we don't need the matched value here)
         # we are just predicting, we care about the predictions
-        prediction_data = nf_data[:, 0:133]
+        prediction_data = nf_data[:, 0:133] #SIFT + XY + BRG
         y_pred = model.predict(prediction_data, verbose=0)  # returns a value from (0,1)
         y_pred = np.where(y_pred >= 0.5, 1, 0)
         matchable_indices = np.where(y_pred == 1)[0]
@@ -82,24 +81,50 @@ def run_predictions(model, data, model_type=None):
         return matchable_xy_descs
     if(model_type == "pm"):
         y_pred = model.predict(pm_data[:,2:130])
-        # re-organise the data so it is XY + SIFT
         matchable_indices = np.where(y_pred == 1)[0]
         matchable_xy_descs = xy_descs[matchable_indices]  # has to be XY + DESC  # returns 1 or 0
         return matchable_xy_descs
 
 def save_debug_images(parameters, kps_xy, model_img, image_path, matchable_xy_descs_mnm, matchable_xy_descs_nf, matchable_xy_descs_nf_small, matchable_xy_descs_pm):
     source = os.path.join(image_path, model_img.name)
-    dest_mnm = os.path.join(parameters.debug_images_ml_path, "mnm_" + model_img.name.replace("/", "_"))
-    dest_nf = os.path.join(parameters.debug_images_ml_path, "nf_" + model_img.name.replace("/", "_"))
-    dest_nf_small = os.path.join(parameters.debug_images_ml_path, "nf_small_" + model_img.name.replace("/", "_"))
-    dest_pm = os.path.join(parameters.debug_images_ml_path, "pm_" + model_img.name.replace("/", "_"))
+
+    # TODO: This needs to be refactored
+    dest_mnm_overlay = os.path.join(parameters.debug_images_ml_path, "mnm_overlay_" + model_img.name.replace("/", "_"))
+    dest_mnm_all = os.path.join(parameters.debug_images_ml_path, "mnm_all_" + model_img.name.replace("/", "_"))
+    dest_mnm_matchable_only = os.path.join(parameters.debug_images_ml_path, "mnm_matchable_only_" + model_img.name.replace("/", "_"))
+
+    dest_nf_overlay = os.path.join(parameters.debug_images_ml_path, "nf_overlay_" + model_img.name.replace("/", "_"))
+    dest_nf_all = os.path.join(parameters.debug_images_ml_path, "nf_all_" + model_img.name.replace("/", "_"))
+    dest_nf_matchable_only = os.path.join(parameters.debug_images_ml_path, "nf_matchable_only_" + model_img.name.replace("/", "_"))
+
+    dest_nf_small_overlay = os.path.join(parameters.debug_images_ml_path, "nf_small_overlay_" + model_img.name.replace("/", "_"))
+    dest_nf_small_all = os.path.join(parameters.debug_images_ml_path, "nf_small_all_" + model_img.name.replace("/", "_"))
+    dest_nf_small_matchable_only = os.path.join(parameters.debug_images_ml_path, "nf_small_matchable_only_" + model_img.name.replace("/", "_"))
+
+    dest_pm_overlay = os.path.join(parameters.debug_images_ml_path, "pm_overlay_" + model_img.name.replace("/", "_"))
+    dest_pm_all = os.path.join(parameters.debug_images_ml_path, "pm_all_" + model_img.name.replace("/", "_"))
+    dest_pm_matchable_only = os.path.join(parameters.debug_images_ml_path, "pm_matchable_only_" + model_img.name.replace("/", "_"))
 
     height, width , _ = cv2.imread(source).shape
 
-    save_debug_image_simple_ml(source, kps_xy, matchable_xy_descs_mnm[:, 0:2], dest_mnm)
-    save_debug_image_simple_ml(source, kps_xy, matchable_xy_descs_nf[:, 0:2], dest_nf)
-    save_debug_image_simple_ml(source, kps_xy, matchable_xy_descs_nf_small[:, 0:2], dest_nf_small)
-    save_debug_image_simple_ml(source, kps_xy, matchable_xy_descs_pm[:, 0:2], dest_pm)
+    # red on top of green
+    save_debug_image_simple_ml(source, kps_xy, matchable_xy_descs_mnm[:, 0:2], f"{dest_mnm_overlay}")
+    save_debug_image_simple_ml(source, kps_xy, matchable_xy_descs_nf[:, 0:2], f"{dest_nf_overlay}")
+    save_debug_image_simple_ml(source, kps_xy, matchable_xy_descs_nf_small[:, 0:2], f"{dest_nf_small_overlay}")
+    save_debug_image_simple_ml(source, kps_xy, matchable_xy_descs_pm[:, 0:2], f"{dest_pm_overlay}")
+
+    # red only (all keypoints)
+    save_debug_image_simple_ml_red(source, kps_xy, f"{dest_mnm_all}")
+    save_debug_image_simple_ml_red(source, kps_xy, f"{dest_nf_all}")
+    save_debug_image_simple_ml_red(source, kps_xy, f"{dest_nf_small_all}")
+    save_debug_image_simple_ml_red(source, kps_xy, f"{dest_pm_all}")
+
+    # green only (matchable)
+    save_debug_image_simple_ml_green(source, matchable_xy_descs_mnm[:, 0:2], f"{dest_mnm_matchable_only}")
+    save_debug_image_simple_ml_green(source, matchable_xy_descs_nf[:, 0:2], f"{dest_nf_matchable_only}")
+    save_debug_image_simple_ml_green(source, matchable_xy_descs_nf_small[:, 0:2], f"{dest_nf_small_matchable_only}")
+    save_debug_image_simple_ml_green(source, matchable_xy_descs_pm[:, 0:2], f"{dest_pm_matchable_only}")
+
     return height, width
 
 def get_image_statistics(matchable_xy_descs, train_descriptors_gt, points3D_xyz_ids,
@@ -142,7 +167,7 @@ def get_image_statistics(matchable_xy_descs, train_descriptors_gt, points3D_xyz_
     consensus_time = end - start
 
     if(est_pose['success'] == False):
-        return model_img.name
+        return "Degenerate"
 
     rotm = pycolmap.qvec_to_rotmat(est_pose['qvec'])
     tvec = est_pose['tvec']
@@ -200,10 +225,14 @@ def get_prediction_data(parameters, data):
         # test_data[i, 137] = dominantOrientation
         # test_data[i, 138] = matched
         test_data = get_test_data(opencv_data_db, gt_db_mnm, img_id)
+        if(test_data is None):
+            print("No data for image: ", model_img.name)
+            continue
 
+        # all data below is in the same order
         mnm_data = np.c_[test_data[:,128:130], test_data[:,133], test_data[:,134], test_data[:,135], test_data[:,136], test_data[:,131], test_data[:,137], test_data[:,138]]
-        pm_data = np.c_[test_data[:,128:130], test_data[:, 0:128]]
-        nf_data = test_data
+        pm_data = np.c_[test_data[:,128:130], test_data[:, 0:128]] #NOTE: the xy is not needed here but it doesn't matter
+        nf_data = test_data #just for naming purposes
 
         prediction_data = {}
         prediction_data["mnm_data"] = mnm_data
@@ -220,6 +249,7 @@ def get_prediction_data(parameters, data):
         height, width = save_debug_images(parameters, kps_xy, model_img, image_path, matchable_xy_descs_mnm, matchable_xy_descs_nf, matchable_xy_descs_nf_small, matchable_xy_descs_pm)
 
         # data = {errors_rotation, errors_translation, total_fm_time, total_consencus_time, percentage_reduction_total, est_poses, gt_poses}
+        # Degenerate cases are defined below as get_image_statistics returns "Degenerate"
         data_mnm = get_image_statistics(matchable_xy_descs_mnm, train_descriptors_gt_mnm, points3D_xyz_ids_mnm, Ks_mnm, model_img, descs, scale=scale, camera_type=camera_type, height=height, width=width)
         data_nf = get_image_statistics(matchable_xy_descs_nf, train_descriptors_gt_mnm, points3D_xyz_ids_mnm, Ks_mnm, model_img, descs, scale=scale, camera_type=camera_type, height=height, width=width)
         data_nf_small = get_image_statistics(matchable_xy_descs_nf_small, train_descriptors_gt_mnm, points3D_xyz_ids_mnm, Ks_mnm, model_img, descs, scale=scale, camera_type=camera_type, height=height, width=width)
@@ -303,6 +333,7 @@ def write_predictions(base_path, dataset, gt_image_path,thresholds_q, thresholds
         scale = 1
         camera_type = "PINHOLE" #CMU/Lamar
 
+    print("Loading models..")
     # For MnM (2020)
     mnm_model_path = os.path.join(base_path, parameters.mnm_path, mnm_model_name)
     mnm_model = cv2.ml.RTrees_load(mnm_model_path)
@@ -357,7 +388,7 @@ def write_predictions(base_path, dataset, gt_image_path,thresholds_q, thresholds
 def pose_result_cmu(writer):
     root_path = "/media/iNicosiaData/engd_data/"
     slices_names = ["slice2", "slice3", "slice4", "slice5", "slice6", "slice7", "slice8", "slice9", "slice10", "slice11", "slice12", "slice13", "slice14", "slice15",
-                    "slice16", "slice17", "slice18", "slice19", "slice20", "slice21", "slice22", "slice23", "slice24", "slice25"]
+                "slice16", "slice17", "slice18", "slice19", "slice20", "slice21", "slice22", "slice23", "slice24", "slice25"]
     # for CMU
     thresholds_q = np.linspace(1, 10, 10)
     thresholds_t = np.geomspace(0.2, 5, 10)  # np.geomspace(0.2, 5, 10), same as np.logspace(np.log10(0.2), np.log10(5), num=10, base=10.0)
@@ -379,7 +410,8 @@ def pose_results_lamar(writer):
         gt_image_path = os.path.join(root_path, "lamar", dataset, "sessions", "query_val_phone", "raw_data")
         print("Base path: " + base_path)
         mnm_model_name = "trained_model_pairs_no_10000.xml"
-        pm_model_name = "rforest_3200.joblib"
+        temp_params = Parameters(base_path)
+        pm_model_name = f"rforest_{temp_params.predicting_matchability_comparison_data_lamar_no_samples}.joblib"
         write_predictions(base_path, dataset, gt_image_path, thresholds_q, thresholds_t, writer, mnm_model_name, pm_model_name)
 
 def pose_results_retail_shop(writer):
@@ -400,7 +432,6 @@ result_file_output_path = os.path.join(root_path, file_name)
 
 with open(result_file_output_path, 'w', encoding='UTF8') as f:
     writer = csv.writer(f)
+    pose_result_cmu(writer)
     pose_results_retail_shop(writer)
     pose_results_lamar(writer) #remember to use the custom version of OpenCV (export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3.8/site-packages/) for higher feature matching limits
-    pose_result_cmu(writer)
-

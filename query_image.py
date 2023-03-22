@@ -493,12 +493,51 @@ def get_test_data(ml_db, gt_db, image_id):
     db_rows = ml_db.execute("SELECT sift, xy, blue, green, red, octave, angle, size, response, domOrientations, matched FROM data WHERE image_id = ? and gt = 1 ", (image_id,)).fetchall()
     rows_descs, cols_descs, descs = get_descriptors(gt_db, image_id)
 
+    if(len(db_rows) == 0):
+        # This is because the image with id image_id is not part of the localised opencv model images from create_universal_models.py
+        # Could have been skipped in the pairs checking code in that file.
+        print("No db_rows in the data table for image_id: " + str(image_id))
+        return None
+
     assert rows_descs == len(db_rows), "The number of rows in the descriptors table is not equal to the number of rows in the ML data table"
 
     rows_no = rows_descs
     test_data = np.empty([rows_no, 139])
     for i in range(len(db_rows)):
         row = db_rows[i]
+        sift = COLMAPDatabase.blob_to_array(row[0], np.uint8)
+        kps_xy = COLMAPDatabase.blob_to_array(row[1], np.float64)
+        blue = row[2]
+        green = row[3]
+        red = row[4]
+        octave = row[5]
+        angle = row[6]
+        size = row[7]
+        response = row[8]
+        dominantOrientation = row[9]
+        matched = row[10]
+
+        test_data[i, 0:128] = sift
+        test_data[i, 128:130] = kps_xy
+        test_data[i, 130] = blue
+        test_data[i, 131] = green
+        test_data[i, 132] = red
+        test_data[i, 133] = octave
+        test_data[i, 134] = angle
+        test_data[i, 135] = size
+        test_data[i, 136] = response
+        test_data[i, 137] = dominantOrientation
+        test_data[i, 138] = matched
+
+    return test_data
+
+def get_test_data_all(opencv_data_db): #or #ml_db
+    print("Loading test data from db")
+    db_raw_data = opencv_data_db.execute("SELECT sift, xy, blue, green, red, octave, angle, size, response, domOrientations, matched FROM data WHERE gt = 1").fetchall()
+    rows_no = len(db_raw_data)
+    test_data = np.empty([rows_no, 139])
+    for i in tqdm(range(rows_no)):
+        row = db_raw_data[i]
         sift = COLMAPDatabase.blob_to_array(row[0], np.uint8)
         kps_xy = COLMAPDatabase.blob_to_array(row[1], np.float64)
         blue = row[2]

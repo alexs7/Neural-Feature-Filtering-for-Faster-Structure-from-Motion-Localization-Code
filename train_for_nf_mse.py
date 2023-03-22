@@ -1,3 +1,6 @@
+# Adding this model for abalation studies 06/04/2023
+# will use the MSE function and save in the model in folder "classification_model_mse"
+
 import datetime
 import os
 import numpy as np
@@ -26,7 +29,7 @@ def run(base_path, db_path):
 
     ml_path = os.path.join(params.base_path, "ML_data") #folder should exist from create_nf_training_data.py
     os.makedirs(ml_path, exist_ok=True)
-    nn_save_path = os.path.join(ml_path, "classification_model_small") #to store the binary model
+    nn_save_path = os.path.join(ml_path, "classification_model_mse") #to store the binary model
     os.makedirs(nn_save_path, exist_ok=True)
     log_folder_name = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     log_folder = os.path.join(ml_path, "tensorboard_logs", log_folder_name)
@@ -44,9 +47,9 @@ def run(base_path, db_path):
 
     # split to val and train data
     val_size = int(data.shape[0] * 30 / 100)
-    X_val = data[0:val_size, 0:133]
+    X_val = data[0:val_size, 0:138]
     y_val = data[0:val_size, 138].astype(np.float32)
-    X_train = data[val_size:, 0:133]
+    X_train = data[val_size:, 0:138]
     y_train = data[val_size:, 138].astype(np.float32)
 
     # converts batches so np.float32
@@ -69,7 +72,7 @@ def run(base_path, db_path):
 
     model = Sequential()
     # in keras the first layer is a hidden layer too, so input dims is OK here
-    model.add(Dense(133, input_dim=133, activation='relu')) #Note: 'relu' here will be the same as 'linear' (default as all values are positive)
+    model.add(Dense(138, input_dim=138, activation='relu')) #Note: 'relu' here will be the same as 'linear' (default as all values are positive)
     model.add(Dense(276, activation='relu'))
     model.add(Dense(276, activation='relu'))
     model.add(Dense(276, activation='relu'))
@@ -77,7 +80,7 @@ def run(base_path, db_path):
     model.add(Dense(1, activation='sigmoid'))
     # Compile model
     opt = keras.optimizers.Adam(learning_rate=1e-4)
-    model.compile(optimizer=opt, loss=tweaked_loss, metrics=metrics)
+    model.compile(optimizer=opt, loss=tf.keras.losses.MeanSquaredError(), metrics=metrics)
     model.summary()
 
     # NOTE: Before training you should use a baseline model

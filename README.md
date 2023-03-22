@@ -21,10 +21,11 @@ The files themselves will contain comments on how to use them.
 - create_nf_training_data.py
 - train_for_nf.py
 
-#### Benchmarking the models:
+#### Benchmarking the models and generating statistics:
 
 - learned_models_benchmarks.py #will generate model statistics (this will be merged with the next script)
 - learned_models_pose_data.py #will generate pose data statistics
+- parse_results_for_thesis.py #this file might need manualy adjustments 
 
 #### Notes:
 
