@@ -190,6 +190,7 @@ def get_localised_query_images_pose_data_mnm(parameters):
 
     return localised_qt_images, Ks
 
+# TODO: Clean up - First task after submission to clean up this code, remove the method below 12/04/2023
 def parse_row_data(images_pose_data, thresholds_q, thresholds_t, scale=1, model=None):
     total_fm_time = []  # feature matching time
     total_consensus_time = []  # RANSAC time

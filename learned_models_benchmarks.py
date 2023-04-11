@@ -7,7 +7,7 @@
 # 5 - Balanced Accuracy
 
 # The result .csv file can be parsed with parse_results_for_thesis.py
-# NOTE: I trained a model on SIFT+RGB values only nf_small, but I am not using it now.
+# A second file is generated but with the averaged results. This file is not used yet in parse_results_for_thesis.py
 
 import csv
 import os
